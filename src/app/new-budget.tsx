@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 export default function BudgetDetailScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>May Budget</Text>
+      <Text style={styles.title}>New Budget</Text>
       <Text style={styles.subtitle}>
         This is where the editable budget will go.
       </Text>

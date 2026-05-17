@@ -15,15 +15,12 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.newButton}
-        onPress={() => router.push("/budget-detail")}
+        onPress={() => router.push("/new-budget")}
       >
         <Text style={styles.newButtonText}>+ New Budget</Text>
       </TouchableOpacity>
 
-      <Pressable
-        style={styles.card}
-        onPress={() => router.push("/budget-detail")}
-      >
+      <Pressable style={styles.card} onPress={() => router.push("/may-budget")}>
         <Text style={styles.cardTitle}>May Budget</Text>
         <Text style={styles.cardSubtitle}>
           Tap to edit income, bills, and notes
@@ -32,7 +29,7 @@ export default function HomeScreen() {
 
       <Pressable
         style={styles.card}
-        onPress={() => router.push("/budget-detail")}
+        onPress={() => router.push("/wedding-budget")}
       >
         <Text style={styles.cardTitle}>Wedding Budget</Text>
         <Text style={styles.cardSubtitle}>Saved draft</Text>
