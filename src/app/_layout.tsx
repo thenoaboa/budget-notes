@@ -13,10 +13,7 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ title: "Budgets" }} />
-        <Stack.Screen
-          name="budget-detail"
-          options={{ title: "Budget Detail" }}
-        />
+        <Stack.Screen name="budget/[id]" options={{ title: "Budget" }} />
       </Stack>
     </ThemeProvider>
   );
