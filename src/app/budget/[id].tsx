@@ -1,7 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+} from "react-native";
 
 type Budget = {
   id: string;
@@ -37,16 +44,6 @@ export default function BudgetDetailScreen() {
 
       if (foundBudget) {
         setBudget(foundBudget);
-      } else {
-        setBudget({
-          id: String(id),
-          budgetName: "",
-          amount: "",
-          item1: "",
-          item2: "",
-          item3: "",
-          notes: "",
-        });
       }
     }
 
@@ -77,6 +74,7 @@ export default function BudgetDetailScreen() {
 
     if (!hasContent) {
       const filteredBudgets = parsedBudgets.filter((b) => b.id !== String(id));
+
       await AsyncStorage.setItem("budgets", JSON.stringify(filteredBudgets));
       return;
     }
@@ -90,11 +88,51 @@ export default function BudgetDetailScreen() {
     await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
   }
 
+  async function deleteBudget() {
+    Alert.alert(
+      "Delete Budget?",
+      "Are you sure you want to delete this budget?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: async () => {
+            const savedBudgets = await AsyncStorage.getItem("budgets");
+            const parsedBudgets: Budget[] = savedBudgets
+              ? JSON.parse(savedBudgets)
+              : [];
+
+            const updatedBudgets = parsedBudgets.filter(
+              (b) => b.id !== String(id),
+            );
+
+            await AsyncStorage.setItem(
+              "budgets",
+              JSON.stringify(updatedBudgets),
+            );
+
+            router.push("/");
+          },
+        },
+      ],
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Pressable onPress={() => router.push("/")}>
-        <Text style={styles.backButton}>← Back</Text>
-      </Pressable>
+      <View style={styles.topBar}>
+        <Pressable onPress={() => router.push("/")}>
+          <Text style={styles.backButton}>← Back</Text>
+        </Pressable>
+
+        <Pressable onPress={deleteBudget}>
+          <Text style={styles.trashButton}>🗑️</Text>
+        </Pressable>
+      </View>
 
       <TextInput
         style={styles.title}
@@ -162,17 +200,30 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 60,
   },
+
+  topBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
   backButton: {
     color: "#60a5fa",
     fontSize: 18,
-    marginBottom: 20,
   },
+
+  trashButton: {
+    fontSize: 24,
+  },
+
   title: {
     color: "white",
     fontSize: 36,
     fontWeight: "bold",
     marginBottom: 24,
   },
+
   sectionTitle: {
     color: "#9ca3af",
     fontSize: 16,
@@ -180,6 +231,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 8,
   },
+
   input: {
     backgroundColor: "#1f2937",
     color: "white",
@@ -187,6 +239,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
+
   notes: {
     backgroundColor: "#1f2937",
     color: "white",
