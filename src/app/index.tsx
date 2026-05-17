@@ -6,27 +6,29 @@ import {
   View,
 } from "react-native";
 
-import { Link } from "expo-router";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Budgets</Text>
 
-      <Link href="/budget-detail" asChild>
-        <TouchableOpacity style={styles.newButton}>
-          <Text style={styles.newButtonText}>+ New Budget</Text>
-        </TouchableOpacity>
-      </Link>
+      <TouchableOpacity
+        style={styles.newButton}
+        onPress={() => router.push("/budget-detail")}
+      >
+        <Text style={styles.newButtonText}>+ New Budget</Text>
+      </TouchableOpacity>
 
-      <Link href="/budget-detail" asChild>
-        <Pressable style={styles.card}>
-          <Text style={styles.cardTitle}>May Budget</Text>
-          <Text style={styles.cardSubtitle}>
-            Tap to edit income, bills, and notes
-          </Text>
-        </Pressable>
-      </Link>
+      <Pressable
+        style={styles.card}
+        onPress={() => router.push("/budget-detail")}
+      >
+        <Text style={styles.cardTitle}>May Budget</Text>
+        <Text style={styles.cardSubtitle}>
+          Tap to edit income, bills, and notes
+        </Text>
+      </Pressable>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Wedding Budget</Text>
