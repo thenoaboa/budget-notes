@@ -3,25 +3,35 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-type Budget = {
+type BudgetDraft = {
   id: string;
-  name: string;
-  subtitle: string;
+  budgetName: string;
+  amount: string;
+  item1: string;
+  item2: string;
+  item3: string;
+  notes: string;
 };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [savedBudgets, setSavedBudgets] = useState<Budget[]>([]);
+  const [newBudgetDraft, setNewBudgetDraft] = useState<BudgetDraft | null>(
+    null,
+  );
 
   useFocusEffect(
     useCallback(() => {
-      async function loadBudgets() {
-        const existingBudgets = await AsyncStorage.getItem("budgets");
-        const budgets = existingBudgets ? JSON.parse(existingBudgets) : [];
-        setSavedBudgets(budgets);
+      async function loadDraft() {
+        const savedDraft = await AsyncStorage.getItem("newBudgetDraft");
+
+        if (savedDraft) {
+          setNewBudgetDraft(JSON.parse(savedDraft));
+        } else {
+          setNewBudgetDraft(null);
+        }
       }
 
-      loadBudgets();
+      loadDraft();
     }, []),
   );
 
@@ -35,6 +45,16 @@ export default function HomeScreen() {
       >
         <Text style={styles.newButtonText}>+ New Budget</Text>
       </Pressable>
+
+      {newBudgetDraft && (
+        <Pressable
+          style={styles.card}
+          onPress={() => router.push("/new-budget")}
+        >
+          <Text style={styles.cardTitle}>{newBudgetDraft.budgetName}</Text>
+          <Text style={styles.cardSubtitle}>Auto-saved draft</Text>
+        </Pressable>
+      )}
 
       <Pressable style={styles.card} onPress={() => router.push("/may-budget")}>
         <Text style={styles.cardTitle}>May Budget</Text>
@@ -50,13 +70,6 @@ export default function HomeScreen() {
         <Text style={styles.cardTitle}>Wedding Budget</Text>
         <Text style={styles.cardSubtitle}>Saved draft</Text>
       </Pressable>
-
-      {savedBudgets.map((budget) => (
-        <Pressable key={budget.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{budget.name}</Text>
-          <Text style={styles.cardSubtitle}>{budget.subtitle}</Text>
-        </Pressable>
-      ))}
     </View>
   );
 }

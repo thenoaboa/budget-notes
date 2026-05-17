@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function NewBudgetScreen() {
   const [budgetName, setBudgetName] = useState("New Budget");
@@ -30,6 +31,10 @@ export default function NewBudgetScreen() {
 
   return (
     <View style={styles.container}>
+      <Pressable onPress={() => router.push("/")}>
+        <Text style={styles.backButton}>← Back</Text>
+      </Pressable>
+
       <TextInput
         style={styles.title}
         value={budgetName}
@@ -95,6 +100,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
     padding: 24,
     paddingTop: 60,
+  },
+  backButton: {
+    color: "#60a5fa",
+    fontSize: 18,
+    marginBottom: 20,
   },
   title: {
     color: "white",
