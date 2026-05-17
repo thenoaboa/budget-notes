@@ -30,10 +30,13 @@ export default function HomeScreen() {
         </Text>
       </Pressable>
 
-      <View style={styles.card}>
+      <Pressable
+        style={styles.card}
+        onPress={() => router.push("/budget-detail")}
+      >
         <Text style={styles.cardTitle}>Wedding Budget</Text>
         <Text style={styles.cardSubtitle}>Saved draft</Text>
-      </View>
+      </Pressable>
     </View>
   );
 }
