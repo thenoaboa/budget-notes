@@ -1,33 +1,47 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { useFocusEffect, useRouter } from "expo-router";
+
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { Pressable, ScrollView, StyleSheet, Text } from "react-native";
 
 type SpendingItem = {
   id: string;
+
   amount: string;
+
   name: string;
+
   quantity: string;
+
   included: boolean;
 };
 
 type Budget = {
   id: string;
+
   budgetName: string;
+
   amount: string;
+
   spendingItems: SpendingItem[];
+
   notes: string;
 };
 
 export default function HomeScreen() {
   const router = useRouter();
+
   const [budgets, setBudgets] = useState<Budget[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       async function loadBudgets() {
         const savedBudgets = await AsyncStorage.getItem("budgets");
+
         const parsedBudgets = savedBudgets ? JSON.parse(savedBudgets) : [];
+
         setBudgets(parsedBudgets);
       }
 
@@ -37,11 +51,12 @@ export default function HomeScreen() {
 
   function createNewBudget() {
     const id = Date.now().toString();
+
     router.push(`/budget/${id}` as any);
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.header}>Budgets</Text>
 
       <Pressable style={styles.newButton} onPress={createNewBudget}>
@@ -57,51 +72,80 @@ export default function HomeScreen() {
           <Text style={styles.cardTitle}>
             {budget.budgetName || "Untitled Budget"}
           </Text>
+
           <Text style={styles.cardSubtitle}>Tap to edit budget</Text>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+
     backgroundColor: "#111",
-    padding: 24,
-    paddingTop: 60,
   },
+
+  content: {
+    padding: 24,
+
+    paddingTop: 60,
+
+    paddingBottom: 40,
+  },
+
   header: {
     color: "white",
+
     fontSize: 42,
+
     fontWeight: "bold",
+
     marginBottom: 24,
   },
+
   newButton: {
     backgroundColor: "#2563eb",
+
     padding: 18,
+
     borderRadius: 14,
+
     alignItems: "center",
+
     marginBottom: 18,
   },
+
   newButtonText: {
     color: "white",
+
     fontSize: 18,
+
     fontWeight: "bold",
   },
+
   card: {
     backgroundColor: "#1f2937",
+
     padding: 20,
+
     borderRadius: 14,
+
     marginBottom: 14,
   },
+
   cardTitle: {
     color: "white",
+
     fontSize: 24,
+
     fontWeight: "bold",
   },
+
   cardSubtitle: {
     color: "#9ca3af",
+
     marginTop: 6,
   },
 });
