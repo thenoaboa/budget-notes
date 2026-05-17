@@ -1,14 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-} from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 type Budget = {
   id: string;
@@ -22,6 +15,12 @@ type Budget = {
 
 export default function BudgetDetailScreen() {
   const { id } = useLocalSearchParams();
+
+  const item1NameRef = useRef<TextInput>(null);
+  const item2AmountRef = useRef<TextInput>(null);
+  const item2NameRef = useRef<TextInput>(null);
+  const item3AmountRef = useRef<TextInput>(null);
+  const item3NameRef = useRef<TextInput>(null);
 
   const [budget, setBudget] = useState<Budget>({
     id: String(id),
@@ -89,37 +88,16 @@ export default function BudgetDetailScreen() {
   }
 
   async function deleteBudget() {
-    Alert.alert(
-      "Delete Budget?",
-      "Are you sure you want to delete this budget?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: async () => {
-            const savedBudgets = await AsyncStorage.getItem("budgets");
-            const parsedBudgets: Budget[] = savedBudgets
-              ? JSON.parse(savedBudgets)
-              : [];
+    const savedBudgets = await AsyncStorage.getItem("budgets");
+    const parsedBudgets: Budget[] = savedBudgets
+      ? JSON.parse(savedBudgets)
+      : [];
 
-            const updatedBudgets = parsedBudgets.filter(
-              (b) => b.id !== String(id),
-            );
+    const updatedBudgets = parsedBudgets.filter((b) => b.id !== String(id));
 
-            await AsyncStorage.setItem(
-              "budgets",
-              JSON.stringify(updatedBudgets),
-            );
+    await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
 
-            router.push("/");
-          },
-        },
-      ],
-    );
+    router.push("/");
   }
 
   return (
@@ -139,45 +117,113 @@ export default function BudgetDetailScreen() {
         value={budget.budgetName}
         placeholder="New Budget"
         placeholderTextColor="#6b7280"
+        returnKeyType="next"
         onChangeText={(text) => updateBudget("budgetName", text)}
       />
 
       <Text style={styles.sectionTitle}>Dollar Amount</Text>
 
-      <TextInput
-        style={styles.input}
-        value={budget.amount}
-        placeholder="$0.00"
-        placeholderTextColor="#6b7280"
-        keyboardType="numeric"
-        onChangeText={(text) => updateBudget("amount", text)}
-      />
+      <View style={styles.moneyInputContainer}>
+        <Text style={styles.dollarSign}>$</Text>
 
-      <Text style={styles.sectionTitle}>Expenses</Text>
+        <TextInput
+          style={styles.moneyInput}
+          value={budget.amount}
+          placeholder="0.00"
+          placeholderTextColor="#6b7280"
+          keyboardType="numeric"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => item2AmountRef.current?.focus()}
+          onChangeText={(text) => updateBudget("amount", text)}
+        />
+      </View>
 
-      <TextInput
-        style={styles.input}
-        value={budget.item1}
-        placeholder="$0.00 - Item 1"
-        placeholderTextColor="#6b7280"
-        onChangeText={(text) => updateBudget("item1", text)}
-      />
+      <Text style={styles.sectionTitle}>Spending</Text>
 
-      <TextInput
-        style={styles.input}
-        value={budget.item2}
-        placeholder="$0.00 - Item 2"
-        placeholderTextColor="#6b7280"
-        onChangeText={(text) => updateBudget("item2", text)}
-      />
+      <View style={styles.spendingRow}>
+        <View style={styles.spendingAmountContainer}>
+          <Text style={styles.dollarSign}>$</Text>
 
-      <TextInput
-        style={styles.input}
-        value={budget.item3}
-        placeholder="$0.00 - Item 3"
-        placeholderTextColor="#6b7280"
-        onChangeText={(text) => updateBudget("item3", text)}
-      />
+          <TextInput
+            style={styles.spendingAmountInput}
+            value={budget.item1}
+            placeholder="0.00"
+            placeholderTextColor="#6b7280"
+            keyboardType="numeric"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => item1NameRef.current?.focus()}
+            onChangeText={(text) => updateBudget("item1", text)}
+          />
+        </View>
+
+        <TextInput
+          ref={item1NameRef}
+          style={styles.spendingNameInput}
+          placeholder="Item name"
+          placeholderTextColor="#6b7280"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => item2AmountRef.current?.focus()}
+        />
+      </View>
+
+      <View style={styles.spendingRow}>
+        <View style={styles.spendingAmountContainer}>
+          <Text style={styles.dollarSign}>$</Text>
+
+          <TextInput
+            ref={item2AmountRef}
+            style={styles.spendingAmountInput}
+            value={budget.item2}
+            placeholder="0.00"
+            placeholderTextColor="#6b7280"
+            keyboardType="numeric"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => item2NameRef.current?.focus()}
+            onChangeText={(text) => updateBudget("item2", text)}
+          />
+        </View>
+
+        <TextInput
+          ref={item2NameRef}
+          style={styles.spendingNameInput}
+          placeholder="Item name"
+          placeholderTextColor="#6b7280"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => item3AmountRef.current?.focus()}
+        />
+      </View>
+
+      <View style={styles.spendingRow}>
+        <View style={styles.spendingAmountContainer}>
+          <Text style={styles.dollarSign}>$</Text>
+
+          <TextInput
+            ref={item3AmountRef}
+            style={styles.spendingAmountInput}
+            value={budget.item3}
+            placeholder="0.00"
+            placeholderTextColor="#6b7280"
+            keyboardType="numeric"
+            returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => item3NameRef.current?.focus()}
+            onChangeText={(text) => updateBudget("item3", text)}
+          />
+        </View>
+
+        <TextInput
+          ref={item3NameRef}
+          style={styles.spendingNameInput}
+          placeholder="Item name"
+          placeholderTextColor="#6b7280"
+          returnKeyType="done"
+        />
+      </View>
 
       <Text style={styles.sectionTitle}>Notes</Text>
 
@@ -232,12 +278,55 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  input: {
+  moneyInputContainer: {
+    backgroundColor: "#1f2937",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  dollarSign: {
+    color: "white",
+    fontSize: 18,
+    marginRight: 4,
+  },
+
+  moneyInput: {
+    flex: 1,
+    color: "white",
+    paddingVertical: 14,
+    fontSize: 16,
+  },
+
+  spendingRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  spendingAmountContainer: {
+    backgroundColor: "#1f2937",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    width: 120,
+  },
+
+  spendingAmountInput: {
+    flex: 1,
+    color: "white",
+    paddingVertical: 14,
+  },
+
+  spendingNameInput: {
+    flex: 1,
     backgroundColor: "#1f2937",
     color: "white",
     padding: 14,
     borderRadius: 10,
-    marginBottom: 10,
   },
 
   notes: {
