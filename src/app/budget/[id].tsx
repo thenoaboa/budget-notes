@@ -3,32 +3,44 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+type SpendingItem = {
+  id: string;
+  amount: string;
+  name: string;
+  quantity: string;
+  included: boolean;
+};
+
 type Budget = {
   id: string;
   budgetName: string;
   amount: string;
-  item1: string;
-  item2: string;
-  item3: string;
+  spendingItems: SpendingItem[];
   notes: string;
 };
+
+function createBlankSpendingItem(): SpendingItem {
+  return {
+    id: Date.now().toString() + Math.random().toString(),
+    amount: "",
+    name: "",
+    quantity: "",
+    included: true,
+  };
+}
 
 export default function BudgetDetailScreen() {
   const { id } = useLocalSearchParams();
 
-  const item1NameRef = useRef<TextInput>(null);
-  const item2AmountRef = useRef<TextInput>(null);
-  const item2NameRef = useRef<TextInput>(null);
-  const item3AmountRef = useRef<TextInput>(null);
-  const item3NameRef = useRef<TextInput>(null);
+  const amountRefs = useRef<Record<string, TextInput | null>>({});
+  const nameRefs = useRef<Record<string, TextInput | null>>({});
+  const quantityRefs = useRef<Record<string, TextInput | null>>({});
 
   const [budget, setBudget] = useState<Budget>({
     id: String(id),
     budgetName: "",
     amount: "",
-    item1: "",
-    item2: "",
-    item3: "",
+    spendingItems: [createBlankSpendingItem()],
     notes: "",
   });
 
@@ -42,29 +54,30 @@ export default function BudgetDetailScreen() {
       const foundBudget = parsedBudgets.find((b) => b.id === String(id));
 
       if (foundBudget) {
-        setBudget(foundBudget);
+        setBudget({
+          ...foundBudget,
+          spendingItems:
+            foundBudget.spendingItems && foundBudget.spendingItems.length > 0
+              ? foundBudget.spendingItems
+              : [createBlankSpendingItem()],
+        });
       }
     }
 
     loadBudget();
   }, [id]);
 
-  async function updateBudget(field: keyof Budget, value: string) {
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      [field]: value,
-    };
-
-    setBudget(updatedBudget);
-
+  async function saveBudget(updatedBudget: Budget) {
     const hasContent =
       updatedBudget.budgetName.trim() !== "" ||
       updatedBudget.amount.trim() !== "" ||
-      updatedBudget.item1.trim() !== "" ||
-      updatedBudget.item2.trim() !== "" ||
-      updatedBudget.item3.trim() !== "" ||
-      updatedBudget.notes.trim() !== "";
+      updatedBudget.notes.trim() !== "" ||
+      updatedBudget.spendingItems.some(
+        (item) =>
+          item.amount.trim() !== "" ||
+          item.name.trim() !== "" ||
+          item.quantity.trim() !== "",
+      );
 
     const savedBudgets = await AsyncStorage.getItem("budgets");
     const parsedBudgets: Budget[] = savedBudgets
@@ -87,6 +100,53 @@ export default function BudgetDetailScreen() {
     await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
   }
 
+  function updateBudgetField(field: keyof Budget, value: string) {
+    const updatedBudget = {
+      ...budget,
+      id: String(id),
+      [field]: value,
+    };
+
+    setBudget(updatedBudget);
+    saveBudget(updatedBudget);
+  }
+
+  function updateSpendingItem(
+    itemId: string,
+    field: keyof SpendingItem,
+    value: string,
+  ) {
+    const updatedItems = budget.spendingItems.map((item) =>
+      item.id === itemId ? { ...item, [field]: value } : item,
+    );
+
+    const updatedBudget = {
+      ...budget,
+      id: String(id),
+      spendingItems: updatedItems,
+    };
+
+    setBudget(updatedBudget);
+    saveBudget(updatedBudget);
+  }
+
+  function addSpendingItemAndFocus() {
+    const newItem = createBlankSpendingItem();
+
+    const updatedBudget = {
+      ...budget,
+      id: String(id),
+      spendingItems: [...budget.spendingItems, newItem],
+    };
+
+    setBudget(updatedBudget);
+    saveBudget(updatedBudget);
+
+    setTimeout(() => {
+      amountRefs.current[newItem.id]?.focus();
+    }, 100);
+  }
+
   async function deleteBudget() {
     const savedBudgets = await AsyncStorage.getItem("budgets");
     const parsedBudgets: Budget[] = savedBudgets
@@ -96,7 +156,6 @@ export default function BudgetDetailScreen() {
     const updatedBudgets = parsedBudgets.filter((b) => b.id !== String(id));
 
     await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
-
     router.push("/");
   }
 
@@ -118,7 +177,7 @@ export default function BudgetDetailScreen() {
         placeholder="New Budget"
         placeholderTextColor="#6b7280"
         returnKeyType="next"
-        onChangeText={(text) => updateBudget("budgetName", text)}
+        onChangeText={(text) => updateBudgetField("budgetName", text)}
       />
 
       <Text style={styles.sectionTitle}>Dollar Amount</Text>
@@ -133,97 +192,78 @@ export default function BudgetDetailScreen() {
           placeholderTextColor="#6b7280"
           keyboardType="numeric"
           returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => item2AmountRef.current?.focus()}
-          onChangeText={(text) => updateBudget("amount", text)}
+          onChangeText={(text) => updateBudgetField("amount", text)}
         />
       </View>
 
       <Text style={styles.sectionTitle}>Spending</Text>
 
-      <View style={styles.spendingRow}>
-        <View style={styles.spendingAmountContainer}>
-          <Text style={styles.dollarSign}>$</Text>
+      {budget.spendingItems.map((item, index) => {
+        const isLastItem = index === budget.spendingItems.length - 1;
 
-          <TextInput
-            style={styles.spendingAmountInput}
-            value={budget.item1}
-            placeholder="0.00"
-            placeholderTextColor="#6b7280"
-            keyboardType="numeric"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => item1NameRef.current?.focus()}
-            onChangeText={(text) => updateBudget("item1", text)}
-          />
-        </View>
+        return (
+          <View key={item.id} style={styles.spendingRow}>
+            <View style={styles.spendingAmountContainer}>
+              <Text style={styles.dollarSign}>$</Text>
 
-        <TextInput
-          ref={item1NameRef}
-          style={styles.spendingNameInput}
-          placeholder="Item name"
-          placeholderTextColor="#6b7280"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => item2AmountRef.current?.focus()}
-        />
-      </View>
+              <TextInput
+                ref={(ref) => {
+                  amountRefs.current[item.id] = ref;
+                }}
+                style={styles.spendingAmountInput}
+                value={item.amount}
+                placeholder="0.00"
+                placeholderTextColor="#6b7280"
+                keyboardType="numeric"
+                returnKeyType="next"
+                blurOnSubmit={false}
+                onSubmitEditing={() => nameRefs.current[item.id]?.focus()}
+                onChangeText={(text) =>
+                  updateSpendingItem(item.id, "amount", text)
+                }
+              />
+            </View>
 
-      <View style={styles.spendingRow}>
-        <View style={styles.spendingAmountContainer}>
-          <Text style={styles.dollarSign}>$</Text>
+            <TextInput
+              ref={(ref) => {
+                nameRefs.current[item.id] = ref;
+              }}
+              style={styles.spendingNameInput}
+              value={item.name}
+              placeholder="Item name"
+              placeholderTextColor="#6b7280"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={() => quantityRefs.current[item.id]?.focus()}
+              onChangeText={(text) => updateSpendingItem(item.id, "name", text)}
+            />
 
-          <TextInput
-            ref={item2AmountRef}
-            style={styles.spendingAmountInput}
-            value={budget.item2}
-            placeholder="0.00"
-            placeholderTextColor="#6b7280"
-            keyboardType="numeric"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => item2NameRef.current?.focus()}
-            onChangeText={(text) => updateBudget("item2", text)}
-          />
-        </View>
-
-        <TextInput
-          ref={item2NameRef}
-          style={styles.spendingNameInput}
-          placeholder="Item name"
-          placeholderTextColor="#6b7280"
-          returnKeyType="next"
-          blurOnSubmit={false}
-          onSubmitEditing={() => item3AmountRef.current?.focus()}
-        />
-      </View>
-
-      <View style={styles.spendingRow}>
-        <View style={styles.spendingAmountContainer}>
-          <Text style={styles.dollarSign}>$</Text>
-
-          <TextInput
-            ref={item3AmountRef}
-            style={styles.spendingAmountInput}
-            value={budget.item3}
-            placeholder="0.00"
-            placeholderTextColor="#6b7280"
-            keyboardType="numeric"
-            returnKeyType="next"
-            blurOnSubmit={false}
-            onSubmitEditing={() => item3NameRef.current?.focus()}
-            onChangeText={(text) => updateBudget("item3", text)}
-          />
-        </View>
-
-        <TextInput
-          ref={item3NameRef}
-          style={styles.spendingNameInput}
-          placeholder="Item name"
-          placeholderTextColor="#6b7280"
-          returnKeyType="done"
-        />
-      </View>
+            <TextInput
+              ref={(ref) => {
+                quantityRefs.current[item.id] = ref;
+              }}
+              style={styles.quantityInput}
+              value={item.quantity}
+              placeholder="1"
+              placeholderTextColor="#6b7280"
+              keyboardType="numeric"
+              returnKeyType={isLastItem ? "next" : "next"}
+              blurOnSubmit={false}
+              onSubmitEditing={() => {
+                if (isLastItem) {
+                  addSpendingItemAndFocus();
+                } else {
+                  const nextItem = budget.spendingItems[index + 1];
+                  amountRefs.current[nextItem.id]?.focus();
+                }
+              }}
+              onChangeText={(text) =>
+                updateSpendingItem(item.id, "quantity", text)
+              }
+            />
+          </View>
+        );
+      })}
 
       <Text style={styles.sectionTitle}>Notes</Text>
 
@@ -233,7 +273,7 @@ export default function BudgetDetailScreen() {
         placeholder="Write budget notes here..."
         placeholderTextColor="#6b7280"
         multiline
-        onChangeText={(text) => updateBudget("notes", text)}
+        onChangeText={(text) => updateBudgetField("notes", text)}
       />
     </View>
   );
@@ -312,7 +352,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    width: 120,
+    width: 105,
   },
 
   spendingAmountInput: {
@@ -327,6 +367,15 @@ const styles = StyleSheet.create({
     color: "white",
     padding: 14,
     borderRadius: 10,
+  },
+
+  quantityInput: {
+    width: 55,
+    backgroundColor: "#1f2937",
+    color: "white",
+    padding: 14,
+    borderRadius: 10,
+    textAlign: "center",
   },
 
   notes: {

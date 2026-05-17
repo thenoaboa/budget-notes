@@ -3,13 +3,19 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+type SpendingItem = {
+  id: string;
+  amount: string;
+  name: string;
+  quantity: string;
+  included: boolean;
+};
+
 type Budget = {
   id: string;
   budgetName: string;
   amount: string;
-  item1: string;
-  item2: string;
-  item3: string;
+  spendingItems: SpendingItem[];
   notes: string;
 };
 
@@ -48,7 +54,9 @@ export default function HomeScreen() {
           style={styles.card}
           onPress={() => router.push(`/budget/${budget.id}` as any)}
         >
-          <Text style={styles.cardTitle}>{budget.budgetName}</Text>
+          <Text style={styles.cardTitle}>
+            {budget.budgetName || "Untitled Budget"}
+          </Text>
           <Text style={styles.cardSubtitle}>Tap to edit budget</Text>
         </Pressable>
       ))}
