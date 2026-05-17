@@ -1,24 +1,40 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { router } from "expo-router";
+type Budget = {
+  id: string;
+  name: string;
+  subtitle: string;
+};
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [savedBudgets, setSavedBudgets] = useState<Budget[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function loadBudgets() {
+        const existingBudgets = await AsyncStorage.getItem("budgets");
+        const budgets = existingBudgets ? JSON.parse(existingBudgets) : [];
+        setSavedBudgets(budgets);
+      }
+
+      loadBudgets();
+    }, []),
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Budgets</Text>
 
-      <TouchableOpacity
+      <Pressable
         style={styles.newButton}
         onPress={() => router.push("/new-budget")}
       >
         <Text style={styles.newButtonText}>+ New Budget</Text>
-      </TouchableOpacity>
+      </Pressable>
 
       <Pressable style={styles.card} onPress={() => router.push("/may-budget")}>
         <Text style={styles.cardTitle}>May Budget</Text>
@@ -34,6 +50,13 @@ export default function HomeScreen() {
         <Text style={styles.cardTitle}>Wedding Budget</Text>
         <Text style={styles.cardSubtitle}>Saved draft</Text>
       </Pressable>
+
+      {savedBudgets.map((budget) => (
+        <Pressable key={budget.id} style={styles.card}>
+          <Text style={styles.cardTitle}>{budget.name}</Text>
+          <Text style={styles.cardSubtitle}>{budget.subtitle}</Text>
+        </Pressable>
+      ))}
     </View>
   );
 }

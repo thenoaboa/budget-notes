@@ -1,52 +1,89 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function NewBudgetScreen() {
+  const [budgetName, setBudgetName] = useState("New Budget");
+  const [amount, setAmount] = useState("");
+  const [item1, setItem1] = useState("");
+  const [item2, setItem2] = useState("");
+  const [item3, setItem3] = useState("");
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    async function autoSaveBudget() {
+      const budget = {
+        id: "new-budget",
+        budgetName,
+        amount,
+        item1,
+        item2,
+        item3,
+        notes,
+      };
+
+      await AsyncStorage.setItem("newBudgetDraft", JSON.stringify(budget));
+    }
+
+    autoSaveBudget();
+  }, [budgetName, amount, item1, item2, item3, notes]);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>New Budget</Text>
-
       <TextInput
-        style={styles.budgetName}
-        placeholder="Budget name"
+        style={styles.title}
+        value={budgetName}
+        onChangeText={setBudgetName}
+        placeholder="New Budget"
         placeholderTextColor="#6b7280"
       />
 
       <Text style={styles.sectionTitle}>Dollar Amount</Text>
+
       <TextInput
         style={styles.input}
         placeholder="$0.00"
         placeholderTextColor="#6b7280"
         keyboardType="numeric"
+        value={amount}
+        onChangeText={setAmount}
       />
 
-      <Text style={styles.sectionTitle}>Spending</Text>
+      <Text style={styles.sectionTitle}>Expenses</Text>
+
       <TextInput
         style={styles.input}
         placeholder="$0.00 - Item 1"
         placeholderTextColor="#6b7280"
-        keyboardType="numeric"
+        value={item1}
+        onChangeText={setItem1}
       />
 
       <TextInput
         style={styles.input}
         placeholder="$0.00 - Item 2"
         placeholderTextColor="#6b7280"
-        keyboardType="numeric"
+        value={item2}
+        onChangeText={setItem2}
       />
 
       <TextInput
         style={styles.input}
         placeholder="$0.00 - Item 3"
         placeholderTextColor="#6b7280"
-        keyboardType="numeric"
+        value={item3}
+        onChangeText={setItem3}
       />
 
       <Text style={styles.sectionTitle}>Notes</Text>
+
       <TextInput
         style={styles.notes}
         placeholder="Write budget notes here..."
         placeholderTextColor="#6b7280"
         multiline
+        value={notes}
+        onChangeText={setNotes}
       />
     </View>
   );
@@ -64,14 +101,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: "bold",
     marginBottom: 20,
-  },
-  budgetName: {
-    color: "white",
-    fontSize: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: "#374151",
-    paddingBottom: 10,
-    marginBottom: 24,
   },
   sectionTitle: {
     color: "#9ca3af",
