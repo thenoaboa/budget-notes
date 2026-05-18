@@ -1,7 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text } from "react-native";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 type SpendingItem = {
@@ -28,7 +35,6 @@ export default function HomeScreen() {
     useCallback(() => {
       async function loadBudgets() {
         const savedBudgets = await AsyncStorage.getItem("budgets");
-
         const parsedBudgets = savedBudgets ? JSON.parse(savedBudgets) : [];
 
         setBudgets(parsedBudgets);
@@ -40,7 +46,6 @@ export default function HomeScreen() {
 
   function createNewBudget() {
     const id = Date.now().toString();
-
     router.push(`/budget/${id}` as any);
   }
 
@@ -48,26 +53,18 @@ export default function HomeScreen() {
     const updatedBudgets = budgets.filter((budget) => budget.id !== budgetId);
 
     setBudgets(updatedBudgets);
-
     await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
   }
 
   function confirmDeleteBudget(budgetId: string) {
-    Alert.alert(
-      "Delete budget?",
-      "Are you sure you want to delete this budget?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: () => deleteBudget(budgetId),
-        },
-      ],
-    );
+    Alert.alert("Delete note?", "Are you sure you want to delete this?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes",
+        style: "destructive",
+        onPress: () => deleteBudget(budgetId),
+      },
+    ]);
   }
 
   function renderRightActions(budgetId: string) {
@@ -83,11 +80,26 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.header}>Budgets</Text>
+      <View style={styles.simpleHeader}>
+        <Text style={styles.simpleTitle}>Your Notes</Text>
+
+        <Text style={styles.simpleSubtitle}>
+          Keep track of what you have and what still feels safe.
+        </Text>
+      </View>
 
       <Pressable style={styles.newButton} onPress={createNewBudget}>
-        <Text style={styles.newButtonText}>+ New Budget</Text>
+        <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
+
+      {budgets.length === 0 && (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>Nothing here yet.</Text>
+          <Text style={styles.emptyText}>
+            Start a note when you want a clearer picture before spending.
+          </Text>
+        </View>
+      )}
 
       {budgets.map((budget) => (
         <Swipeable
@@ -99,10 +111,10 @@ export default function HomeScreen() {
             onPress={() => router.push(`/budget/${budget.id}` as any)}
           >
             <Text style={styles.cardTitle}>
-              {budget.budgetName || "Untitled Budget"}
+              {budget.budgetName || "Untitled Note"}
             </Text>
 
-            <Text style={styles.cardSubtitle}>Tap to edit budget</Text>
+            <Text style={styles.cardSubtitle}>Tap to keep planning</Text>
           </Pressable>
         </Swipeable>
       ))}
@@ -113,65 +125,107 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#111",
+    backgroundColor: "#101820",
   },
 
   content: {
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 58,
+    paddingBottom: 120,
+    backgroundColor: "#101820",
   },
 
-  header: {
-    color: "white",
+  simpleHeader: {
+    marginBottom: 22,
+  },
+
+  simpleTitle: {
+    color: "#FFFFFF",
     fontSize: 42,
-    fontWeight: "bold",
-    marginBottom: 24,
+    fontWeight: "900",
+    letterSpacing: -1,
+  },
+
+  simpleSubtitle: {
+    color: "#8A98A8",
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 6,
+    lineHeight: 22,
   },
 
   newButton: {
-    backgroundColor: "#2563eb",
-    padding: 18,
-    borderRadius: 14,
+    backgroundColor: "#2ECC71",
+    borderRadius: 16,
+    paddingVertical: 15,
     alignItems: "center",
     marginBottom: 18,
   },
 
   newButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+    color: "#101820",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+
+  emptyCard: {
+    backgroundColor: "#1B2633",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+    marginBottom: 14,
+  },
+
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+
+  emptyText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 21,
   },
 
   card: {
-    backgroundColor: "#1f2937",
-    padding: 20,
-    borderRadius: 14,
+    backgroundColor: "#1B2633",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
     marginBottom: 14,
   },
 
   cardTitle: {
-    color: "white",
+    color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: "900",
   },
 
   cardSubtitle: {
-    color: "#9ca3af",
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "700",
     marginTop: 6,
   },
 
   deleteAction: {
-    backgroundColor: "#dc2626",
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
     width: 90,
     marginBottom: 14,
-    borderRadius: 14,
+    borderRadius: 18,
   },
 
   deleteActionText: {
-    color: "white",
-    fontWeight: "bold",
+    color: "#FF6B6B",
+    fontWeight: "900",
   },
 });

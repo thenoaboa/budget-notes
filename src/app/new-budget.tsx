@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function NewBudgetScreen() {
-  const [budgetName, setBudgetName] = useState("New Budget");
+  const [budgetName, setBudgetName] = useState("Newww Budget");
   const [amount, setAmount] = useState("");
   const [item1, setItem1] = useState("");
   const [item2, setItem2] = useState("");
