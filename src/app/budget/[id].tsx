@@ -33,6 +33,8 @@ export default function BudgetScreen() {
   const itemNameRefs = useRef<Record<number, TextInput | null>>({});
   const itemAmountRefs = useRef<Record<number, TextInput | null>>({});
 
+  const moneyAvailableIsEmpty = startingMoney.trim() === "";
+
   const addItem = () => {
     const newId = Date.now();
 
@@ -99,12 +101,17 @@ export default function BudgetScreen() {
   const safeToSpend = starting - totalSpent;
 
   const status = useMemo(() => {
+    if (moneyAvailableIsEmpty) return "green";
     if (safeToSpend < 0) return "red";
     if (safeToSpend <= 50) return "yellow";
     return "green";
-  }, [safeToSpend]);
+  }, [safeToSpend, moneyAvailableIsEmpty]);
 
   const affirmingMessage = useMemo(() => {
+    if (moneyAvailableIsEmpty) {
+      return "Make your money go further";
+    }
+
     const greenMessages = [
       "You’re still okay.",
       "You’ve got enough.",
@@ -138,7 +145,11 @@ export default function BudgetScreen() {
 
     const index = Math.abs(Math.round(safeToSpend)) % pool.length;
     return pool[index];
-  }, [safeToSpend, status]);
+  }, [safeToSpend, status, moneyAvailableIsEmpty]);
+
+  const headerSubtext = moneyAvailableIsEmpty
+    ? "Add money available below"
+    : "safe to spend";
 
   const statusStyles = {
     green: {
@@ -203,7 +214,7 @@ export default function BudgetScreen() {
                   { color: currentStyle.textColor },
                 ]}
               >
-                safe to spend
+                {headerSubtext}
               </Text>
             </View>
 
