@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -11,6 +12,7 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 type SpendingItem = {
   id: string;
@@ -119,7 +121,6 @@ export default function BudgetDetailScreen() {
 
     if (!hasContent) {
       const filteredBudgets = parsedBudgets.filter((b) => b.id !== String(id));
-
       await AsyncStorage.setItem("budgets", JSON.stringify(filteredBudgets));
       return;
     }
@@ -163,6 +164,38 @@ export default function BudgetDetailScreen() {
     saveBudget(updatedBudget);
   }
 
+  function deleteSpendingItem(itemId: string) {
+    const updatedItems = budget.spendingItems.filter(
+      (item) => item.id !== itemId,
+    );
+
+    const finalItems =
+      updatedItems.length > 0 ? updatedItems : [createBlankSpendingItem()];
+
+    const updatedBudget = {
+      ...budget,
+      id: String(id),
+      spendingItems: finalItems,
+    };
+
+    setBudget(updatedBudget);
+    saveBudget(updatedBudget);
+  }
+
+  function confirmDeleteSpendingItem(itemId: string) {
+    Alert.alert("Delete item?", "Are you sure you want to delete this item?", [
+      {
+        text: "No",
+        style: "cancel",
+      },
+      {
+        text: "Yes",
+        style: "destructive",
+        onPress: () => deleteSpendingItem(itemId),
+      },
+    ]);
+  }
+
   function addSpendingItemAndFocus() {
     const newItem = createBlankSpendingItem();
 
@@ -181,16 +214,50 @@ export default function BudgetDetailScreen() {
     }, 150);
   }
 
-  async function deleteBudget() {
-    const savedBudgets = await AsyncStorage.getItem("budgets");
-    const parsedBudgets: Budget[] = savedBudgets
-      ? JSON.parse(savedBudgets)
-      : [];
+  function deleteBudget() {
+    Alert.alert(
+      "Delete budget?",
+      "Are you sure you want to delete this budget?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: async () => {
+            const savedBudgets = await AsyncStorage.getItem("budgets");
 
-    const updatedBudgets = parsedBudgets.filter((b) => b.id !== String(id));
+            const parsedBudgets: Budget[] = savedBudgets
+              ? JSON.parse(savedBudgets)
+              : [];
 
-    await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
-    router.push("/");
+            const updatedBudgets = parsedBudgets.filter(
+              (b) => b.id !== String(id),
+            );
+
+            await AsyncStorage.setItem(
+              "budgets",
+              JSON.stringify(updatedBudgets),
+            );
+
+            router.push("/");
+          },
+        },
+      ],
+    );
+  }
+
+  function renderRightActions(itemId: string) {
+    return (
+      <Pressable
+        style={styles.deleteAction}
+        onPress={() => confirmDeleteSpendingItem(itemId)}
+      >
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
+    );
   }
 
   return (
@@ -246,66 +313,71 @@ export default function BudgetDetailScreen() {
           const isLastItem = index === budget.spendingItems.length - 1;
 
           return (
-            <View key={item.id} style={styles.spendingRow}>
-              <View style={styles.spendingAmountContainer}>
-                <Text style={styles.dollarSign}>$</Text>
+            <Swipeable
+              key={item.id}
+              renderRightActions={() => renderRightActions(item.id)}
+            >
+              <View style={styles.spendingRow}>
+                <View style={styles.spendingAmountContainer}>
+                  <Text style={styles.dollarSign}>$</Text>
+
+                  <TextInput
+                    ref={(ref) => {
+                      amountRefs.current[item.id] = ref;
+                    }}
+                    style={styles.spendingAmountInput}
+                    value={item.amount}
+                    placeholder="0.00"
+                    placeholderTextColor="#6b7280"
+                    keyboardType="numeric"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => nameRefs.current[item.id]?.focus()}
+                    onChangeText={(text) =>
+                      updateSpendingItem(item.id, "amount", text)
+                    }
+                  />
+                </View>
 
                 <TextInput
                   ref={(ref) => {
-                    amountRefs.current[item.id] = ref;
+                    nameRefs.current[item.id] = ref;
                   }}
-                  style={styles.spendingAmountInput}
-                  value={item.amount}
-                  placeholder="0.00"
+                  style={styles.spendingNameInput}
+                  value={item.name}
+                  placeholder="Item name"
                   placeholderTextColor="#6b7280"
-                  keyboardType="numeric"
                   returnKeyType="next"
                   blurOnSubmit={false}
-                  onSubmitEditing={() => nameRefs.current[item.id]?.focus()}
+                  onSubmitEditing={() => {
+                    if (isLastItem) {
+                      addSpendingItemAndFocus();
+                    } else {
+                      const nextItem = budget.spendingItems[index + 1];
+                      amountRefs.current[nextItem.id]?.focus();
+                    }
+                  }}
                   onChangeText={(text) =>
-                    updateSpendingItem(item.id, "amount", text)
+                    updateSpendingItem(item.id, "name", text)
+                  }
+                />
+
+                <TextInput
+                  ref={(ref) => {
+                    quantityRefs.current[item.id] = ref;
+                  }}
+                  style={styles.quantityInput}
+                  value={item.quantity}
+                  placeholder="1"
+                  placeholderTextColor="#6b7280"
+                  keyboardType="numeric"
+                  returnKeyType="done"
+                  onChangeText={(text) =>
+                    updateSpendingItem(item.id, "quantity", text)
                   }
                 />
               </View>
-
-              <TextInput
-                ref={(ref) => {
-                  nameRefs.current[item.id] = ref;
-                }}
-                style={styles.spendingNameInput}
-                value={item.name}
-                placeholder="Item name"
-                placeholderTextColor="#6b7280"
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => {
-                  if (isLastItem) {
-                    addSpendingItemAndFocus();
-                  } else {
-                    const nextItem = budget.spendingItems[index + 1];
-                    amountRefs.current[nextItem.id]?.focus();
-                  }
-                }}
-                onChangeText={(text) =>
-                  updateSpendingItem(item.id, "name", text)
-                }
-              />
-
-              <TextInput
-                ref={(ref) => {
-                  quantityRefs.current[item.id] = ref;
-                }}
-                style={styles.quantityInput}
-                value={item.quantity}
-                placeholder="1"
-                placeholderTextColor="#6b7280"
-                keyboardType="numeric"
-                returnKeyType="done"
-                onChangeText={(text) =>
-                  updateSpendingItem(item.id, "quantity", text)
-                }
-              />
-            </View>
+            </Swipeable>
           );
         })}
 
@@ -415,6 +487,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginBottom: 10,
+    backgroundColor: "#111",
   },
 
   spendingAmountContainer: {
@@ -447,6 +520,20 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     textAlign: "center",
+  },
+
+  deleteAction: {
+    backgroundColor: "#dc2626",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 90,
+    marginBottom: 10,
+    borderRadius: 10,
+  },
+
+  deleteActionText: {
+    color: "white",
+    fontWeight: "bold",
   },
 
   notes: {
