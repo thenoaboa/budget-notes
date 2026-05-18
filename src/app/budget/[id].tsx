@@ -12,7 +12,10 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { Swipeable } from "react-native-gesture-handler";
+import {
+    Swipeable,
+    type Swipeable as SwipeableType,
+} from "react-native-gesture-handler";
 
 type SpendingItem = {
   id: string;
@@ -61,6 +64,7 @@ export default function BudgetDetailScreen() {
   const amountRefs = useRef<Record<string, TextInput | null>>({});
   const nameRefs = useRef<Record<string, TextInput | null>>({});
   const quantityRefs = useRef<Record<string, TextInput | null>>({});
+  const swipeableRefs = useRef<Record<string, SwipeableType | null>>({});
 
   const [budget, setBudget] = useState<Budget>({
     id: String(id),
@@ -164,6 +168,21 @@ export default function BudgetDetailScreen() {
     saveBudget(updatedBudget);
   }
 
+  function toggleItemIncluded(itemId: string) {
+    const updatedItems = budget.spendingItems.map((item) =>
+      item.id === itemId ? { ...item, included: !item.included } : item,
+    );
+
+    const updatedBudget = {
+      ...budget,
+      id: String(id),
+      spendingItems: updatedItems,
+    };
+
+    setBudget(updatedBudget);
+    saveBudget(updatedBudget);
+  }
+
   function deleteSpendingItem(itemId: string) {
     const updatedItems = budget.spendingItems.filter(
       (item) => item.id !== itemId,
@@ -187,11 +206,15 @@ export default function BudgetDetailScreen() {
       {
         text: "No",
         style: "cancel",
+        onPress: () => swipeableRefs.current[itemId]?.close(),
       },
       {
         text: "Yes",
         style: "destructive",
-        onPress: () => deleteSpendingItem(itemId),
+        onPress: () => {
+          deleteSpendingItem(itemId);
+          swipeableRefs.current[itemId]?.close();
+        },
       },
     ]);
   }
@@ -228,7 +251,6 @@ export default function BudgetDetailScreen() {
           style: "destructive",
           onPress: async () => {
             const savedBudgets = await AsyncStorage.getItem("budgets");
-
             const parsedBudgets: Budget[] = savedBudgets
               ? JSON.parse(savedBudgets)
               : [];
@@ -246,6 +268,25 @@ export default function BudgetDetailScreen() {
           },
         },
       ],
+    );
+  }
+
+  function renderLeftActions(itemId: string, included: boolean) {
+    return (
+      <Pressable
+        style={[
+          styles.includeAction,
+          included ? styles.excludeActionColor : styles.includeActionColor,
+        ]}
+        onPress={() => {
+          toggleItemIncluded(itemId);
+          swipeableRefs.current[itemId]?.close();
+        }}
+      >
+        <Text style={styles.includeActionText}>
+          {included ? "Exclude" : "Include"}
+        </Text>
+      </Pressable>
     );
   }
 
@@ -314,10 +355,21 @@ export default function BudgetDetailScreen() {
 
           return (
             <Swipeable
+              ref={(ref) => {
+                swipeableRefs.current[item.id] = ref;
+              }}
               key={item.id}
+              renderLeftActions={() =>
+                renderLeftActions(item.id, item.included)
+              }
               renderRightActions={() => renderRightActions(item.id)}
             >
-              <View style={styles.spendingRow}>
+              <View
+                style={[
+                  styles.spendingRow,
+                  !item.included && styles.excludedSpendingRow,
+                ]}
+              >
                 <View style={styles.spendingAmountContainer}>
                   <Text style={styles.dollarSign}>$</Text>
 
@@ -490,6 +542,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
   },
 
+  excludedSpendingRow: {
+    opacity: 0.4,
+  },
+
   spendingAmountContainer: {
     backgroundColor: "#1f2937",
     borderRadius: 10,
@@ -520,6 +576,27 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     textAlign: "center",
+  },
+
+  includeAction: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 100,
+    marginBottom: 10,
+    borderRadius: 10,
+  },
+
+  includeActionColor: {
+    backgroundColor: "#16a34a",
+  },
+
+  excludeActionColor: {
+    backgroundColor: "#6b7280",
+  },
+
+  includeActionText: {
+    color: "white",
+    fontWeight: "bold",
   },
 
   deleteAction: {
