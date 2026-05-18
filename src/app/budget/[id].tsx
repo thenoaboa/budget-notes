@@ -15,6 +15,7 @@ type Item = {
   id: number;
   name: string;
   amount: string;
+  quantity: number;
   included: boolean;
 };
 
@@ -24,7 +25,7 @@ export default function BudgetScreen() {
   const [taxRate, setTaxRate] = useState("8.25");
 
   const [items, setItems] = useState<Item[]>([
-    { id: 1, name: "", amount: "", included: true },
+    { id: 1, name: "", amount: "", quantity: 1, included: true },
   ]);
 
   const startingMoneyRef = useRef<TextInput>(null);
@@ -37,7 +38,7 @@ export default function BudgetScreen() {
 
     setItems((prev) => [
       ...prev,
-      { id: newId, name: "", amount: "", included: true },
+      { id: newId, name: "", amount: "", quantity: 1, included: true },
     ]);
 
     setTimeout(() => {
@@ -48,6 +49,20 @@ export default function BudgetScreen() {
   const updateItem = (id: number, field: "name" | "amount", value: string) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
+  };
+
+  const increaseQuantity = (id: number) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+      ),
+    );
+  };
+
+  const resetQuantity = (id: number) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: 1 } : item)),
     );
   };
 
@@ -68,7 +83,9 @@ export default function BudgetScreen() {
   const subtotal = useMemo(() => {
     return items.reduce((total, item) => {
       if (!item.included) return total;
-      return total + (parseFloat(item.amount) || 0);
+
+      const amount = parseFloat(item.amount) || 0;
+      return total + amount * item.quantity;
     }, 0);
   }, [items]);
 
@@ -289,6 +306,16 @@ export default function BudgetScreen() {
                       }
                     }}
                   />
+
+                  <TouchableOpacity
+                    style={styles.quantityButton}
+                    onPress={() => increaseQuantity(item.id)}
+                    onLongPress={() => resetQuantity(item.id)}
+                  >
+                    <Text style={styles.quantityButtonText}>
+                      x{item.quantity}
+                    </Text>
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
@@ -517,7 +544,8 @@ const styles = StyleSheet.create({
   },
 
   itemAmountInput: {
-    width: 110,
+    flex: 1,
+    minWidth: 85,
     backgroundColor: "#2A3948",
     color: "#FFFFFF",
     fontSize: 16,
@@ -525,6 +553,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderRadius: 12,
+  },
+
+  quantityButton: {
+    width: 50,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#2A3948",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  quantityButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "900",
   },
 
   includeButton: {
