@@ -442,6 +442,13 @@ export default function BudgetDetailScreen() {
           );
         })}
 
+        <Pressable
+          style={styles.addItemButton}
+          onPress={addSpendingItemAndFocus}
+        >
+          <Text style={styles.addItemText}>＋ Add Item</Text>
+        </Pressable>
+
         <Text style={styles.sectionTitle}>Notes</Text>
 
         <TextInput
@@ -546,7 +553,7 @@ const styles = StyleSheet.create({
 
   spendingRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
     marginBottom: 10,
     backgroundColor: "#111",
   },
@@ -561,7 +568,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
-    width: 105,
+    width: 95,
   },
 
   spendingAmountInput: {
@@ -579,12 +586,24 @@ const styles = StyleSheet.create({
   },
 
   quantityInput: {
-    width: 55,
+    width: 50,
     backgroundColor: "#1f2937",
     color: "white",
     padding: 14,
     borderRadius: 10,
     textAlign: "center",
+  },
+
+  addItemButton: {
+    marginTop: 6,
+    marginLeft: 2,
+    marginBottom: 8,
+  },
+
+  addItemText: {
+    color: "#3b82f6",
+    fontSize: 22,
+    fontWeight: "600",
   },
 
   includeAction: {
