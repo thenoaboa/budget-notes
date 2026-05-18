@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
+    KeyboardAvoidingView,
+    Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -25,11 +27,22 @@ export default function BudgetScreen() {
     { id: 1, name: "", amount: "", included: true },
   ]);
 
+  const startingMoneyRef = useRef<TextInput>(null);
+  const taxRateRef = useRef<TextInput>(null);
+  const itemNameRefs = useRef<Record<number, TextInput | null>>({});
+  const itemAmountRefs = useRef<Record<number, TextInput | null>>({});
+
   const addItem = () => {
+    const newId = Date.now();
+
     setItems((prev) => [
       ...prev,
-      { id: Date.now(), name: "", amount: "", included: true },
+      { id: newId, name: "", amount: "", included: true },
     ]);
+
+    setTimeout(() => {
+      itemNameRefs.current[newId]?.focus();
+    }, 100);
   };
 
   const updateItem = (id: number, field: "name" | "amount", value: string) => {
@@ -48,6 +61,8 @@ export default function BudgetScreen() {
 
   const deleteItem = (id: number) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
+    delete itemNameRefs.current[id];
+    delete itemAmountRefs.current[id];
   };
 
   const subtotal = useMemo(() => {
@@ -130,158 +145,20 @@ export default function BudgetScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.page}>
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View
-            style={[
-              styles.headerCard,
-              {
-                backgroundColor: currentStyle.backgroundColor,
-                borderColor: currentStyle.borderColor,
-              },
-            ]}
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={20}
+      >
+        <View style={styles.page}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text
-              style={[styles.headerMessage, { color: currentStyle.textColor }]}
-            >
-              {affirmingMessage}
-            </Text>
-
-            <Text
-              style={[styles.headerAmount, { color: currentStyle.textColor }]}
-            >
-              ${safeToSpend.toFixed(2)}
-            </Text>
-
-            <Text
-              style={[styles.headerSubtext, { color: currentStyle.textColor }]}
-            >
-              safe to spend
-            </Text>
-          </View>
-
-          <Text style={styles.label}>Money available</Text>
-
-          <TextInput
-            style={styles.mainInput}
-            placeholder="$0.00"
-            placeholderTextColor="#8A98A8"
-            keyboardType="decimal-pad"
-            value={startingMoney}
-            onChangeText={setStartingMoney}
-          />
-
-          <View style={styles.taxRow}>
-            <TouchableOpacity
-              style={[
-                styles.taxToggle,
-                salesTaxEnabled && styles.taxToggleActive,
-              ]}
-              onPress={() => setSalesTaxEnabled((prev) => !prev)}
-            >
-              <Text
-                style={[
-                  styles.taxToggleText,
-                  salesTaxEnabled && styles.taxToggleTextActive,
-                ]}
-              >
-                Sales tax {salesTaxEnabled ? "on" : "off"}
-              </Text>
-            </TouchableOpacity>
-
-            {salesTaxEnabled && (
-              <TextInput
-                style={styles.taxInput}
-                placeholder="8.25"
-                placeholderTextColor="#8A98A8"
-                keyboardType="decimal-pad"
-                value={taxRate}
-                onChangeText={setTaxRate}
-              />
-            )}
-          </View>
-
-          <Text style={styles.label}>Things you may buy</Text>
-
-          {items.map((item) => (
-            <View
-              key={item.id}
-              style={[styles.itemCard, !item.included && styles.itemExcluded]}
-            >
-              <TextInput
-                style={styles.itemNameInput}
-                placeholder="Item name"
-                placeholderTextColor="#8A98A8"
-                value={item.name}
-                onChangeText={(text) => updateItem(item.id, "name", text)}
-              />
-
-              <View style={styles.itemControlsRow}>
-                <TextInput
-                  style={styles.itemAmountInput}
-                  placeholder="$0"
-                  placeholderTextColor="#8A98A8"
-                  keyboardType="decimal-pad"
-                  value={item.amount}
-                  onChangeText={(text) => updateItem(item.id, "amount", text)}
-                />
-
-                <TouchableOpacity
-                  style={[
-                    styles.includeButton,
-                    !item.included && styles.includeButtonOff,
-                  ]}
-                  onPress={() => toggleIncluded(item.id)}
-                >
-                  <Text
-                    style={[
-                      styles.includeButtonText,
-                      !item.included && styles.includeButtonTextOff,
-                    ]}
-                  >
-                    {item.included ? "In" : "Out"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.deleteButton}
-                  onPress={() => deleteItem(item.id)}
-                >
-                  <Text style={styles.deleteButtonText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-
-          <TouchableOpacity style={styles.addButton} onPress={addItem}>
-            <Text style={styles.addButtonText}>+ Add Item</Text>
-          </TouchableOpacity>
-
-          <View style={styles.summaryBox}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryText}>Items</Text>
-              <Text style={styles.summaryText}>${subtotal.toFixed(2)}</Text>
-            </View>
-
-            {salesTaxEnabled && (
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryText}>Estimated tax</Text>
-                <Text style={styles.summaryText}>${taxAmount.toFixed(2)}</Text>
-              </View>
-            )}
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryTotal}>Planned total</Text>
-              <Text style={styles.summaryTotal}>${totalSpent.toFixed(2)}</Text>
-            </View>
-
             <View
               style={[
-                styles.statusNote,
+                styles.headerCard,
                 {
                   backgroundColor: currentStyle.backgroundColor,
                   borderColor: currentStyle.borderColor,
@@ -290,16 +167,204 @@ export default function BudgetScreen() {
             >
               <Text
                 style={[
-                  styles.statusNoteText,
+                  styles.headerMessage,
                   { color: currentStyle.textColor },
                 ]}
               >
                 {affirmingMessage}
               </Text>
+
+              <Text
+                style={[styles.headerAmount, { color: currentStyle.textColor }]}
+              >
+                ${safeToSpend.toFixed(2)}
+              </Text>
+
+              <Text
+                style={[
+                  styles.headerSubtext,
+                  { color: currentStyle.textColor },
+                ]}
+              >
+                safe to spend
+              </Text>
             </View>
-          </View>
-        </ScrollView>
-      </View>
+
+            <Text style={styles.label}>Money available</Text>
+
+            <TextInput
+              ref={startingMoneyRef}
+              style={styles.mainInput}
+              placeholder="$0.00"
+              placeholderTextColor="#8A98A8"
+              keyboardType="decimal-pad"
+              returnKeyType={salesTaxEnabled ? "next" : "done"}
+              value={startingMoney}
+              onChangeText={setStartingMoney}
+              onSubmitEditing={() => {
+                if (salesTaxEnabled) {
+                  taxRateRef.current?.focus();
+                }
+              }}
+            />
+
+            <View style={styles.taxRow}>
+              <TouchableOpacity
+                style={[
+                  styles.taxToggle,
+                  salesTaxEnabled && styles.taxToggleActive,
+                ]}
+                onPress={() => setSalesTaxEnabled((prev) => !prev)}
+              >
+                <Text
+                  style={[
+                    styles.taxToggleText,
+                    salesTaxEnabled && styles.taxToggleTextActive,
+                  ]}
+                >
+                  Sales tax {salesTaxEnabled ? "on" : "off"}
+                </Text>
+              </TouchableOpacity>
+
+              {salesTaxEnabled && (
+                <TextInput
+                  ref={taxRateRef}
+                  style={styles.taxInput}
+                  placeholder="8.25"
+                  placeholderTextColor="#8A98A8"
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  value={taxRate}
+                  onChangeText={setTaxRate}
+                />
+              )}
+            </View>
+
+            <Text style={styles.label}>Things you may buy</Text>
+
+            {items.map((item) => (
+              <View
+                key={item.id}
+                style={[styles.itemCard, !item.included && styles.itemExcluded]}
+              >
+                <TextInput
+                  ref={(ref) => {
+                    itemNameRefs.current[item.id] = ref;
+                  }}
+                  style={styles.itemNameInput}
+                  placeholder="Item name"
+                  placeholderTextColor="#8A98A8"
+                  value={item.name}
+                  returnKeyType="next"
+                  onSubmitEditing={() =>
+                    itemAmountRefs.current[item.id]?.focus()
+                  }
+                  blurOnSubmit={false}
+                  onChangeText={(text) => updateItem(item.id, "name", text)}
+                />
+
+                <View style={styles.itemControlsRow}>
+                  <TextInput
+                    ref={(ref) => {
+                      itemAmountRefs.current[item.id] = ref;
+                    }}
+                    style={styles.itemAmountInput}
+                    placeholder="$0"
+                    placeholderTextColor="#8A98A8"
+                    keyboardType="decimal-pad"
+                    returnKeyType="next"
+                    value={item.amount}
+                    onChangeText={(text) => updateItem(item.id, "amount", text)}
+                    onSubmitEditing={() => {
+                      const currentIndex = items.findIndex(
+                        (currentItem) => currentItem.id === item.id,
+                      );
+
+                      const nextItem = items[currentIndex + 1];
+
+                      if (nextItem) {
+                        itemNameRefs.current[nextItem.id]?.focus();
+                      } else {
+                        addItem();
+                      }
+                    }}
+                  />
+
+                  <TouchableOpacity
+                    style={[
+                      styles.includeButton,
+                      !item.included && styles.includeButtonOff,
+                    ]}
+                    onPress={() => toggleIncluded(item.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.includeButtonText,
+                        !item.included && styles.includeButtonTextOff,
+                      ]}
+                    >
+                      {item.included ? "In" : "Out"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => deleteItem(item.id)}
+                  >
+                    <Text style={styles.deleteButtonText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            <TouchableOpacity style={styles.addButton} onPress={addItem}>
+              <Text style={styles.addButtonText}>+ Add Item</Text>
+            </TouchableOpacity>
+
+            <View style={styles.summaryBox}>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>Items</Text>
+                <Text style={styles.summaryText}>${subtotal.toFixed(2)}</Text>
+              </View>
+
+              {salesTaxEnabled && (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryText}>Estimated tax</Text>
+                  <Text style={styles.summaryText}>
+                    ${taxAmount.toFixed(2)}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryTotal}>Planned total</Text>
+                <Text style={styles.summaryTotal}>
+                  ${totalSpent.toFixed(2)}
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.statusNote,
+                  {
+                    backgroundColor: currentStyle.backgroundColor,
+                    borderColor: currentStyle.borderColor,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusNoteText,
+                    { color: currentStyle.textColor },
+                  ]}
+                >
+                  {affirmingMessage}
+                </Text>
+              </View>
+            </View>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -308,6 +373,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#101820",
+  },
+
+  keyboardView: {
+    flex: 1,
   },
 
   page: {
@@ -323,7 +392,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 120,
     backgroundColor: "#101820",
   },
 
