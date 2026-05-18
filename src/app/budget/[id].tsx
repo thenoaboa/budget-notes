@@ -503,7 +503,7 @@ export default function BudgetScreen() {
               )}
             </View>
 
-            <Text style={styles.label}>Things you may buy</Text>
+            <Text style={styles.label}>Things to cover</Text>
 
             {items.map((item) => (
               <View
