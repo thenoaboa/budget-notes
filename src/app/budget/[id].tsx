@@ -2,6 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -53,6 +55,7 @@ function formatMoney(value: number) {
 export default function BudgetDetailScreen() {
   const { id } = useLocalSearchParams();
 
+  const scrollViewRef = useRef<ScrollView>(null);
   const amountRefs = useRef<Record<string, TextInput | null>>({});
   const nameRefs = useRef<Record<string, TextInput | null>>({});
   const quantityRefs = useRef<Record<string, TextInput | null>>({});
@@ -144,7 +147,7 @@ export default function BudgetDetailScreen() {
   function updateSpendingItem(
     itemId: string,
     field: keyof SpendingItem,
-    value: string | boolean,
+    value: string,
   ) {
     const updatedItems = budget.spendingItems.map((item) =>
       item.id === itemId ? { ...item, [field]: value } : item,
@@ -174,7 +177,8 @@ export default function BudgetDetailScreen() {
 
     setTimeout(() => {
       amountRefs.current[newItem.id]?.focus();
-    }, 100);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
   }
 
   async function deleteBudget() {
@@ -190,10 +194,16 @@ export default function BudgetDetailScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={90}
+    >
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollArea}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.topBar}>
           <Pressable onPress={() => router.push("/")}>
@@ -330,7 +340,7 @@ export default function BudgetDetailScreen() {
           Total Spending: {formatMoney(totalSpending)}
         </Text>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -347,7 +357,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingTop: 60,
-    paddingBottom: 170,
+    paddingBottom: 190,
   },
 
   topBar: {
@@ -451,10 +461,6 @@ const styles = StyleSheet.create({
   },
 
   summaryBar: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: "#1f2937",
     padding: 20,
     borderTopWidth: 1,
