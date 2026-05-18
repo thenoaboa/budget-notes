@@ -1,769 +1,551 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
+    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     View,
 } from "react-native";
-import {
-    Swipeable,
-    type Swipeable as SwipeableType,
-} from "react-native-gesture-handler";
 
-type SpendingItem = {
-  id: string;
-  amount: string;
+type Item = {
+  id: number;
   name: string;
-  quantity: string;
+  amount: string;
   included: boolean;
 };
 
-type Budget = {
-  id: string;
-  budgetName: string;
-  amount: string;
-  salesTaxEnabled: boolean;
-  salesTaxRate: string;
-  spendingItems: SpendingItem[];
-  notes: string;
-};
+export default function BudgetScreen() {
+  const [startingMoney, setStartingMoney] = useState("");
+  const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
+  const [taxRate, setTaxRate] = useState("8.25");
 
-function createBlankSpendingItem(): SpendingItem {
-  return {
-    id: Date.now().toString() + Math.random().toString(),
-    amount: "",
-    name: "",
-    quantity: "1",
-    included: true,
-  };
-}
+  const [items, setItems] = useState<Item[]>([
+    { id: 1, name: "", amount: "", included: true },
+  ]);
 
-function moneyToNumber(value: string) {
-  const number = parseFloat(value);
-  return isNaN(number) ? 0 : number;
-}
-
-function quantityToNumber(value: string) {
-  const number = parseFloat(value);
-  return isNaN(number) || number <= 0 ? 1 : number;
-}
-
-function calculateTaxedTotal(subtotal: number, enabled: boolean, rate: string) {
-  if (!enabled) return subtotal;
-
-  const taxRate = moneyToNumber(rate) / 100;
-  return subtotal + subtotal * taxRate;
-}
-
-function formatMoney(value: number) {
-  return `$${Math.abs(value).toFixed(2)}`;
-}
-
-export default function BudgetDetailScreen() {
-  const { id } = useLocalSearchParams();
-
-  const scrollViewRef = useRef<ScrollView>(null);
-  const amountRefs = useRef<Record<string, TextInput | null>>({});
-  const nameRefs = useRef<Record<string, TextInput | null>>({});
-  const quantityRefs = useRef<Record<string, TextInput | null>>({});
-  const swipeableRefs = useRef<Record<string, SwipeableType | null>>({});
-
-  const [budget, setBudget] = useState<Budget>({
-    id: String(id),
-    budgetName: "",
-    amount: "",
-    salesTaxEnabled: false,
-    salesTaxRate: "8.25",
-    spendingItems: [createBlankSpendingItem()],
-    notes: "",
-  });
-
-  const subtotalSpending = budget.spendingItems.reduce((total, item) => {
-    if (!item.included) return total;
-
-    return total + moneyToNumber(item.amount) * quantityToNumber(item.quantity);
-  }, 0);
-
-  const totalSpending = calculateTaxedTotal(
-    subtotalSpending,
-    budget.salesTaxEnabled,
-    budget.salesTaxRate,
-  );
-
-  const remaining = moneyToNumber(budget.amount) - totalSpending;
-  const isOverBudget = remaining < 0;
-
-  useEffect(() => {
-    async function loadBudget() {
-      const savedBudgets = await AsyncStorage.getItem("budgets");
-      const parsedBudgets: Budget[] = savedBudgets
-        ? JSON.parse(savedBudgets)
-        : [];
-
-      const foundBudget = parsedBudgets.find((b) => b.id === String(id));
-
-      if (foundBudget) {
-        setBudget({
-          ...foundBudget,
-          salesTaxEnabled: foundBudget.salesTaxEnabled ?? false,
-          salesTaxRate: foundBudget.salesTaxRate ?? "8.25",
-          spendingItems:
-            foundBudget.spendingItems && foundBudget.spendingItems.length > 0
-              ? foundBudget.spendingItems
-              : [createBlankSpendingItem()],
-        });
-      }
-    }
-
-    loadBudget();
-  }, [id]);
-
-  async function saveBudget(updatedBudget: Budget) {
-    const hasContent =
-      updatedBudget.budgetName.trim() !== "" ||
-      updatedBudget.amount.trim() !== "" ||
-      updatedBudget.notes.trim() !== "" ||
-      updatedBudget.spendingItems.some(
-        (item) =>
-          item.amount.trim() !== "" ||
-          item.name.trim() !== "" ||
-          item.quantity.trim() !== "",
-      );
-
-    const savedBudgets = await AsyncStorage.getItem("budgets");
-    const parsedBudgets: Budget[] = savedBudgets
-      ? JSON.parse(savedBudgets)
-      : [];
-
-    if (!hasContent) {
-      const filteredBudgets = parsedBudgets.filter((b) => b.id !== String(id));
-      await AsyncStorage.setItem("budgets", JSON.stringify(filteredBudgets));
-      return;
-    }
-
-    const budgetExists = parsedBudgets.some((b) => b.id === String(id));
-
-    const updatedBudgets = budgetExists
-      ? parsedBudgets.map((b) => (b.id === String(id) ? updatedBudget : b))
-      : [updatedBudget, ...parsedBudgets];
-
-    await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
-  }
-
-  function updateBudgetField(field: keyof Budget, value: string | boolean) {
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      [field]: value,
-    };
-
-    setBudget(updatedBudget);
-    saveBudget(updatedBudget);
-  }
-
-  function updateSpendingItem(
-    itemId: string,
-    field: keyof SpendingItem,
-    value: string,
-  ) {
-    const updatedItems = budget.spendingItems.map((item) =>
-      item.id === itemId ? { ...item, [field]: value } : item,
-    );
-
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      spendingItems: updatedItems,
-    };
-
-    setBudget(updatedBudget);
-    saveBudget(updatedBudget);
-  }
-
-  function toggleItemIncluded(itemId: string) {
-    const updatedItems = budget.spendingItems.map((item) =>
-      item.id === itemId ? { ...item, included: !item.included } : item,
-    );
-
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      spendingItems: updatedItems,
-    };
-
-    setBudget(updatedBudget);
-    saveBudget(updatedBudget);
-  }
-
-  function deleteSpendingItem(itemId: string) {
-    const updatedItems = budget.spendingItems.filter(
-      (item) => item.id !== itemId,
-    );
-
-    const finalItems =
-      updatedItems.length > 0 ? updatedItems : [createBlankSpendingItem()];
-
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      spendingItems: finalItems,
-    };
-
-    setBudget(updatedBudget);
-    saveBudget(updatedBudget);
-  }
-
-  function confirmDeleteSpendingItem(itemId: string) {
-    Alert.alert("Delete item?", "Are you sure you want to delete this item?", [
-      {
-        text: "No",
-        style: "cancel",
-        onPress: () => swipeableRefs.current[itemId]?.close(),
-      },
-      {
-        text: "Yes",
-        style: "destructive",
-        onPress: () => {
-          deleteSpendingItem(itemId);
-          swipeableRefs.current[itemId]?.close();
-        },
-      },
+  const addItem = () => {
+    setItems((prev) => [
+      ...prev,
+      { id: Date.now(), name: "", amount: "", included: true },
     ]);
-  }
+  };
 
-  function addSpendingItemAndFocus() {
-    const newItem = createBlankSpendingItem();
-
-    const updatedBudget = {
-      ...budget,
-      id: String(id),
-      spendingItems: [...budget.spendingItems, newItem],
-    };
-
-    setBudget(updatedBudget);
-    saveBudget(updatedBudget);
-
-    setTimeout(() => {
-      amountRefs.current[newItem.id]?.focus();
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 150);
-  }
-
-  function deleteBudget() {
-    Alert.alert(
-      "Delete budget?",
-      "Are you sure you want to delete this budget?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: async () => {
-            const savedBudgets = await AsyncStorage.getItem("budgets");
-            const parsedBudgets: Budget[] = savedBudgets
-              ? JSON.parse(savedBudgets)
-              : [];
-
-            const updatedBudgets = parsedBudgets.filter(
-              (b) => b.id !== String(id),
-            );
-
-            await AsyncStorage.setItem(
-              "budgets",
-              JSON.stringify(updatedBudgets),
-            );
-
-            router.push("/");
-          },
-        },
-      ],
+  const updateItem = (id: number, field: "name" | "amount", value: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
     );
-  }
+  };
 
-  function renderLeftActions(itemId: string, included: boolean) {
-    return (
-      <Pressable
-        style={[
-          styles.includeAction,
-          included ? styles.excludeActionColor : styles.includeActionColor,
-        ]}
-        onPress={() => {
-          swipeableRefs.current[itemId]?.close();
-
-          setTimeout(() => {
-            toggleItemIncluded(itemId);
-          }, 200);
-        }}
-      >
-        <Text style={styles.includeActionText}>
-          {included ? "Exclude" : "Include"}
-        </Text>
-      </Pressable>
+  const toggleIncluded = (id: number) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, included: !item.included } : item,
+      ),
     );
-  }
+  };
 
-  function renderRightActions(itemId: string) {
-    return (
-      <Pressable
-        style={styles.deleteAction}
-        onPress={() => confirmDeleteSpendingItem(itemId)}
-      >
-        <Text style={styles.deleteActionText}>Delete</Text>
-      </Pressable>
-    );
-  }
+  const deleteItem = (id: number) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const subtotal = useMemo(() => {
+    return items.reduce((total, item) => {
+      if (!item.included) return total;
+      return total + (parseFloat(item.amount) || 0);
+    }, 0);
+  }, [items]);
+
+  const taxAmount = useMemo(() => {
+    if (!salesTaxEnabled) return 0;
+    return subtotal * ((parseFloat(taxRate) || 0) / 100);
+  }, [subtotal, salesTaxEnabled, taxRate]);
+
+  const totalSpent = subtotal + taxAmount;
+  const starting = parseFloat(startingMoney) || 0;
+  const safeToSpend = starting - totalSpent;
+
+  const status = useMemo(() => {
+    if (safeToSpend < 0) return "red";
+    if (safeToSpend <= 50) return "yellow";
+    return "green";
+  }, [safeToSpend]);
+
+  const affirmingMessage = useMemo(() => {
+    const greenMessages = [
+      "You’re still okay.",
+      "You’ve got enough.",
+      "You still have room.",
+      "There’s still breathing room.",
+      "You’re in a good spot.",
+    ];
+
+    const yellowMessages = [
+      "Things are tightening up.",
+      "Keep an eye on the next few purchases.",
+      "Might be smart to slow down.",
+      "You still have options.",
+      "Small choices help here.",
+    ];
+
+    const redMessages = [
+      "Let’s protect what’s left.",
+      "Focus on essentials for now.",
+      "This week needs extra care.",
+      "Take a second before spending more.",
+      "You can still adjust.",
+    ];
+
+    const pool =
+      status === "red"
+        ? redMessages
+        : status === "yellow"
+          ? yellowMessages
+          : greenMessages;
+
+    const index = Math.abs(Math.round(safeToSpend)) % pool.length;
+    return pool[index];
+  }, [safeToSpend, status]);
+
+  const statusStyles = {
+    green: {
+      backgroundColor: "#123527",
+      borderColor: "#2ECC71",
+      textColor: "#2ECC71",
+    },
+    yellow: {
+      backgroundColor: "#3A3114",
+      borderColor: "#F1C40F",
+      textColor: "#F1C40F",
+    },
+    red: {
+      backgroundColor: "#3A1C1C",
+      borderColor: "#FF6B6B",
+      textColor: "#FF6B6B",
+    },
+  };
+
+  const currentStyle = statusStyles[status];
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={90}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.topBar}>
-          <Pressable onPress={() => router.push("/")}>
-            <Text style={styles.backButton}>← Back</Text>
-          </Pressable>
-
-          <Pressable onPress={deleteBudget}>
-            <Text style={styles.trashButton}>🗑️</Text>
-          </Pressable>
-        </View>
-
-        <TextInput
-          style={styles.title}
-          value={budget.budgetName}
-          placeholder="New Budget"
-          placeholderTextColor="#6b7280"
-          returnKeyType="next"
-          onChangeText={(text) => updateBudgetField("budgetName", text)}
-        />
-
-        <Text style={styles.sectionTitle}>Dollar Amount</Text>
-
-        <View style={styles.moneyInputContainer}>
-          <Text style={styles.dollarSign}>$</Text>
-
-          <TextInput
-            style={styles.moneyInput}
-            value={budget.amount}
-            placeholder="0.00"
-            placeholderTextColor="#6b7280"
-            keyboardType="numeric"
-            returnKeyType="next"
-            onChangeText={(text) => updateBudgetField("amount", text)}
-          />
-        </View>
-
-        <View style={styles.taxRow}>
-          <Pressable
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.page}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View
             style={[
-              styles.taxToggle,
-              budget.salesTaxEnabled && styles.taxToggleActive,
+              styles.headerCard,
+              {
+                backgroundColor: currentStyle.backgroundColor,
+                borderColor: currentStyle.borderColor,
+              },
             ]}
-            onPress={() =>
-              updateBudgetField("salesTaxEnabled", !budget.salesTaxEnabled)
-            }
           >
-            <Text style={styles.taxToggleText}>
-              Sales Tax {budget.salesTaxEnabled ? "ON" : "OFF"}
+            <Text
+              style={[styles.headerMessage, { color: currentStyle.textColor }]}
+            >
+              {affirmingMessage}
             </Text>
-          </Pressable>
+
+            <Text
+              style={[styles.headerAmount, { color: currentStyle.textColor }]}
+            >
+              ${safeToSpend.toFixed(2)}
+            </Text>
+
+            <Text
+              style={[styles.headerSubtext, { color: currentStyle.textColor }]}
+            >
+              safe to spend
+            </Text>
+          </View>
+
+          <Text style={styles.label}>Money available</Text>
 
           <TextInput
-            style={styles.taxInput}
-            value={budget.salesTaxRate}
-            placeholder="8.25"
-            placeholderTextColor="#6b7280"
-            keyboardType="numeric"
-            onChangeText={(text) => updateBudgetField("salesTaxRate", text)}
+            style={styles.mainInput}
+            placeholder="$0.00"
+            placeholderTextColor="#8A98A8"
+            keyboardType="decimal-pad"
+            value={startingMoney}
+            onChangeText={setStartingMoney}
           />
 
-          <Text style={styles.percentSign}>%</Text>
-        </View>
-
-        <Text style={styles.sectionTitle}>Spending</Text>
-
-        {budget.spendingItems.map((item, index) => {
-          const isLastItem = index === budget.spendingItems.length - 1;
-
-          return (
-            <Swipeable
-              ref={(ref) => {
-                swipeableRefs.current[item.id] = ref;
-              }}
-              key={item.id}
-              renderLeftActions={() =>
-                renderLeftActions(item.id, item.included)
-              }
-              renderRightActions={() => renderRightActions(item.id)}
+          <View style={styles.taxRow}>
+            <TouchableOpacity
+              style={[
+                styles.taxToggle,
+                salesTaxEnabled && styles.taxToggleActive,
+              ]}
+              onPress={() => setSalesTaxEnabled((prev) => !prev)}
             >
-              <View style={styles.spendingRow}>
-                <View
+              <Text
+                style={[
+                  styles.taxToggleText,
+                  salesTaxEnabled && styles.taxToggleTextActive,
+                ]}
+              >
+                Sales tax {salesTaxEnabled ? "on" : "off"}
+              </Text>
+            </TouchableOpacity>
+
+            {salesTaxEnabled && (
+              <TextInput
+                style={styles.taxInput}
+                placeholder="8.25"
+                placeholderTextColor="#8A98A8"
+                keyboardType="decimal-pad"
+                value={taxRate}
+                onChangeText={setTaxRate}
+              />
+            )}
+          </View>
+
+          <Text style={styles.label}>Things you may buy</Text>
+
+          {items.map((item) => (
+            <View
+              key={item.id}
+              style={[styles.itemCard, !item.included && styles.itemExcluded]}
+            >
+              <TextInput
+                style={styles.itemNameInput}
+                placeholder="Item name"
+                placeholderTextColor="#8A98A8"
+                value={item.name}
+                onChangeText={(text) => updateItem(item.id, "name", text)}
+              />
+
+              <View style={styles.itemControlsRow}>
+                <TextInput
+                  style={styles.itemAmountInput}
+                  placeholder="$0"
+                  placeholderTextColor="#8A98A8"
+                  keyboardType="decimal-pad"
+                  value={item.amount}
+                  onChangeText={(text) => updateItem(item.id, "amount", text)}
+                />
+
+                <TouchableOpacity
                   style={[
-                    styles.spendingAmountContainer,
-                    !item.included && styles.excludedInput,
+                    styles.includeButton,
+                    !item.included && styles.includeButtonOff,
                   ]}
+                  onPress={() => toggleIncluded(item.id)}
                 >
-                  <Text style={styles.dollarSign}>$</Text>
+                  <Text
+                    style={[
+                      styles.includeButtonText,
+                      !item.included && styles.includeButtonTextOff,
+                    ]}
+                  >
+                    {item.included ? "In" : "Out"}
+                  </Text>
+                </TouchableOpacity>
 
-                  <TextInput
-                    ref={(ref) => {
-                      amountRefs.current[item.id] = ref;
-                    }}
-                    style={styles.spendingAmountInput}
-                    value={item.amount}
-                    placeholder="0.00"
-                    placeholderTextColor="#6b7280"
-                    keyboardType="numeric"
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => nameRefs.current[item.id]?.focus()}
-                    onChangeText={(text) =>
-                      updateSpendingItem(item.id, "amount", text)
-                    }
-                  />
-                </View>
-
-                <TextInput
-                  ref={(ref) => {
-                    nameRefs.current[item.id] = ref;
-                  }}
-                  style={[
-                    styles.spendingNameInput,
-                    !item.included && styles.excludedInput,
-                  ]}
-                  value={item.name}
-                  placeholder="Item name"
-                  placeholderTextColor="#6b7280"
-                  returnKeyType="next"
-                  blurOnSubmit={false}
-                  onSubmitEditing={() => {
-                    if (isLastItem) {
-                      addSpendingItemAndFocus();
-                    } else {
-                      const nextItem = budget.spendingItems[index + 1];
-                      amountRefs.current[nextItem.id]?.focus();
-                    }
-                  }}
-                  onChangeText={(text) =>
-                    updateSpendingItem(item.id, "name", text)
-                  }
-                />
-
-                <TextInput
-                  ref={(ref) => {
-                    quantityRefs.current[item.id] = ref;
-                  }}
-                  style={[
-                    styles.quantityInput,
-                    !item.included && styles.excludedInput,
-                  ]}
-                  value={item.quantity}
-                  placeholder="1"
-                  placeholderTextColor="#6b7280"
-                  keyboardType="numeric"
-                  returnKeyType="done"
-                  onChangeText={(text) =>
-                    updateSpendingItem(item.id, "quantity", text)
-                  }
-                />
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => deleteItem(item.id)}
+                >
+                  <Text style={styles.deleteButtonText}>×</Text>
+                </TouchableOpacity>
               </View>
-            </Swipeable>
-          );
-        })}
+            </View>
+          ))}
 
-        <Pressable
-          style={styles.addItemButton}
-          onPress={addSpendingItemAndFocus}
-        >
-          <Text style={styles.addItemText}>＋ Add Item</Text>
-        </Pressable>
+          <TouchableOpacity style={styles.addButton} onPress={addItem}>
+            <Text style={styles.addButtonText}>+ Add Item</Text>
+          </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>Notes</Text>
+          <View style={styles.summaryBox}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryText}>Items</Text>
+              <Text style={styles.summaryText}>${subtotal.toFixed(2)}</Text>
+            </View>
 
-        <TextInput
-          style={styles.notes}
-          value={budget.notes}
-          placeholder="Write budget notes here..."
-          placeholderTextColor="#6b7280"
-          multiline
-          onChangeText={(text) => updateBudgetField("notes", text)}
-        />
-      </ScrollView>
+            {salesTaxEnabled && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryText}>Estimated tax</Text>
+                <Text style={styles.summaryText}>${taxAmount.toFixed(2)}</Text>
+              </View>
+            )}
 
-      <View style={styles.summaryBar}>
-        <Text
-          style={[
-            styles.remainingText,
-            isOverBudget ? styles.overBudgetText : styles.underBudgetText,
-          ]}
-        >
-          {isOverBudget ? "-" : ""}
-          {formatMoney(remaining)}
-        </Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryTotal}>Planned total</Text>
+              <Text style={styles.summaryTotal}>${totalSpent.toFixed(2)}</Text>
+            </View>
 
-        <Text style={styles.summaryLabel}>Remaining</Text>
-
-        <Text style={styles.totalSpendingText}>
-          Total Spending: {formatMoney(totalSpending)}
-        </Text>
+            <View
+              style={[
+                styles.statusNote,
+                {
+                  backgroundColor: currentStyle.backgroundColor,
+                  borderColor: currentStyle.borderColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusNoteText,
+                  { color: currentStyle.textColor },
+                ]}
+              >
+                {affirmingMessage}
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
       </View>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "#111",
+    backgroundColor: "#101820",
   },
 
-  scrollArea: {
+  page: {
     flex: 1,
+    backgroundColor: "#101820",
+    paddingHorizontal: 16,
+  },
+
+  scroll: {
+    flex: 1,
+    backgroundColor: "#101820",
   },
 
   scrollContent: {
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 190,
+    paddingTop: 12,
+    paddingBottom: 40,
+    backgroundColor: "#101820",
   },
 
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
+  headerCard: {
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    borderWidth: 1,
+    marginBottom: 18,
   },
 
-  backButton: {
-    color: "#60a5fa",
-    fontSize: 18,
+  headerMessage: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
   },
 
-  trashButton: {
-    fontSize: 24,
+  headerAmount: {
+    fontSize: 42,
+    fontWeight: "900",
   },
 
-  title: {
-    color: "white",
-    fontSize: 36,
-    fontWeight: "bold",
-    marginBottom: 24,
+  headerSubtext: {
+    fontSize: 15,
+    fontWeight: "700",
   },
 
-  sectionTitle: {
-    color: "#9ca3af",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: 18,
+  label: {
+    color: "#F4F7FA",
+    fontSize: 15,
+    fontWeight: "800",
     marginBottom: 8,
   },
 
-  moneyInputContainer: {
-    backgroundColor: "#1f2937",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  dollarSign: {
-    color: "white",
-    fontSize: 18,
-    marginRight: 4,
-  },
-
-  moneyInput: {
-    flex: 1,
-    color: "white",
+  mainInput: {
+    backgroundColor: "#243342",
+    color: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: 22,
+    fontWeight: "800",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    marginBottom: 14,
   },
 
   taxRow: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 18,
   },
 
   taxToggle: {
-    backgroundColor: "#374151",
-    padding: 14,
-    borderRadius: 10,
+    flex: 1,
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
   },
 
   taxToggleActive: {
-    backgroundColor: "#2563eb",
+    backgroundColor: "#123527",
+    borderColor: "#2ECC71",
   },
 
   taxToggleText: {
-    color: "white",
-    fontWeight: "bold",
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  taxToggleTextActive: {
+    color: "#2ECC71",
   },
 
   taxInput: {
-    width: 70,
-    backgroundColor: "#1f2937",
-    color: "white",
-    padding: 14,
-    borderRadius: 10,
+    width: 80,
+    backgroundColor: "#243342",
+    color: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    fontWeight: "800",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
     textAlign: "center",
   },
 
-  percentSign: {
-    color: "#9ca3af",
-    fontSize: 18,
-  },
-
-  spendingRow: {
-    flexDirection: "row",
-    gap: 8,
+  itemCard: {
+    backgroundColor: "#1B2633",
+    borderRadius: 16,
+    padding: 8,
     marginBottom: 10,
-    backgroundColor: "#111",
+    borderWidth: 1,
+    borderColor: "#344657",
+    gap: 8,
   },
 
-  excludedInput: {
-    opacity: 0.4,
+  itemExcluded: {
+    opacity: 0.45,
   },
 
-  spendingAmountContainer: {
-    backgroundColor: "#1f2937",
-    borderRadius: 10,
-    paddingHorizontal: 14,
+  itemNameInput: {
+    width: "100%",
+    backgroundColor: "#2A3948",
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+
+  itemControlsRow: {
     flexDirection: "row",
     alignItems: "center",
-    width: 95,
+    gap: 8,
   },
 
-  spendingAmountInput: {
-    flex: 1,
-    color: "white",
-    paddingVertical: 14,
+  itemAmountInput: {
+    width: 110,
+    backgroundColor: "#2A3948",
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 12,
   },
 
-  spendingNameInput: {
-    flex: 1,
-    backgroundColor: "#1f2937",
-    color: "white",
-    padding: 14,
-    borderRadius: 10,
+  includeButton: {
+    width: 52,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#123527",
+    alignItems: "center",
   },
 
-  quantityInput: {
-    width: 50,
-    backgroundColor: "#1f2937",
-    color: "white",
-    padding: 14,
-    borderRadius: 10,
-    textAlign: "center",
+  includeButtonOff: {
+    backgroundColor: "#333D47",
   },
 
-  addItemButton: {
+  includeButtonText: {
+    color: "#2ECC71",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+
+  includeButtonTextOff: {
+    color: "#A7B1BD",
+  },
+
+  deleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#2A3948",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  deleteButtonText: {
+    color: "#A7B1BD",
+    fontSize: 24,
+    lineHeight: 26,
+  },
+
+  addButton: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: "center",
     marginTop: 6,
-    marginLeft: 2,
+    marginBottom: 18,
+  },
+
+  addButtonText: {
+    color: "#101820",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+
+  summaryBox: {
+    backgroundColor: "#1B2633",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+  },
+
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
 
-  addItemText: {
-    color: "#3b82f6",
-    fontSize: 22,
-    fontWeight: "600",
+  summaryText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
-  includeAction: {
-    justifyContent: "center",
-    alignItems: "center",
-    width: 100,
-    marginBottom: 10,
-    borderRadius: 10,
+  summaryTotal: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "900",
   },
 
-  includeActionColor: {
-    backgroundColor: "#16a34a",
+  statusNote: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
   },
 
-  excludeActionColor: {
-    backgroundColor: "#6b7280",
-  },
-
-  includeActionText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-
-  deleteAction: {
-    backgroundColor: "#dc2626",
-    justifyContent: "center",
-    alignItems: "center",
-    width: 90,
-    marginBottom: 10,
-    borderRadius: 10,
-  },
-
-  deleteActionText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-
-  notes: {
-    backgroundColor: "#1f2937",
-    color: "white",
-    padding: 14,
-    borderRadius: 10,
-    minHeight: 120,
-    textAlignVertical: "top",
-  },
-
-  summaryBar: {
-    backgroundColor: "#1f2937",
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#374151",
-  },
-
-  remainingText: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "left",
-  },
-
-  underBudgetText: {
-    color: "#16a34a",
-  },
-
-  overBudgetText: {
-    color: "#dc2626",
-  },
-
-  summaryLabel: {
-    color: "#9ca3af",
-    textAlign: "left",
+  statusNoteText: {
     fontSize: 14,
-    marginTop: 2,
-  },
-
-  totalSpendingText: {
-    color: "#9ca3af",
-    textAlign: "left",
-    fontSize: 16,
-    marginTop: 8,
+    fontWeight: "800",
   },
 });
