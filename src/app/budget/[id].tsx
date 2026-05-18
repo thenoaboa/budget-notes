@@ -1,4 +1,6 @@
-import React, { useMemo, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -19,7 +21,27 @@ type Item = {
   included: boolean;
 };
 
+type StoredSpendingItem = {
+  id: string;
+  amount: string;
+  name: string;
+  quantity: string;
+  included: boolean;
+};
+
+type StoredBudget = {
+  id: string;
+  budgetName: string;
+  amount: string;
+  spendingItems: StoredSpendingItem[];
+  notes: string;
+};
+
 export default function BudgetScreen() {
+  const { id } = useLocalSearchParams();
+
+  const budgetId = Array.isArray(id) ? id[0] : id;
+
   const [startingMoney, setStartingMoney] = useState("");
   const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState("8.25");
@@ -28,12 +50,121 @@ export default function BudgetScreen() {
     { id: 1, name: "", amount: "", quantity: 1, included: true },
   ]);
 
+  const [hasLoaded, setHasLoaded] = useState(false);
+
   const startingMoneyRef = useRef<TextInput>(null);
   const taxRateRef = useRef<TextInput>(null);
   const itemNameRefs = useRef<Record<number, TextInput | null>>({});
   const itemAmountRefs = useRef<Record<number, TextInput | null>>({});
 
   const moneyAvailableIsEmpty = startingMoney.trim() === "";
+
+  useEffect(() => {
+    async function loadBudget() {
+      if (!budgetId) return;
+
+      try {
+        const savedBudgets = await AsyncStorage.getItem("budgets");
+        const parsedBudgets: StoredBudget[] = savedBudgets
+          ? JSON.parse(savedBudgets)
+          : [];
+
+        const existingBudget = parsedBudgets.find(
+          (budget) => budget.id === budgetId,
+        );
+
+        if (existingBudget) {
+          setStartingMoney(existingBudget.amount || "");
+
+          if (
+            existingBudget.spendingItems &&
+            existingBudget.spendingItems.length > 0
+          ) {
+            setItems(
+              existingBudget.spendingItems.map((item, index) => ({
+                id: Number(item.id) || Date.now() + index,
+                name: item.name || "",
+                amount: item.amount || "",
+                quantity: Number(item.quantity) || 1,
+                included: item.included ?? true,
+              })),
+            );
+          }
+        }
+      } catch (error) {
+        console.log("Load budget failed:", error);
+      } finally {
+        setHasLoaded(true);
+      }
+    }
+
+    loadBudget();
+  }, [budgetId]);
+
+  useEffect(() => {
+    async function autoSaveBudget() {
+      if (!budgetId || !hasLoaded) return;
+
+      try {
+        const savedBudgets = await AsyncStorage.getItem("budgets");
+        const parsedBudgets: StoredBudget[] = savedBudgets
+          ? JSON.parse(savedBudgets)
+          : [];
+
+        const hasContent =
+          startingMoney.trim() !== "" ||
+          items.some(
+            (item) => item.name.trim() !== "" || item.amount.trim() !== "",
+          );
+
+        if (!hasContent) {
+          const filteredBudgets = parsedBudgets.filter(
+            (budget) => budget.id !== budgetId,
+          );
+
+          await AsyncStorage.setItem(
+            "budgets",
+            JSON.stringify(filteredBudgets),
+          );
+          return;
+        }
+
+        const firstNamedItem = items.find((item) => item.name.trim() !== "");
+
+        const budgetToSave: StoredBudget = {
+          id: budgetId,
+          budgetName: firstNamedItem?.name.trim() || "Untitled Note",
+          amount: startingMoney,
+          spendingItems: items.map((item) => ({
+            id: item.id.toString(),
+            amount: item.amount,
+            name: item.name,
+            quantity: item.quantity.toString(),
+            included: item.included,
+          })),
+          notes: "",
+        };
+
+        const existingIndex = parsedBudgets.findIndex(
+          (budget) => budget.id === budgetId,
+        );
+
+        const updatedBudgets = [...parsedBudgets];
+
+        if (existingIndex >= 0) {
+          updatedBudgets[existingIndex] = budgetToSave;
+        } else {
+          updatedBudgets.unshift(budgetToSave);
+        }
+
+        await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
+      } catch (error) {
+        console.log("Auto-save failed:", error);
+      }
+    }
+
+    autoSaveBudget();
+  }, [budgetId, hasLoaded, startingMoney, items]);
 
   const addItem = () => {
     const newId = Date.now();
