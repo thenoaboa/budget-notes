@@ -39,6 +39,8 @@ type StoredBudget = {
   notes: string;
   createdAt?: string;
   updatedAt?: string;
+  salesTaxEnabled?: boolean;
+  taxRate?: string;
 };
 
 export default function BudgetScreen() {
@@ -132,6 +134,8 @@ export default function BudgetScreen() {
 
           setLastEditedAt(existingBudget.updatedAt || "");
           setStartingMoney(existingBudget.amount || "");
+          setSalesTaxEnabled(existingBudget.salesTaxEnabled ?? false);
+          setTaxRate(existingBudget.taxRate || "8.25");
 
           if (
             existingBudget.spendingItems &&
@@ -179,6 +183,8 @@ export default function BudgetScreen() {
         const hasContent =
           noteTitle.trim() !== "" ||
           startingMoney.trim() !== "" ||
+          salesTaxEnabled ||
+          taxRate.trim() !== "8.25" ||
           items.some(
             (item) => item.name.trim() !== "" || item.amount.trim() !== "",
           );
@@ -225,6 +231,8 @@ export default function BudgetScreen() {
           notes: "",
           createdAt: newCreatedAt,
           updatedAt: newUpdatedAt,
+          salesTaxEnabled,
+          taxRate,
         };
 
         const existingIndex = parsedBudgets.findIndex(
@@ -246,7 +254,16 @@ export default function BudgetScreen() {
     }
 
     autoSaveBudget();
-  }, [budgetId, hasLoaded, noteTitle, startingMoney, items, createdAt]);
+  }, [
+    budgetId,
+    hasLoaded,
+    noteTitle,
+    startingMoney,
+    items,
+    createdAt,
+    salesTaxEnabled,
+    taxRate,
+  ]);
 
   const addItem = () => {
     const newId = Date.now();
