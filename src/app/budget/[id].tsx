@@ -29,6 +29,8 @@ type Budget = {
   id: string;
   budgetName: string;
   amount: string;
+  salesTaxEnabled: boolean;
+  salesTaxRate: string;
   spendingItems: SpendingItem[];
   notes: string;
 };
@@ -53,6 +55,13 @@ function quantityToNumber(value: string) {
   return isNaN(number) || number <= 0 ? 1 : number;
 }
 
+function calculateTaxedTotal(subtotal: number, enabled: boolean, rate: string) {
+  if (!enabled) return subtotal;
+
+  const taxRate = moneyToNumber(rate) / 100;
+  return subtotal + subtotal * taxRate;
+}
+
 function formatMoney(value: number) {
   return `$${Math.abs(value).toFixed(2)}`;
 }
@@ -70,15 +79,23 @@ export default function BudgetDetailScreen() {
     id: String(id),
     budgetName: "",
     amount: "",
+    salesTaxEnabled: false,
+    salesTaxRate: "8.25",
     spendingItems: [createBlankSpendingItem()],
     notes: "",
   });
 
-  const totalSpending = budget.spendingItems.reduce((total, item) => {
+  const subtotalSpending = budget.spendingItems.reduce((total, item) => {
     if (!item.included) return total;
 
     return total + moneyToNumber(item.amount) * quantityToNumber(item.quantity);
   }, 0);
+
+  const totalSpending = calculateTaxedTotal(
+    subtotalSpending,
+    budget.salesTaxEnabled,
+    budget.salesTaxRate,
+  );
 
   const remaining = moneyToNumber(budget.amount) - totalSpending;
   const isOverBudget = remaining < 0;
@@ -95,6 +112,8 @@ export default function BudgetDetailScreen() {
       if (foundBudget) {
         setBudget({
           ...foundBudget,
+          salesTaxEnabled: foundBudget.salesTaxEnabled ?? false,
+          salesTaxRate: foundBudget.salesTaxRate ?? "8.25",
           spendingItems:
             foundBudget.spendingItems && foundBudget.spendingItems.length > 0
               ? foundBudget.spendingItems
@@ -138,7 +157,7 @@ export default function BudgetDetailScreen() {
     await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
   }
 
-  function updateBudgetField(field: keyof Budget, value: string) {
+  function updateBudgetField(field: keyof Budget, value: string | boolean) {
     const updatedBudget = {
       ...budget,
       id: String(id),
@@ -351,6 +370,33 @@ export default function BudgetDetailScreen() {
           />
         </View>
 
+        <View style={styles.taxRow}>
+          <Pressable
+            style={[
+              styles.taxToggle,
+              budget.salesTaxEnabled && styles.taxToggleActive,
+            ]}
+            onPress={() =>
+              updateBudgetField("salesTaxEnabled", !budget.salesTaxEnabled)
+            }
+          >
+            <Text style={styles.taxToggleText}>
+              Sales Tax {budget.salesTaxEnabled ? "ON" : "OFF"}
+            </Text>
+          </Pressable>
+
+          <TextInput
+            style={styles.taxInput}
+            value={budget.salesTaxRate}
+            placeholder="8.25"
+            placeholderTextColor="#6b7280"
+            keyboardType="numeric"
+            onChangeText={(text) => updateBudgetField("salesTaxRate", text)}
+          />
+
+          <Text style={styles.percentSign}>%</Text>
+        </View>
+
         <Text style={styles.sectionTitle}>Spending</Text>
 
         {budget.spendingItems.map((item, index) => {
@@ -549,6 +595,42 @@ const styles = StyleSheet.create({
     color: "white",
     paddingVertical: 14,
     fontSize: 16,
+  },
+
+  taxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
+  },
+
+  taxToggle: {
+    backgroundColor: "#374151",
+    padding: 14,
+    borderRadius: 10,
+  },
+
+  taxToggleActive: {
+    backgroundColor: "#2563eb",
+  },
+
+  taxToggleText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+
+  taxInput: {
+    width: 70,
+    backgroundColor: "#1f2937",
+    color: "white",
+    padding: 14,
+    borderRadius: 10,
+    textAlign: "center",
+  },
+
+  percentSign: {
+    color: "#9ca3af",
+    fontSize: 18,
   },
 
   spendingRow: {
