@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
+    Pressable,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -35,13 +36,17 @@ type StoredBudget = {
   amount: string;
   spendingItems: StoredSpendingItem[];
   notes: string;
+  updatedAt?: string;
 };
 
 export default function BudgetScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
 
+  const [noteTitle, setNoteTitle] = useState("");
+  const [lastEditedAt, setLastEditedAt] = useState("");
   const [startingMoney, setStartingMoney] = useState("");
   const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState("8.25");
@@ -51,6 +56,7 @@ export default function BudgetScreen() {
   ]);
 
   const [hasLoaded, setHasLoaded] = useState(false);
+  const skipNextAutoSaveRef = useRef(true);
 
   const startingMoneyRef = useRef<TextInput>(null);
   const taxRateRef = useRef<TextInput>(null);
@@ -58,6 +64,25 @@ export default function BudgetScreen() {
   const itemAmountRefs = useRef<Record<number, TextInput | null>>({});
 
   const moneyAvailableIsEmpty = startingMoney.trim() === "";
+
+  function formatEditedTime(dateString: string) {
+    if (!dateString) return "Not edited yet";
+
+    const date = new Date(dateString);
+
+    return `Last edited ${date.toLocaleDateString()} at ${date.toLocaleTimeString(
+      [],
+      {
+        hour: "numeric",
+        minute: "2-digit",
+      },
+    )}`;
+  }
+
+  function createNewNote() {
+    const newId = Date.now().toString();
+    router.push(`/budget/${newId}` as any);
+  }
 
   useEffect(() => {
     async function loadBudget() {
@@ -74,7 +99,9 @@ export default function BudgetScreen() {
         );
 
         if (existingBudget) {
+          setNoteTitle(existingBudget.budgetName || "");
           setStartingMoney(existingBudget.amount || "");
+          setLastEditedAt(existingBudget.updatedAt || "");
 
           if (
             existingBudget.spendingItems &&
@@ -105,6 +132,11 @@ export default function BudgetScreen() {
     async function autoSaveBudget() {
       if (!budgetId || !hasLoaded) return;
 
+      if (skipNextAutoSaveRef.current) {
+        skipNextAutoSaveRef.current = false;
+        return;
+      }
+
       try {
         const savedBudgets = await AsyncStorage.getItem("budgets");
         const parsedBudgets: StoredBudget[] = savedBudgets
@@ -112,6 +144,7 @@ export default function BudgetScreen() {
           : [];
 
         const hasContent =
+          noteTitle.trim() !== "" ||
           startingMoney.trim() !== "" ||
           items.some(
             (item) => item.name.trim() !== "" || item.amount.trim() !== "",
@@ -126,14 +159,19 @@ export default function BudgetScreen() {
             "budgets",
             JSON.stringify(filteredBudgets),
           );
+
+          setLastEditedAt("");
           return;
         }
+
+        const newUpdatedAt = new Date().toISOString();
+        setLastEditedAt(newUpdatedAt);
 
         const firstNamedItem = items.find((item) => item.name.trim() !== "");
 
         const budgetToSave: StoredBudget = {
           id: budgetId,
-          budgetName: firstNamedItem?.name.trim() || "Untitled Note",
+          budgetName: noteTitle.trim() || "Untitled Note",
           amount: startingMoney,
           spendingItems: items.map((item) => ({
             id: item.id.toString(),
@@ -143,6 +181,7 @@ export default function BudgetScreen() {
             included: item.included,
           })),
           notes: "",
+          updatedAt: newUpdatedAt,
         };
 
         const existingIndex = parsedBudgets.findIndex(
@@ -164,7 +203,7 @@ export default function BudgetScreen() {
     }
 
     autoSaveBudget();
-  }, [budgetId, hasLoaded, startingMoney, items]);
+  }, [budgetId, hasLoaded, noteTitle, startingMoney, items]);
 
   const addItem = () => {
     const newId = Date.now();
@@ -531,6 +570,37 @@ export default function BudgetScreen() {
                 </Text>
               </View>
             </View>
+
+            <View style={styles.bottomSection}>
+              <View style={styles.bottomTopRow}>
+                <Pressable
+                  style={styles.bottomIconButton}
+                  onPress={() => router.push("/" as any)}
+                >
+                  <Text style={styles.bottomIconText}>‹</Text>
+                </Pressable>
+
+                <TextInput
+                  style={styles.bottomTitleInput}
+                  placeholder="Untitled Note"
+                  placeholderTextColor="#5F6B78"
+                  value={noteTitle}
+                  onChangeText={setNoteTitle}
+                  textAlign="center"
+                />
+
+                <Pressable
+                  style={styles.bottomIconButton}
+                  onPress={createNewNote}
+                >
+                  <Text style={styles.bottomIconText}>+</Text>
+                </Pressable>
+              </View>
+
+              <Text style={styles.lastEditedText}>
+                {formatEditedTime(lastEditedAt)}
+              </Text>
+            </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -561,7 +631,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingTop: 12,
-    paddingBottom: 120,
+    paddingBottom: 80,
     backgroundColor: "#101820",
   },
 
@@ -801,5 +871,51 @@ const styles = StyleSheet.create({
   statusNoteText: {
     fontSize: 14,
     fontWeight: "800",
+  },
+
+  bottomSection: {
+    marginTop: 24,
+    marginBottom: 40,
+  },
+
+  bottomTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  bottomIconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    backgroundColor: "#2A3948",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  bottomIconText: {
+    color: "#2ECC71",
+    fontSize: 30,
+    fontWeight: "900",
+    lineHeight: 32,
+  },
+
+  bottomTitleInput: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "900",
+    letterSpacing: -0.7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    textAlign: "center",
+  },
+
+  lastEditedText: {
+    color: "#8A98A8",
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 4,
   },
 });
