@@ -279,8 +279,11 @@ export default function BudgetDetailScreen() {
           included ? styles.excludeActionColor : styles.includeActionColor,
         ]}
         onPress={() => {
-          toggleItemIncluded(itemId);
           swipeableRefs.current[itemId]?.close();
+
+          setTimeout(() => {
+            toggleItemIncluded(itemId);
+          }, 200);
         }}
       >
         <Text style={styles.includeActionText}>
@@ -364,13 +367,13 @@ export default function BudgetDetailScreen() {
               }
               renderRightActions={() => renderRightActions(item.id)}
             >
-              <View
-                style={[
-                  styles.spendingRow,
-                  !item.included && styles.excludedSpendingRow,
-                ]}
-              >
-                <View style={styles.spendingAmountContainer}>
+              <View style={styles.spendingRow}>
+                <View
+                  style={[
+                    styles.spendingAmountContainer,
+                    !item.included && styles.excludedInput,
+                  ]}
+                >
                   <Text style={styles.dollarSign}>$</Text>
 
                   <TextInput
@@ -395,7 +398,10 @@ export default function BudgetDetailScreen() {
                   ref={(ref) => {
                     nameRefs.current[item.id] = ref;
                   }}
-                  style={styles.spendingNameInput}
+                  style={[
+                    styles.spendingNameInput,
+                    !item.included && styles.excludedInput,
+                  ]}
                   value={item.name}
                   placeholder="Item name"
                   placeholderTextColor="#6b7280"
@@ -418,7 +424,10 @@ export default function BudgetDetailScreen() {
                   ref={(ref) => {
                     quantityRefs.current[item.id] = ref;
                   }}
-                  style={styles.quantityInput}
+                  style={[
+                    styles.quantityInput,
+                    !item.included && styles.excludedInput,
+                  ]}
                   value={item.quantity}
                   placeholder="1"
                   placeholderTextColor="#6b7280"
@@ -542,7 +551,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
   },
 
-  excludedSpendingRow: {
+  excludedInput: {
     opacity: 0.4,
   },
 
