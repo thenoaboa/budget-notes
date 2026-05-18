@@ -33,7 +33,7 @@ function createBlankSpendingItem(): SpendingItem {
     id: Date.now().toString() + Math.random().toString(),
     amount: "",
     name: "",
-    quantity: "",
+    quantity: "1",
     included: true,
   };
 }
@@ -278,7 +278,14 @@ export default function BudgetDetailScreen() {
                 placeholderTextColor="#6b7280"
                 returnKeyType="next"
                 blurOnSubmit={false}
-                onSubmitEditing={() => quantityRefs.current[item.id]?.focus()}
+                onSubmitEditing={() => {
+                  if (isLastItem) {
+                    addSpendingItemAndFocus();
+                  } else {
+                    const nextItem = budget.spendingItems[index + 1];
+                    amountRefs.current[nextItem.id]?.focus();
+                  }
+                }}
                 onChangeText={(text) =>
                   updateSpendingItem(item.id, "name", text)
                 }
@@ -293,16 +300,7 @@ export default function BudgetDetailScreen() {
                 placeholder="1"
                 placeholderTextColor="#6b7280"
                 keyboardType="numeric"
-                returnKeyType="next"
-                blurOnSubmit={false}
-                onSubmitEditing={() => {
-                  if (isLastItem) {
-                    addSpendingItemAndFocus();
-                  } else {
-                    const nextItem = budget.spendingItems[index + 1];
-                    amountRefs.current[nextItem.id]?.focus();
-                  }
-                }}
+                returnKeyType="done"
                 onChangeText={(text) =>
                   updateSpendingItem(item.id, "quantity", text)
                 }
