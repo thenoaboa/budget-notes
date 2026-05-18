@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+    Alert,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -36,6 +37,7 @@ type StoredBudget = {
   amount: string;
   spendingItems: StoredSpendingItem[];
   notes: string;
+  createdAt?: string;
   updatedAt?: string;
 };
 
@@ -46,6 +48,7 @@ export default function BudgetScreen() {
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const [noteTitle, setNoteTitle] = useState("");
+  const [createdAt, setCreatedAt] = useState("");
   const [lastEditedAt, setLastEditedAt] = useState("");
   const [startingMoney, setStartingMoney] = useState("");
   const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
@@ -65,18 +68,36 @@ export default function BudgetScreen() {
 
   const moneyAvailableIsEmpty = startingMoney.trim() === "";
 
-  function formatEditedTime(dateString: string) {
-    if (!dateString) return "Not edited yet";
+  function getCreatedDateFromId(idValue: string | undefined) {
+    if (!idValue) return new Date().toISOString();
 
-    const date = new Date(dateString);
+    const timestamp = Number(idValue);
 
-    return `Last edited ${date.toLocaleDateString()} at ${date.toLocaleTimeString(
-      [],
-      {
-        hour: "numeric",
-        minute: "2-digit",
-      },
-    )}`;
+    if (!Number.isNaN(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+
+    return new Date().toISOString();
+  }
+
+  function formatNoteTime(createdDate: string, editedDate: string) {
+    const dateToUse = editedDate || createdDate;
+
+    if (!dateToUse) return "Not edited yet";
+
+    const date = new Date(dateToUse);
+
+    const formattedDate = date.toLocaleDateString();
+    const formattedTime = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    if (editedDate) {
+      return `Last edited ${formattedDate} at ${formattedTime}`;
+    }
+
+    return `Created ${formattedDate} at ${formattedTime}`;
   }
 
   function createNewNote() {
@@ -99,9 +120,18 @@ export default function BudgetScreen() {
         );
 
         if (existingBudget) {
-          setNoteTitle(existingBudget.budgetName || "");
-          setStartingMoney(existingBudget.amount || "");
+          setNoteTitle(
+            existingBudget.budgetName === "Untitled"
+              ? ""
+              : existingBudget.budgetName || "",
+          );
+
+          setCreatedAt(
+            existingBudget.createdAt || getCreatedDateFromId(budgetId),
+          );
+
           setLastEditedAt(existingBudget.updatedAt || "");
+          setStartingMoney(existingBudget.amount || "");
 
           if (
             existingBudget.spendingItems &&
@@ -117,9 +147,12 @@ export default function BudgetScreen() {
               })),
             );
           }
+        } else {
+          setCreatedAt(getCreatedDateFromId(budgetId));
         }
       } catch (error) {
         console.log("Load budget failed:", error);
+        setCreatedAt(getCreatedDateFromId(budgetId));
       } finally {
         setHasLoaded(true);
       }
@@ -164,14 +197,23 @@ export default function BudgetScreen() {
           return;
         }
 
-        const newUpdatedAt = new Date().toISOString();
-        setLastEditedAt(newUpdatedAt);
+        const existingBudget = parsedBudgets.find(
+          (budget) => budget.id === budgetId,
+        );
 
-        const firstNamedItem = items.find((item) => item.name.trim() !== "");
+        const newCreatedAt =
+          existingBudget?.createdAt ||
+          createdAt ||
+          getCreatedDateFromId(budgetId);
+
+        const newUpdatedAt = existingBudget ? new Date().toISOString() : "";
+
+        setCreatedAt(newCreatedAt);
+        setLastEditedAt(newUpdatedAt);
 
         const budgetToSave: StoredBudget = {
           id: budgetId,
-          budgetName: noteTitle.trim() || "Untitled Note",
+          budgetName: noteTitle.trim() || "Untitled",
           amount: startingMoney,
           spendingItems: items.map((item) => ({
             id: item.id.toString(),
@@ -181,6 +223,7 @@ export default function BudgetScreen() {
             included: item.included,
           })),
           notes: "",
+          createdAt: newCreatedAt,
           updatedAt: newUpdatedAt,
         };
 
@@ -203,7 +246,7 @@ export default function BudgetScreen() {
     }
 
     autoSaveBudget();
-  }, [budgetId, hasLoaded, noteTitle, startingMoney, items]);
+  }, [budgetId, hasLoaded, noteTitle, startingMoney, items, createdAt]);
 
   const addItem = () => {
     const newId = Date.now();
@@ -247,9 +290,22 @@ export default function BudgetScreen() {
   };
 
   const deleteItem = (id: number) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    delete itemNameRefs.current[id];
-    delete itemAmountRefs.current[id];
+    Alert.alert("Delete item?", "Are you sure you want to remove this item?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          setItems((prev) => prev.filter((item) => item.id !== id));
+
+          delete itemNameRefs.current[id];
+          delete itemAmountRefs.current[id];
+        },
+      },
+    ]);
   };
 
   const subtotal = useMemo(() => {
@@ -341,6 +397,10 @@ export default function BudgetScreen() {
 
   const currentStyle = statusStyles[status];
 
+  const headerTextColor = moneyAvailableIsEmpty
+    ? "#FFFFFF"
+    : currentStyle.textColor;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -363,27 +423,15 @@ export default function BudgetScreen() {
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.headerMessage,
-                  { color: currentStyle.textColor },
-                ]}
-              >
+              <Text style={[styles.headerMessage, { color: headerTextColor }]}>
                 {affirmingMessage}
               </Text>
 
-              <Text
-                style={[styles.headerAmount, { color: currentStyle.textColor }]}
-              >
+              <Text style={[styles.headerAmount, { color: headerTextColor }]}>
                 ${safeToSpend.toFixed(2)}
               </Text>
 
-              <Text
-                style={[
-                  styles.headerSubtext,
-                  { color: currentStyle.textColor },
-                ]}
-              >
+              <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
                 {headerSubtext}
               </Text>
             </View>
@@ -582,7 +630,7 @@ export default function BudgetScreen() {
 
                 <TextInput
                   style={styles.bottomTitleInput}
-                  placeholder="Untitled Note"
+                  placeholder="Untitled"
                   placeholderTextColor="#5F6B78"
                   value={noteTitle}
                   onChangeText={setNoteTitle}
@@ -598,7 +646,7 @@ export default function BudgetScreen() {
               </View>
 
               <Text style={styles.lastEditedText}>
-                {formatEditedTime(lastEditedAt)}
+                {formatNoteTime(createdAt, lastEditedAt)}
               </Text>
             </View>
           </ScrollView>

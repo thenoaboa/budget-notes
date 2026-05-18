@@ -1,12 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Alert,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
@@ -25,17 +28,23 @@ type Budget = {
   amount: string;
   spendingItems: SpendingItem[];
   notes: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export default function HomeScreen() {
   const router = useRouter();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useFocusEffect(
     useCallback(() => {
       async function loadBudgets() {
         const savedBudgets = await AsyncStorage.getItem("budgets");
-        const parsedBudgets = savedBudgets ? JSON.parse(savedBudgets) : [];
+        const parsedBudgets: Budget[] = savedBudgets
+          ? JSON.parse(savedBudgets)
+          : [];
 
         setBudgets(parsedBudgets);
       }
@@ -78,13 +87,106 @@ export default function HomeScreen() {
     );
   }
 
+  function getFallbackDateFromId(id: string) {
+    const timestamp = Number(id);
+
+    if (!Number.isNaN(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+
+    return "";
+  }
+
+  function getSortDate(budget: Budget) {
+    return (
+      budget.updatedAt || budget.createdAt || getFallbackDateFromId(budget.id)
+    );
+  }
+
+  function formatNoteDate(budget: Budget) {
+    const editedDate = budget.updatedAt;
+    const createdDate = budget.createdAt || getFallbackDateFromId(budget.id);
+    const dateToUse = editedDate || createdDate;
+
+    if (!dateToUse) return "No date yet";
+
+    const date = new Date(dateToUse);
+
+    const formattedDate = date.toLocaleDateString();
+    const formattedTime = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    if (editedDate) {
+      return `Last edited ${formattedDate} at ${formattedTime}`;
+    }
+
+    return `Created ${formattedDate} at ${formattedTime}`;
+  }
+
+  function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const yOffset = event.nativeEvent.contentOffset.y;
+
+    if (yOffset < -24) {
+      setSearchVisible(true);
+    }
+  }
+
+  const visibleBudgets = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    const sortedBudgets = [...budgets].sort((a, b) => {
+      const aTime = new Date(getSortDate(a)).getTime() || 0;
+      const bTime = new Date(getSortDate(b)).getTime() || 0;
+
+      return bTime - aTime;
+    });
+
+    if (!normalizedSearch) return sortedBudgets;
+
+    return sortedBudgets.filter((budget) => {
+      const createdDateText = budget.createdAt
+        ? new Date(budget.createdAt).toLocaleString()
+        : "";
+
+      const updatedDateText = budget.updatedAt
+        ? new Date(budget.updatedAt).toLocaleString()
+        : "";
+
+      const itemText = budget.spendingItems
+        .map((item) => `${item.name} ${item.amount} x${item.quantity}`)
+        .join(" ");
+
+      const searchableText = [
+        budget.budgetName,
+        budget.amount,
+        budget.notes,
+        itemText,
+        createdDateText,
+        updatedDateText,
+        formatNoteDate(budget),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearch);
+    });
+  }, [budgets, searchQuery]);
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      alwaysBounceVertical
+    >
       <View style={styles.simpleHeader}>
         <Text style={styles.simpleTitle}>Your Notes</Text>
 
         <Text style={styles.simpleSubtitle}>
-          Keep track of what you have and what still feels safe.
+          Keep track of what you have and what you can spend.
         </Text>
       </View>
 
@@ -92,16 +194,31 @@ export default function HomeScreen() {
         <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
 
-      {budgets.length === 0 && (
+      {searchVisible && (
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search notes..."
+          placeholderTextColor="#8A98A8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      )}
+
+      {visibleBudgets.length === 0 && (
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>Nothing here yet.</Text>
+          <Text style={styles.emptyTitle}>
+            {searchQuery.trim() ? "No matches found." : "Nothing here yet."}
+          </Text>
+
           <Text style={styles.emptyText}>
-            Start a note when you want a clearer picture before spending.
+            {searchQuery.trim()
+              ? "Try searching by title, item, amount, or date."
+              : "Start a note when you want a clearer picture before spending."}
           </Text>
         </View>
       )}
 
-      {budgets.map((budget) => (
+      {visibleBudgets.map((budget) => (
         <Swipeable
           key={budget.id}
           renderRightActions={() => renderRightActions(budget.id)}
@@ -114,7 +231,7 @@ export default function HomeScreen() {
               {budget.budgetName || "Untitled Note"}
             </Text>
 
-            <Text style={styles.cardSubtitle}>Tap to keep planning</Text>
+            <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
           </Pressable>
         </Swipeable>
       ))}
@@ -159,13 +276,26 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 15,
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 14,
   },
 
   newButtonText: {
     color: "#101820",
     fontSize: 17,
     fontWeight: "900",
+  },
+
+  searchInput: {
+    backgroundColor: "#243342",
+    color: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontWeight: "800",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    marginBottom: 18,
   },
 
   emptyCard: {
