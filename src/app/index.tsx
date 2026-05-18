@@ -112,17 +112,21 @@ export default function HomeScreen() {
 
     const date = new Date(dateToUse);
 
-    const formattedDate = date.toLocaleDateString();
+    const formattedDate = date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+
     const formattedTime = date.toLocaleTimeString([], {
       hour: "numeric",
       minute: "2-digit",
     });
 
     if (editedDate) {
-      return `Last edited ${formattedDate} at ${formattedTime}`;
+      return `Edited ${formattedDate} • ${formattedTime}`;
     }
 
-    return `Created ${formattedDate} at ${formattedTime}`;
+    return `Created ${formattedDate} • ${formattedTime}`;
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
