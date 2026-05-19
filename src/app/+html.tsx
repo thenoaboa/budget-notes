@@ -25,7 +25,9 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
       </head>
 
-      <body>{children}</body>
+      <body>
+        <div id="root">{children}</div>
+      </body>
     </html>
   );
 }
