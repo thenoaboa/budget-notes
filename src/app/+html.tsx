@@ -1,18 +1,22 @@
 import { ScrollViewStyleReset } from "expo-router/html";
+import type { ReactNode } from "react";
 
-export default function Root({ children }: { children: React.ReactNode }) {
+export default function Root({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+        />
 
         <title>Stretch</title>
 
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/stretch-icon.png" />
         <link rel="apple-touch-icon" href="/stretch-icon.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/stretch-icon.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/stretch-icon.png" />
 
         <meta name="theme-color" content="#2563eb" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -25,9 +29,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
       </head>
 
-      <body>
-        <div id="root">{children}</div>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
