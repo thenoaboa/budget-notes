@@ -6,7 +6,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./public/icon.png"
+      "favicon": "./public/stretch-icon.png"
     }
   }
 }
