@@ -2,17 +2,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Item = {
@@ -645,14 +645,18 @@ export default function BudgetScreen() {
                   <Text style={styles.bottomIconText}>‹</Text>
                 </Pressable>
 
-                <TextInput
-                  style={styles.bottomTitleInput}
-                  placeholder="Untitled"
-                  placeholderTextColor="#5F6B78"
-                  value={noteTitle}
-                  onChangeText={setNoteTitle}
-                  textAlign="center"
-                />
+                <View style={styles.bottomTitleWrap}>
+                  <TextInput
+                    style={styles.bottomTitleInput}
+                    placeholder="Untitled"
+                    placeholderTextColor="#5F6B78"
+                    value={noteTitle}
+                    onChangeText={setNoteTitle}
+                    textAlign="center"
+                    numberOfLines={1}
+                    multiline={false}
+                  />
+                </View>
 
                 <Pressable
                   style={styles.bottomIconButton}
@@ -947,6 +951,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    width: "100%",
+    gap: 12,
+  },
+
+  bottomTitleWrap: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+  },
+
+  bottomTitleInput: {
+    width: "100%",
+    maxWidth: "100%",
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "900",
+    letterSpacing: -0.7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    textAlign: "center",
+    flexShrink: 1,
   },
 
   bottomIconButton: {
@@ -956,6 +981,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A3948",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
 
   bottomIconText: {
@@ -963,17 +989,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "900",
     lineHeight: 32,
-  },
-
-  bottomTitleInput: {
-    flex: 1,
-    color: "#FFFFFF",
-    fontSize: 30,
-    fontWeight: "900",
-    letterSpacing: -0.7,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    textAlign: "center",
   },
 
   lastEditedText: {
