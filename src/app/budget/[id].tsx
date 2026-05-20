@@ -252,16 +252,7 @@ export default function BudgetScreen() {
     }
 
     autoSaveBudget();
-  }, [
-    budgetId,
-    hasLoaded,
-    noteTitle,
-    startingMoney,
-    items,
-    createdAt,
-    salesTaxEnabled,
-    taxRate,
-  ]);
+  }, [budgetId, hasLoaded, noteTitle, startingMoney, items, createdAt]);
 
   const addItem = () => {
     const newId = Date.now();
