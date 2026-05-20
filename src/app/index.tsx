@@ -206,7 +206,7 @@ export default function HomeScreen() {
       </View>
 
       <Pressable style={styles.newButton} onPress={createNewBudget}>
-        <Text style={styles.newButtonText}>+ New budget note</Text>
+        <Text style={styles.newButtonText}>+ New Budget Note</Text>
       </Pressable>
 
       {searchVisible && (
