@@ -307,6 +307,25 @@ export default function BudgetScreen() {
   };
 
   const deleteItem = (id: number) => {
+    const removeItem = () => {
+      setItems((prev) => prev.filter((item) => item.id !== id));
+
+      delete itemNameRefs.current[id];
+      delete itemAmountRefs.current[id];
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Are you sure you want to remove this item?",
+      );
+
+      if (confirmed) {
+        removeItem();
+      }
+
+      return;
+    }
+
     Alert.alert("Delete item?", "Are you sure you want to remove this item?", [
       {
         text: "Cancel",
@@ -315,12 +334,7 @@ export default function BudgetScreen() {
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
-          setItems((prev) => prev.filter((item) => item.id !== id));
-
-          delete itemNameRefs.current[id];
-          delete itemAmountRefs.current[id];
-        },
+        onPress: removeItem,
       },
     ]);
   };
