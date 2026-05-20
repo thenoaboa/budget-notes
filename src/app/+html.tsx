@@ -9,7 +9,7 @@ export default function Root({ children }: { children: ReactNode }) {
 
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
 
         <title>Stretch</title>
@@ -18,7 +18,7 @@ export default function Root({ children }: { children: ReactNode }) {
         <link rel="icon" href="/stretch-icon.png" />
         <link rel="apple-touch-icon" href="/stretch-icon.png" />
 
-        <meta name="theme-color" content="#2563eb" />
+        <meta name="theme-color" content="#101820" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="Stretch" />
         <meta
@@ -29,7 +29,7 @@ export default function Root({ children }: { children: ReactNode }) {
         <ScrollViewStyleReset />
       </head>
 
-      <body>{children}</body>
+      <body style={{ backgroundColor: "#101820", margin: 0 }}>{children}</body>
     </html>
   );
 }
