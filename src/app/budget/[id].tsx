@@ -183,8 +183,6 @@ export default function BudgetScreen() {
         const hasContent =
           noteTitle.trim() !== "" ||
           startingMoney.trim() !== "" ||
-          salesTaxEnabled ||
-          taxRate.trim() !== "8.25" ||
           items.some(
             (item) => item.name.trim() !== "" || item.amount.trim() !== "",
           );
