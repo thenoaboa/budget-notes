@@ -198,15 +198,15 @@ export default function HomeScreen() {
       alwaysBounceVertical
     >
       <View style={styles.simpleHeader}>
-        <Text style={styles.simpleTitle}>Budget Notes</Text>
+        <Text style={styles.simpleTitle}>Budget Note</Text>
 
         <Text style={styles.simpleSubtitle}>
-          Keep track of what you have and what you can spend.
+          Plan today, spend confidently.
         </Text>
       </View>
 
       <Pressable style={styles.newButton} onPress={createNewBudget}>
-        <Text style={styles.newButtonText}>+ New Budget Note</Text>
+        <Text style={styles.newButtonText}>+ New budget note</Text>
       </Pressable>
 
       {searchVisible && (
