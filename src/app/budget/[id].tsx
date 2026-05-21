@@ -68,10 +68,6 @@ export default function BudgetScreen() {
 
             <Text style={styles.label}>Things to cover</Text>
 
-            <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
-              <Text style={styles.addButtonText}>+ Add Item</Text>
-            </TouchableOpacity>
-
             {editor.items.map((item) => (
               <SpendingItemRow
                 key={item.id}
@@ -86,6 +82,10 @@ export default function BudgetScreen() {
                 focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
               />
             ))}
+
+            <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
+              <Text style={styles.addButtonText}>+ Add Item</Text>
+            </TouchableOpacity>
 
             <BudgetSummaryBox
               items={editor.items}
