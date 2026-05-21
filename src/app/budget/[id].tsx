@@ -1,8 +1,11 @@
 // Save as: src/app/budget/[id].tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -24,6 +27,8 @@ export default function BudgetScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
 
+  const [showCreatedDate, setShowCreatedDate] = useState(false);
+
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
@@ -31,6 +36,12 @@ export default function BudgetScreen() {
   function createNewNote() {
     const newId = Date.now().toString();
     router.push(`/budget/${newId}` as any);
+  }
+
+  function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const scrollY = event.nativeEvent.contentOffset.y;
+
+    setShowCreatedDate(scrollY > 40);
   }
 
   return (
@@ -45,6 +56,8 @@ export default function BudgetScreen() {
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
           >
             <BudgetHeaderCard
               affirmingMessage={editor.affirmingMessage}
@@ -100,10 +113,14 @@ export default function BudgetScreen() {
             <BudgetBottomBar
               noteTitle={editor.noteTitle}
               setNoteTitle={editor.setNoteTitle}
-              lastEditedText={formatBudgetEditorTime(
-                editor.createdAt,
-                editor.lastEditedAt,
-              )}
+              lastEditedText={
+                showCreatedDate
+                  ? formatBudgetEditorTime(
+                      editor.createdAt,
+                      editor.lastEditedAt,
+                    )
+                  : ""
+              }
               onBack={() => router.push("/" as any)}
               onCreateNewNote={createNewNote}
             />
