@@ -12,8 +12,8 @@ import {
   View,
 } from "react-native";
 
+import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { BudgetBottomBar } from "../../components/BudgetBottomBar";
-import { BudgetHeaderCard } from "../../components/BudgetHeader";
 import { BudgetSummaryBox } from "../../components/BudgetSummary";
 import { MoneyAvailableSection } from "../../components/MoneyAvailable";
 import { SpendingItemRow } from "../../components/SpendingItemCard";
@@ -52,6 +52,7 @@ export default function BudgetScreen() {
               headerSubtext={editor.headerSubtext}
               currentStyle={editor.currentStyle}
               headerTextColor={editor.headerTextColor}
+              hasEnteredMoney={editor.startingMoney.trim() !== ""}
             />
 
             <MoneyAvailableSection

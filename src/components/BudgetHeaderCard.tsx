@@ -10,6 +10,7 @@ type Props = {
   headerSubtext: string;
   currentStyle: BudgetStatusStyle;
   headerTextColor: string;
+  hasEnteredMoney: boolean;
 };
 
 export function BudgetHeaderCard({
@@ -18,6 +19,7 @@ export function BudgetHeaderCard({
   headerSubtext,
   currentStyle,
   headerTextColor,
+  hasEnteredMoney,
 }: Props) {
   return (
     <View
@@ -29,15 +31,19 @@ export function BudgetHeaderCard({
         },
       ]}
     >
-      <Text style={[styles.headerMessage, { color: headerTextColor }]}>
-        {affirmingMessage}
-      </Text>
+      {!hasEnteredMoney && (
+        <Text style={[styles.headerMessage, { color: headerTextColor }]}>
+          {affirmingMessage}
+        </Text>
+      )}
 
       <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
 
-      <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
-        {headerSubtext}
-      </Text>
+      {!hasEnteredMoney && (
+        <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
+          {headerSubtext}
+        </Text>
+      )}
     </View>
   );
 }
