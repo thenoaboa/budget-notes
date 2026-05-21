@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { useRef } from "react";
+import {
+  GestureResponderEvent,
+  Pressable,
+  StyleSheet,
+  Text,
+} from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { Budget } from "../types/budget";
@@ -11,17 +17,35 @@ type Props = {
 };
 
 export function NoteCard({ budget, onPress, onDelete }: Props) {
+  const swipeableRef = useRef<Swipeable>(null);
+
+  function handleDelete(event: GestureResponderEvent) {
+    event.stopPropagation();
+
+    swipeableRef.current?.close();
+    onDelete();
+  }
+
+  function handlePress() {
+    swipeableRef.current?.close();
+    onPress();
+  }
+
   function renderRightActions() {
     return (
-      <Pressable style={styles.deleteAction} onPress={onDelete}>
+      <Pressable style={styles.deleteAction} onPress={handleDelete}>
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
     );
   }
 
   return (
-    <Swipeable renderRightActions={renderRightActions}>
-      <Pressable style={styles.card} onPress={onPress}>
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={renderRightActions}
+      overshootRight={false}
+    >
+      <Pressable style={styles.card} onPress={handlePress}>
         <Text style={styles.cardTitle}>
           {budget.budgetName || "Untitled Note"}
         </Text>
