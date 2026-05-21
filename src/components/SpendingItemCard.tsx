@@ -1,6 +1,6 @@
 // Save as: src/components/SpendingItemCard.tsx
 
-import { MutableRefObject } from "react";
+import type { MutableRefObject } from "react";
 import {
   StyleSheet,
   Text,
@@ -47,8 +47,9 @@ export function SpendingItemRow({
           keyboardType="decimal-pad"
           returnKeyType="next"
           value={item.amount}
+          blurOnSubmit={false}
           onChangeText={(text) => updateItem(item.id, "amount", text)}
-          onSubmitEditing={() => focusNextItemOrAddCurrent(item.id)}
+          onSubmitEditing={() => itemNameRefs.current[item.id]?.focus()}
         />
 
         <TouchableOpacity
@@ -93,9 +94,9 @@ export function SpendingItemRow({
         placeholderTextColor="#8A98A8"
         value={item.name}
         returnKeyType="next"
-        onSubmitEditing={() => itemAmountRefs.current[item.id]?.focus()}
         blurOnSubmit={false}
         onChangeText={(text) => updateItem(item.id, "name", text)}
+        onSubmitEditing={() => focusNextItemOrAddCurrent(item.id)}
       />
     </View>
   );

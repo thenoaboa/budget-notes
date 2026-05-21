@@ -131,7 +131,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     ]);
 
     setTimeout(() => {
-      itemNameRefs.current[newId]?.focus();
+      itemAmountRefs.current[newId]?.focus();
     }, 100);
   }
 
@@ -204,7 +204,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     const nextItem = items[currentIndex + 1];
 
     if (nextItem) {
-      itemNameRefs.current[nextItem.id]?.focus();
+      itemAmountRefs.current[nextItem.id]?.focus();
     } else {
       addItem();
     }
