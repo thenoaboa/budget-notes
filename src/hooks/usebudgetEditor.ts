@@ -8,7 +8,9 @@ import {
   loadBudgetById,
   mapStoredItemsToEditorItems,
 } from "../storage/budgetEditorStorage";
+
 import type { BudgetItem } from "../types/budgetEditor";
+
 import {
   budgetStatusStyles,
   getAffirmingMessage,
@@ -16,25 +18,30 @@ import {
   getSubtotal,
   getTaxAmount,
 } from "../utils/budgetEditorCalculations";
+
 import { getCreatedDateFromId } from "../utils/budgetEditorDates";
 
 export function useBudgetEditor(budgetId: string | undefined) {
   const [noteTitle, setNoteTitle] = useState("");
   const [createdAt, setCreatedAt] = useState("");
   const [lastEditedAt, setLastEditedAt] = useState("");
+
   const [startingMoney, setStartingMoney] = useState("");
+
   const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState("8.25");
 
-  const [items, setItems] = useState<BudgetItem[]>([
-    { id: 1, name: "", amount: "", quantity: 1, included: true },
-  ]);
+  // FIXED:
+  // New notes now start completely empty
+  const [items, setItems] = useState<BudgetItem[]>([]);
 
   const [hasLoaded, setHasLoaded] = useState(false);
+
   const skipNextAutoSaveRef = useRef(true);
 
   const startingMoneyRef = useRef<TextInput>(null);
   const taxRateRef = useRef<TextInput>(null);
+
   const itemNameRefs = useRef<Record<number, TextInput | null>>({});
   const itemAmountRefs = useRef<Record<number, TextInput | null>>({});
 
@@ -59,8 +66,11 @@ export function useBudgetEditor(budgetId: string | undefined) {
           );
 
           setLastEditedAt(existingBudget.updatedAt || "");
+
           setStartingMoney(existingBudget.amount || "");
+
           setSalesTaxEnabled(existingBudget.salesTaxEnabled ?? false);
+
           setTaxRate(existingBudget.taxRate || "8.25");
 
           if (
@@ -74,6 +84,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         }
       } catch (error) {
         console.log("Load budget failed:", error);
+
         setCreatedAt(getCreatedDateFromId(budgetId));
       } finally {
         setHasLoaded(true);
@@ -127,7 +138,13 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
     setItems((prev) => [
       ...prev,
-      { id: newId, name: "", amount: "", quantity: 1, included: true },
+      {
+        id: newId,
+        name: "",
+        amount: "",
+        quantity: 1,
+        included: true,
+      },
     ]);
 
     setTimeout(() => {
@@ -137,28 +154,52 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   function updateItem(id: number, field: "name" | "amount", value: string) {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
     );
   }
 
   function increaseQuantity(id: number) {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item,
+        item.id === id
+          ? {
+              ...item,
+              quantity: item.quantity + 1,
+            }
+          : item,
       ),
     );
   }
 
   function resetQuantity(id: number) {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: 1 } : item)),
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: 1,
+            }
+          : item,
+      ),
     );
   }
 
   function toggleIncluded(id: number) {
     setItems((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, included: !item.included } : item,
+        item.id === id
+          ? {
+              ...item,
+              included: !item.included,
+            }
+          : item,
       ),
     );
   }
@@ -219,7 +260,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
   }, [subtotal, salesTaxEnabled, taxRate]);
 
   const totalSpent = subtotal + taxAmount;
+
   const starting = parseFloat(startingMoney) || 0;
+
   const safeToSpend = starting - totalSpent;
 
   const status = useMemo(() => {
@@ -243,15 +286,21 @@ export function useBudgetEditor(budgetId: string | undefined) {
   return {
     noteTitle,
     setNoteTitle,
+
     createdAt,
     lastEditedAt,
+
     startingMoney,
     setStartingMoney,
+
     salesTaxEnabled,
     setSalesTaxEnabled,
+
     taxRate,
     setTaxRate,
+
     items,
+
     addItem,
     updateItem,
     increaseQuantity,
@@ -259,16 +308,22 @@ export function useBudgetEditor(budgetId: string | undefined) {
     toggleIncluded,
     deleteItem,
     focusNextItemOrAddCurrent,
+
     startingMoneyRef,
     taxRateRef,
+
     itemNameRefs,
     itemAmountRefs,
+
     subtotal,
     taxAmount,
     totalSpent,
+
     safeToSpend,
+
     affirmingMessage,
     headerSubtext,
+
     currentStyle,
     headerTextColor,
   };
