@@ -41,7 +41,7 @@ export default function BudgetScreen() {
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const scrollY = event.nativeEvent.contentOffset.y;
 
-    setShowCreatedDate(scrollY > 40);
+    setShowCreatedDate(scrollY > 5);
   }
 
   return (
