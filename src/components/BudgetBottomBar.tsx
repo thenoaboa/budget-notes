@@ -42,7 +42,9 @@ export function BudgetBottomBar({
         </Pressable>
       </View>
 
-      <Text style={styles.lastEditedText}>{lastEditedText}</Text>
+      {lastEditedText !== "" && (
+        <Text style={styles.lastEditedText}>{lastEditedText}</Text>
+      )}
     </View>
   );
 }
