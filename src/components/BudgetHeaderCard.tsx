@@ -37,7 +37,14 @@ export function BudgetHeaderCard({
         </Text>
       )}
 
-      <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
+      <Text
+        style={[
+          styles.headerAmount,
+          hasEnteredMoney && styles.headerAmountLarge,
+        ]}
+      >
+        ${safeToSpend.toFixed(2)}
+      </Text>
 
       {!hasEnteredMoney && (
         <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
@@ -50,11 +57,13 @@ export function BudgetHeaderCard({
 
 const styles = StyleSheet.create({
   headerCard: {
+    minHeight: 126,
     paddingVertical: 18,
     paddingHorizontal: 18,
     borderRadius: 24,
     borderWidth: 1,
     marginBottom: 18,
+    justifyContent: "center",
   },
 
   headerMessage: {
@@ -67,6 +76,13 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 42,
     fontWeight: "900",
+  },
+
+  headerAmountLarge: {
+    fontSize: 58,
+    lineHeight: 66,
+    textAlign: "center",
+    paddingVertical: 8,
   },
 
   headerSubtext: {
