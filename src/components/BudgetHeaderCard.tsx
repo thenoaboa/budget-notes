@@ -18,7 +18,6 @@ export function BudgetHeaderCard({
   safeToSpend,
   headerSubtext,
   currentStyle,
-  headerTextColor,
   hasEnteredMoney,
 }: Props) {
   return (
@@ -32,24 +31,13 @@ export function BudgetHeaderCard({
       ]}
     >
       {!hasEnteredMoney && (
-        <Text style={[styles.headerMessage, { color: headerTextColor }]}>
-          {affirmingMessage}
-        </Text>
+        <Text style={styles.headerMessage}>{affirmingMessage}</Text>
       )}
 
-      <Text
-        style={[
-          styles.headerAmount,
-          hasEnteredMoney && styles.headerAmountLarge,
-        ]}
-      >
-        ${safeToSpend.toFixed(2)}
-      </Text>
+      <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
 
       {!hasEnteredMoney && (
-        <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
-          {headerSubtext}
-        </Text>
+        <Text style={styles.headerSubtext}>{headerSubtext}</Text>
       )}
     </View>
   );
@@ -57,16 +45,15 @@ export function BudgetHeaderCard({
 
 const styles = StyleSheet.create({
   headerCard: {
-    minHeight: 126,
     paddingVertical: 18,
     paddingHorizontal: 18,
     borderRadius: 24,
     borderWidth: 1,
     marginBottom: 18,
-    justifyContent: "center",
   },
 
   headerMessage: {
+    color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 4,
@@ -78,14 +65,8 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
-  headerAmountLarge: {
-    fontSize: 50,
-    lineHeight: 68,
-    textAlign: "center",
-    paddingVertical: 6,
-  },
-
   headerSubtext: {
+    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",
   },
