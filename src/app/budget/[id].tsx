@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id].tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   NativeScrollEvent,
@@ -29,6 +29,10 @@ export default function BudgetScreen() {
 
   const [showCreatedDate, setShowCreatedDate] = useState(false);
 
+  const lastScrollYRef = useRef(0);
+  const scrollLockedRef = useRef(false);
+  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
@@ -39,9 +43,25 @@ export default function BudgetScreen() {
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const scrollY = event.nativeEvent.contentOffset.y;
+    const currentY = event.nativeEvent.contentOffset.y;
+    const lastY = lastScrollYRef.current;
 
-    setShowCreatedDate(scrollY > 5);
+    const scrollingDown = currentY > lastY + 12;
+
+    if (scrollingDown && !scrollLockedRef.current) {
+      setShowCreatedDate((current) => !current);
+      scrollLockedRef.current = true;
+
+      if (unlockTimerRef.current) {
+        clearTimeout(unlockTimerRef.current);
+      }
+
+      unlockTimerRef.current = setTimeout(() => {
+        scrollLockedRef.current = false;
+      }, 500);
+    }
+
+    lastScrollYRef.current = currentY;
   }
 
   return (
