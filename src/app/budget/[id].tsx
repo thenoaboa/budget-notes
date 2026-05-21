@@ -46,13 +46,15 @@ export default function BudgetScreen() {
     const fullContentHeight = contentSize.height;
 
     const distancePastBottom = scrollY + visibleHeight - fullContentHeight;
+    const shouldShowDate = distancePastBottom > 40;
 
-    if (distancePastBottom > 40) {
-      setShowCreatedDate(true);
-      return;
-    }
+    setShowCreatedDate((currentValue) => {
+      if (currentValue === shouldShowDate) {
+        return currentValue;
+      }
 
-    setShowCreatedDate(false);
+      return shouldShowDate;
+    });
   }
 
   return (
