@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
   },
 
   headerAmountLarge: {
-    fontSize: 58,
-    lineHeight: 66,
+    fontSize: 50,
+    lineHeight: 68,
     textAlign: "center",
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
 
   headerSubtext: {
