@@ -42,9 +42,14 @@ export function BudgetBottomBar({
         </Pressable>
       </View>
 
-      {lastEditedText !== "" && (
-        <Text style={styles.lastEditedText}>{lastEditedText}</Text>
-      )}
+      <Text
+        style={[
+          styles.lastEditedText,
+          !lastEditedText && styles.hiddenLastEditedText,
+        ]}
+      >
+        {lastEditedText || " "}
+      </Text>
     </View>
   );
 }
@@ -105,5 +110,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginTop: 4,
+  },
+
+  hiddenLastEditedText: {
+    opacity: 0,
   },
 });
