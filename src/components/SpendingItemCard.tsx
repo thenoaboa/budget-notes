@@ -1,4 +1,4 @@
-// Save as: src/components/SpendingItemRow.tsx
+// Save as: src/components/SpendingItemCard.tsx
 
 import { MutableRefObject } from "react";
 import {
@@ -36,20 +36,6 @@ export function SpendingItemRow({
 }: Props) {
   return (
     <View style={[styles.itemCard, !item.included && styles.itemExcluded]}>
-      <TextInput
-        ref={(ref) => {
-          itemNameRefs.current[item.id] = ref;
-        }}
-        style={styles.itemNameInput}
-        placeholder="Item name"
-        placeholderTextColor="#8A98A8"
-        value={item.name}
-        returnKeyType="next"
-        onSubmitEditing={() => itemAmountRefs.current[item.id]?.focus()}
-        blurOnSubmit={false}
-        onChangeText={(text) => updateItem(item.id, "name", text)}
-      />
-
       <View style={styles.itemControlsRow}>
         <TextInput
           ref={(ref) => {
@@ -97,6 +83,20 @@ export function SpendingItemRow({
           <Text style={styles.deleteButtonText}>×</Text>
         </TouchableOpacity>
       </View>
+
+      <TextInput
+        ref={(ref) => {
+          itemNameRefs.current[item.id] = ref;
+        }}
+        style={styles.itemNameInput}
+        placeholder="Item name"
+        placeholderTextColor="#8A98A8"
+        value={item.name}
+        returnKeyType="next"
+        onSubmitEditing={() => itemAmountRefs.current[item.id]?.focus()}
+        blurOnSubmit={false}
+        onChangeText={(text) => updateItem(item.id, "name", text)}
+      />
     </View>
   );
 }
