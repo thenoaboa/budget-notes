@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id].tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   KeyboardAvoidingView,
   NativeScrollEvent,
@@ -29,10 +29,6 @@ export default function BudgetScreen() {
 
   const [showCreatedDate, setShowCreatedDate] = useState(false);
 
-  const lastScrollYRef = useRef(0);
-  const scrollLockedRef = useRef(false);
-  const unlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
@@ -43,25 +39,20 @@ export default function BudgetScreen() {
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const currentY = event.nativeEvent.contentOffset.y;
-    const lastY = lastScrollYRef.current;
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
 
-    const scrollingDown = currentY > lastY + 12;
+    const scrollY = contentOffset.y;
+    const visibleHeight = layoutMeasurement.height;
+    const fullContentHeight = contentSize.height;
 
-    if (scrollingDown && !scrollLockedRef.current) {
-      setShowCreatedDate((current) => !current);
-      scrollLockedRef.current = true;
+    const distancePastBottom = scrollY + visibleHeight - fullContentHeight;
 
-      if (unlockTimerRef.current) {
-        clearTimeout(unlockTimerRef.current);
-      }
-
-      unlockTimerRef.current = setTimeout(() => {
-        scrollLockedRef.current = false;
-      }, 500);
+    if (distancePastBottom > 40) {
+      setShowCreatedDate(true);
+      return;
     }
 
-    lastScrollYRef.current = currentY;
+    setShowCreatedDate(false);
   }
 
   return (
@@ -78,6 +69,8 @@ export default function BudgetScreen() {
             keyboardShouldPersistTaps="handled"
             onScroll={handleScroll}
             scrollEventThrottle={16}
+            alwaysBounceVertical
+            bounces
           >
             <BudgetHeaderCard
               affirmingMessage={editor.affirmingMessage}
