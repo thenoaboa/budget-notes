@@ -33,9 +33,7 @@ export function BudgetHeaderCard({
         {affirmingMessage}
       </Text>
 
-      <Text style={[styles.headerAmount, { color: headerTextColor }]}>
-        ${safeToSpend.toFixed(2)}
-      </Text>
+      <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
 
       <Text style={[styles.headerSubtext, { color: headerTextColor }]}>
         {headerSubtext}
@@ -60,6 +58,7 @@ const styles = StyleSheet.create({
   },
 
   headerAmount: {
+    color: "#FFFFFF",
     fontSize: 42,
     fontWeight: "900",
   },
