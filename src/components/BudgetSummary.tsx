@@ -1,10 +1,19 @@
-// Save as: src/components/BudgetSummaryBox.tsx
+// Save as: src/components/BudgetSummary.tsx
 
 import { StyleSheet, Text, View } from "react-native";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
+type SummaryItem = {
+  id: number;
+  name: string;
+  amount: string;
+  included?: boolean;
+  quantity?: number;
+};
+
 type Props = {
+  items: SummaryItem[];
   subtotal: number;
   taxAmount: number;
   totalSpent: number;
@@ -13,7 +22,27 @@ type Props = {
   currentStyle: BudgetStatusStyle;
 };
 
+function parseMoney(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value !== "string") {
+    return 0;
+  }
+
+  const cleaned = value.replace(/[^0-9.]/g, "");
+  const parsed = Number(cleaned);
+
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatMoney(value: number) {
+  return `$${value.toFixed(2)}`;
+}
+
 export function BudgetSummaryBox({
+  items,
   subtotal,
   taxAmount,
   totalSpent,
@@ -21,24 +50,88 @@ export function BudgetSummaryBox({
   affirmingMessage,
   currentStyle,
 }: Props) {
+  const hasEnteredAnyItem = items.some((item) => {
+    const name = item.name.trim();
+    const amount = parseMoney(item.amount);
+
+    return name !== "" || amount > 0;
+  });
+
+  const visibleItems = items.filter((item) => {
+    const name = item.name.trim();
+    const amount = parseMoney(item.amount);
+    const isIncluded = item.included !== false;
+
+    return isIncluded && (name !== "" || amount > 0);
+  });
+
   return (
     <View style={styles.summaryBox}>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryText}>Items</Text>
-        <Text style={styles.summaryText}>${subtotal.toFixed(2)}</Text>
-      </View>
+      {!hasEnteredAnyItem ? (
+        <>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryText}>Items</Text>
+            <Text style={styles.summaryText}>{formatMoney(subtotal)}</Text>
+          </View>
 
-      {salesTaxEnabled && (
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryText}>Estimated tax</Text>
-          <Text style={styles.summaryText}>${taxAmount.toFixed(2)}</Text>
-        </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryTotal}>Planned total</Text>
+            <Text style={styles.summaryTotal}>{formatMoney(totalSpent)}</Text>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryHeaderText}>Items:</Text>
+            <Text style={styles.summaryHeaderText}>
+              {formatMoney(subtotal)}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          {visibleItems.map((item) => {
+            const amount = parseMoney(item.amount);
+            const quantity =
+              Number.isFinite(item.quantity) &&
+              item.quantity &&
+              item.quantity > 0
+                ? item.quantity
+                : 1;
+
+            const itemName = item.name.trim() || "Unnamed item";
+            const lineTotal = amount * quantity;
+
+            return (
+              <View key={item.id} style={styles.itemRow}>
+                <Text style={styles.itemText} numberOfLines={1}>
+                  {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
+                </Text>
+
+                <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
+              </View>
+            );
+          })}
+
+          {salesTaxEnabled && (
+            <>
+              <View style={styles.divider} />
+
+              <View style={styles.itemRow}>
+                <Text style={styles.itemText}>Estimated tax:</Text>
+                <Text style={styles.itemAmount}>{formatMoney(taxAmount)}</Text>
+              </View>
+            </>
+          )}
+
+          <View style={styles.divider} />
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryTotal}>Planned total:</Text>
+            <Text style={styles.summaryTotal}>{formatMoney(totalSpent)}</Text>
+          </View>
+        </>
       )}
-
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryTotal}>Planned total</Text>
-        <Text style={styles.summaryTotal}>${totalSpent.toFixed(2)}</Text>
-      </View>
 
       <View
         style={[
@@ -70,6 +163,7 @@ const styles = StyleSheet.create({
 
   summaryRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 8,
   },
@@ -80,10 +174,45 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  summaryHeaderText: {
+    color: "#CAD3DD",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 4,
+  },
+
+  itemText: {
+    flex: 1,
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "700",
+    paddingRight: 12,
+  },
+
+  itemAmount: {
+    width: 90,
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "800",
+    textAlign: "right",
+  },
+
   summaryTotal: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "900",
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#344657",
+    marginVertical: 6,
   },
 
   statusNote: {
@@ -97,5 +226,6 @@ const styles = StyleSheet.create({
   statusNoteText: {
     fontSize: 14,
     fontWeight: "800",
+    textAlign: "center",
   },
 });

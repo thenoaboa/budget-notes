@@ -88,6 +88,7 @@ export default function BudgetScreen() {
             </TouchableOpacity>
 
             <BudgetSummaryBox
+              items={editor.items}
               subtotal={editor.subtotal}
               taxAmount={editor.taxAmount}
               totalSpent={editor.totalSpent}
@@ -105,10 +106,6 @@ export default function BudgetScreen() {
               )}
               onBack={() => router.push("/" as any)}
               onCreateNewNote={createNewNote}
-              items={editor.items}
-              plannedTotal={editor.totalSpent}
-              estimatedTax={editor.taxAmount}
-              taxEnabled={editor.salesTaxEnabled}
             />
           </ScrollView>
         </View>
