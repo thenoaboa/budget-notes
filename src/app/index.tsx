@@ -29,10 +29,10 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      setSearchVisible(false);
-      setSearchQuery("");
-
-      return undefined;
+      return () => {
+        setSearchVisible(false);
+        setSearchQuery("");
+      };
     }, [setSearchVisible, setSearchQuery]),
   );
 
