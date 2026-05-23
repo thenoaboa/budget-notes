@@ -30,6 +30,7 @@ export function BudgetHeaderCard({
   const [isEditingAmount, setIsEditingAmount] = useState(false);
 
   const startingAmount = parseFloat(startingMoney) || 0;
+
   const displayAmount = hasEnteredItems ? safeToSpend : startingAmount;
 
   const inputValue = isEditingAmount
@@ -64,10 +65,12 @@ export function BudgetHeaderCard({
         placeholderTextColor="#FFFFFF"
         keyboardType="decimal-pad"
         returnKeyType="done"
-        selectTextOnFocus
+        selectTextOnFocus={true}
       />
 
-      <Text style={styles.headerSubtext}>{headerSubtext}</Text>
+      <Text style={styles.headerSubtext}>
+        {startingMoney.trim() === "" ? "Tap amount to edit" : headerSubtext}
+      </Text>
     </View>
   );
 }
