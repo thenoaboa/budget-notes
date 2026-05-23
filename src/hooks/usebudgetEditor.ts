@@ -134,7 +134,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
     const newId = Date.now();
 
     setItems((prev) => [
-      ...prev,
       {
         id: newId,
         name: "",
@@ -142,6 +141,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         quantity: 1,
         included: true,
       },
+      ...prev,
     ]);
 
     setTimeout(() => {
@@ -262,8 +262,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   const safeToSpend = starting - totalSpent;
 
-  // Controls the header card color only.
-  // No yellow color state: green at $0.00 and above, red below $0.00.
   const status = useMemo(() => {
     if (moneyAvailableIsEmpty) {
       return "green";
@@ -272,9 +270,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
     return safeToSpend >= 0 ? "green" : "red";
   }, [safeToSpend, moneyAvailableIsEmpty]);
 
-  // Controls the message text only.
-  // Yellow messages can still appear when money is low,
-  // but the card color stays green until the balance is negative.
   const messageStatus = useMemo(() => {
     if (moneyAvailableIsEmpty) {
       return "green";
