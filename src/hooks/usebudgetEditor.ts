@@ -14,7 +14,6 @@ import type { BudgetItem } from "../types/budgetEditor";
 import {
   budgetStatusStyles,
   getAffirmingMessage,
-  getBudgetStatus,
   getSubtotal,
   getTaxAmount,
 } from "../utils/budgetEditorCalculations";
@@ -31,8 +30,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
   const [salesTaxEnabled, setSalesTaxEnabled] = useState(false);
   const [taxRate, setTaxRate] = useState("8.25");
 
-  // FIXED:
-  // New notes now start completely empty
   const [items, setItems] = useState<BudgetItem[]>([]);
 
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -266,7 +263,13 @@ export function useBudgetEditor(budgetId: string | undefined) {
   const safeToSpend = starting - totalSpent;
 
   const status = useMemo(() => {
-    return getBudgetStatus(safeToSpend, moneyAvailableIsEmpty);
+    if (moneyAvailableIsEmpty) {
+      return "neutral" as keyof typeof budgetStatusStyles;
+    }
+
+    return safeToSpend >= 0
+      ? ("positive" as keyof typeof budgetStatusStyles)
+      : ("negative" as keyof typeof budgetStatusStyles);
   }, [safeToSpend, moneyAvailableIsEmpty]);
 
   const affirmingMessage = useMemo(() => {
