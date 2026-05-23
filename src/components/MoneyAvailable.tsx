@@ -2,11 +2,11 @@
 
 import { RefObject } from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Props = {
@@ -34,23 +34,27 @@ export function MoneyAvailableSection({
 }: Props) {
   return (
     <>
-      <Text style={styles.label}>Money available</Text>
+      {false && (
+        <>
+          <Text style={styles.label}>Money available</Text>
 
-      <TextInput
-        ref={startingMoneyRef}
-        style={styles.mainInput}
-        placeholder="$0.00"
-        placeholderTextColor="#8A98A8"
-        keyboardType="decimal-pad"
-        returnKeyType={salesTaxEnabled ? "next" : "done"}
-        value={startingMoney}
-        onChangeText={setStartingMoney}
-        onSubmitEditing={() => {
-          if (salesTaxEnabled) {
-            taxRateRef.current?.focus();
-          }
-        }}
-      />
+          <TextInput
+            ref={startingMoneyRef}
+            style={styles.mainInput}
+            placeholder="$0.00"
+            placeholderTextColor="#8A98A8"
+            keyboardType="decimal-pad"
+            returnKeyType={salesTaxEnabled ? "next" : "done"}
+            value={startingMoney}
+            onChangeText={setStartingMoney}
+            onSubmitEditing={() => {
+              if (salesTaxEnabled) {
+                taxRateRef.current?.focus();
+              }
+            }}
+          />
+        </>
+      )}
 
       <View style={styles.taxRow}>
         <TouchableOpacity
