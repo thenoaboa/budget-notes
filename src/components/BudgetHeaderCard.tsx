@@ -18,7 +18,6 @@ export function BudgetHeaderCard({
   safeToSpend,
   headerSubtext,
   currentStyle,
-  hasEnteredMoney,
 }: Props) {
   return (
     <View
@@ -30,15 +29,11 @@ export function BudgetHeaderCard({
         },
       ]}
     >
-      {!hasEnteredMoney && (
-        <Text style={styles.headerMessage}>{affirmingMessage}</Text>
-      )}
+      <Text style={styles.headerMessage}>{affirmingMessage}</Text>
 
       <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
 
-      {!hasEnteredMoney && (
-        <Text style={styles.headerSubtext}>{headerSubtext}</Text>
-      )}
+      <Text style={styles.headerSubtext}>{headerSubtext}</Text>
     </View>
   );
 }
