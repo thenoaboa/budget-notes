@@ -125,20 +125,22 @@ export default function BudgetScreen() {
               currentStyle={editor.currentStyle}
             />
 
-            <BudgetBottomBar
-              noteTitle={editor.noteTitle}
-              setNoteTitle={editor.setNoteTitle}
-              lastEditedText={
-                showCreatedDate
-                  ? formatBudgetEditorTime(
-                      editor.createdAt,
-                      editor.lastEditedAt,
-                    )
-                  : ""
-              }
-              onBack={() => router.push("/" as any)}
-              onCreateNewNote={createNewNote}
-            />
+            {false && (
+              <BudgetBottomBar
+                noteTitle={editor.noteTitle}
+                setNoteTitle={editor.setNoteTitle}
+                lastEditedText={
+                  showCreatedDate
+                    ? formatBudgetEditorTime(
+                        editor.createdAt,
+                        editor.lastEditedAt,
+                      )
+                    : ""
+                }
+                onBack={() => router.push("/" as any)}
+                onCreateNewNote={createNewNote}
+              />
+            )}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
