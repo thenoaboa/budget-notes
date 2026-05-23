@@ -96,7 +96,7 @@ export default function BudgetScreen() {
               />
             </View>
 
-            <Text style={styles.label}>Things to cover</Text>
+            {false && <Text style={styles.label}>Things to cover</Text>}
 
             {editor.items.map((item) => (
               <SpendingItemRow
