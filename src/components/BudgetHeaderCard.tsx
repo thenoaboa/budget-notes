@@ -78,7 +78,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 24,
     borderWidth: 1,
-    marginBottom: 18,
+    marginTop: 12,
+    marginBottom: 12,
   },
 
   headerMessage: {

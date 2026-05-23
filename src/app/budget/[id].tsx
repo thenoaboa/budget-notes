@@ -65,6 +65,20 @@ export default function BudgetScreen() {
         keyboardVerticalOffset={20}
       >
         <View style={styles.page}>
+          <BudgetHeaderCard
+            affirmingMessage={editor.affirmingMessage}
+            safeToSpend={editor.safeToSpend}
+            startingMoney={editor.startingMoney}
+            setStartingMoney={editor.setStartingMoney}
+            startingMoneyRef={editor.startingMoneyRef}
+            headerSubtext={editor.headerSubtext}
+            currentStyle={editor.currentStyle}
+            headerTextColor={editor.headerTextColor}
+            hasEnteredItems={editor.items.some(
+              (item) => item.amount.trim() !== "",
+            )}
+          />
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -74,20 +88,6 @@ export default function BudgetScreen() {
             alwaysBounceVertical
             bounces
           >
-            <BudgetHeaderCard
-              affirmingMessage={editor.affirmingMessage}
-              safeToSpend={editor.safeToSpend}
-              startingMoney={editor.startingMoney}
-              setStartingMoney={editor.setStartingMoney}
-              startingMoneyRef={editor.startingMoneyRef}
-              headerSubtext={editor.headerSubtext}
-              currentStyle={editor.currentStyle}
-              headerTextColor={editor.headerTextColor}
-              hasEnteredItems={editor.items.some(
-                (item) => item.amount.trim() !== "",
-              )}
-            />
-
             <View style={styles.taxOnlySection}>
               <MoneyAvailableSection
                 startingMoney=""
@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingTop: 12,
     paddingBottom: 80,
     backgroundColor: "#101820",
   },
