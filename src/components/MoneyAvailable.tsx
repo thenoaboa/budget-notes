@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   taxRow: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 8,
   },
 
   taxToggle: {
