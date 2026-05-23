@@ -103,6 +103,16 @@ export default function BudgetScreen() {
 
             {false && <Text style={styles.label}>Things to cover</Text>}
 
+            <BudgetSummaryBox
+              items={editor.items}
+              subtotal={editor.subtotal}
+              taxAmount={editor.taxAmount}
+              totalSpent={editor.totalSpent}
+              salesTaxEnabled={editor.salesTaxEnabled}
+              affirmingMessage={editor.affirmingMessage}
+              currentStyle={editor.currentStyle}
+            />
+
             {editor.items.map((item) => (
               <SpendingItemRow
                 key={item.id}
@@ -117,16 +127,6 @@ export default function BudgetScreen() {
                 focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
               />
             ))}
-
-            <BudgetSummaryBox
-              items={editor.items}
-              subtotal={editor.subtotal}
-              taxAmount={editor.taxAmount}
-              totalSpent={editor.totalSpent}
-              salesTaxEnabled={editor.salesTaxEnabled}
-              affirmingMessage={editor.affirmingMessage}
-              currentStyle={editor.currentStyle}
-            />
 
             {false && (
               <TouchableOpacity
