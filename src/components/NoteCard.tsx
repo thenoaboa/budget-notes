@@ -1,10 +1,5 @@
 import { useRef } from "react";
-import {
-  GestureResponderEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { Budget } from "../types/budget";
@@ -19,9 +14,7 @@ type Props = {
 export function NoteCard({ budget, onPress, onDelete }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
-  function handleDelete(event: GestureResponderEvent) {
-    event.stopPropagation();
-
+  function handleDelete() {
     swipeableRef.current?.close();
     onDelete();
   }
@@ -46,9 +39,13 @@ export function NoteCard({ budget, onPress, onDelete }: Props) {
       overshootRight={false}
     >
       <Pressable style={styles.card} onPress={handlePress}>
-        <Text style={styles.cardTitle}>
-          {budget.budgetName || "Untitled Note"}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.cardTitle} numberOfLines={1}>
+            {budget.budgetName || "Untitled Note"}
+          </Text>
+
+          <Text style={styles.editIcon}>✎</Text>
+        </View>
 
         <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
       </Pressable>
@@ -66,10 +63,25 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
   cardTitle: {
+    flex: 1,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
+    marginRight: 10,
+  },
+
+  editIcon: {
+    color: "#8A98A8",
+    fontSize: 17,
+    fontWeight: "800",
+    opacity: 0.55,
   },
 
   cardSubtitle: {
