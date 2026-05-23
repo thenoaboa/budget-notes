@@ -1,6 +1,6 @@
 // Save as: src/components/BudgetSummary.tsx
 
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
@@ -20,6 +20,7 @@ type Props = {
   salesTaxEnabled: boolean;
   affirmingMessage: string;
   currentStyle: BudgetStatusStyle;
+  onAddItem?: () => void;
 };
 
 function parseMoney(value: unknown) {
@@ -49,6 +50,7 @@ export function BudgetSummaryBox({
   salesTaxEnabled,
   affirmingMessage,
   currentStyle,
+  onAddItem,
 }: Props) {
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
@@ -83,6 +85,7 @@ export function BudgetSummaryBox({
         <>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryHeaderText}>Items:</Text>
+
             <Text style={styles.summaryHeaderText}>
               {formatMoney(subtotal)}
             </Text>
@@ -92,6 +95,7 @@ export function BudgetSummaryBox({
 
           {visibleItems.map((item) => {
             const amount = parseMoney(item.amount);
+
             const quantity =
               Number.isFinite(item.quantity) &&
               item.quantity &&
@@ -100,6 +104,7 @@ export function BudgetSummaryBox({
                 : 1;
 
             const itemName = item.name.trim() || "Unnamed item";
+
             const lineTotal = amount * quantity;
 
             return (
@@ -119,6 +124,7 @@ export function BudgetSummaryBox({
 
               <View style={styles.itemRow}>
                 <Text style={styles.itemText}>Estimated tax:</Text>
+
                 <Text style={styles.itemAmount}>{formatMoney(taxAmount)}</Text>
               </View>
             </>
@@ -128,26 +134,33 @@ export function BudgetSummaryBox({
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryTotal}>Planned total:</Text>
+
             <Text style={styles.summaryTotal}>{formatMoney(totalSpent)}</Text>
           </View>
         </>
       )}
 
-      <View
-        style={[
-          styles.statusNote,
-          {
-            backgroundColor: currentStyle.backgroundColor,
-            borderColor: currentStyle.borderColor,
-          },
-        ]}
-      >
-        <Text
-          style={[styles.statusNoteText, { color: currentStyle.textColor }]}
+      {false && (
+        <View
+          style={[
+            styles.statusNote,
+            {
+              backgroundColor: currentStyle.backgroundColor,
+              borderColor: currentStyle.borderColor,
+            },
+          ]}
         >
-          {affirmingMessage}
-        </Text>
-      </View>
+          <Text
+            style={[styles.statusNoteText, { color: currentStyle.textColor }]}
+          >
+            {affirmingMessage}
+          </Text>
+        </View>
+      )}
+
+      <Pressable style={styles.inlineAddButton} onPress={onAddItem}>
+        <Text style={styles.inlineAddButtonText}>+ Add Item</Text>
+      </Pressable>
     </View>
   );
 }
@@ -227,5 +240,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     textAlign: "center",
+  },
+
+  inlineAddButton: {
+    marginTop: 10,
+    backgroundColor: "#2ECC71",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  inlineAddButtonText: {
+    color: "#101820",
+    fontSize: 18,
+    fontWeight: "900",
   },
 });

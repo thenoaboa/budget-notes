@@ -128,9 +128,14 @@ export default function BudgetScreen() {
               currentStyle={editor.currentStyle}
             />
 
-            <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
-              <Text style={styles.addButtonText}>+ Add Item</Text>
-            </TouchableOpacity>
+            {false && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={editor.addItem}
+              >
+                <Text style={styles.addButtonText}>+ Add Item</Text>
+              </TouchableOpacity>
+            )}
 
             {false && (
               <BudgetBottomBar
