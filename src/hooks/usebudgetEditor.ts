@@ -239,7 +239,14 @@ export function useBudgetEditor(budgetId: string | undefined) {
       (currentItem) => currentItem.id === itemId,
     );
 
-    const nextItem = items[currentIndex + 1];
+    const isTopItem = currentIndex === 0;
+
+    if (isTopItem) {
+      addItem();
+      return;
+    }
+
+    const nextItem = items[currentIndex - 1];
 
     if (nextItem) {
       itemAmountRefs.current[nextItem.id]?.focus();
