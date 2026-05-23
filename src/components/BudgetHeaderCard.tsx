@@ -1,24 +1,46 @@
 // Save as: src/components/BudgetHeaderCard.tsx
 
-import { StyleSheet, Text, View } from "react-native";
+import { RefObject, useState } from "react";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
 type Props = {
   affirmingMessage: string;
   safeToSpend: number;
+  startingMoney: string;
+  setStartingMoney: (value: string) => void;
+  startingMoneyRef: RefObject<TextInput | null>;
   headerSubtext: string;
   currentStyle: BudgetStatusStyle;
   headerTextColor: string;
-  hasEnteredMoney: boolean;
+  hasEnteredItems: boolean;
 };
 
 export function BudgetHeaderCard({
   affirmingMessage,
   safeToSpend,
+  startingMoney,
+  setStartingMoney,
+  startingMoneyRef,
   headerSubtext,
   currentStyle,
+  hasEnteredItems,
 }: Props) {
+  const [isEditingAmount, setIsEditingAmount] = useState(false);
+
+  const startingAmount = parseFloat(startingMoney) || 0;
+  const displayAmount = hasEnteredItems ? safeToSpend : startingAmount;
+
+  const inputValue = isEditingAmount
+    ? startingMoney
+    : `$${displayAmount.toFixed(2)}`;
+
+  function handleAmountChange(value: string) {
+    const cleanedValue = value.replace(/[^0-9.]/g, "");
+    setStartingMoney(cleanedValue);
+  }
+
   return (
     <View
       style={[
@@ -31,7 +53,19 @@ export function BudgetHeaderCard({
     >
       <Text style={styles.headerMessage}>{affirmingMessage}</Text>
 
-      <Text style={styles.headerAmount}>${safeToSpend.toFixed(2)}</Text>
+      <TextInput
+        ref={startingMoneyRef}
+        style={styles.headerAmount}
+        value={inputValue}
+        onChangeText={handleAmountChange}
+        onFocus={() => setIsEditingAmount(true)}
+        onBlur={() => setIsEditingAmount(false)}
+        placeholder="$0.00"
+        placeholderTextColor="#FFFFFF"
+        keyboardType="decimal-pad"
+        returnKeyType="done"
+        selectTextOnFocus
+      />
 
       <Text style={styles.headerSubtext}>{headerSubtext}</Text>
     </View>
@@ -58,6 +92,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 42,
     fontWeight: "900",
+    padding: 0,
   },
 
   headerSubtext: {

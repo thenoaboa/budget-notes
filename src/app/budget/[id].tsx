@@ -77,10 +77,15 @@ export default function BudgetScreen() {
             <BudgetHeaderCard
               affirmingMessage={editor.affirmingMessage}
               safeToSpend={editor.safeToSpend}
+              startingMoney={editor.startingMoney}
+              setStartingMoney={editor.setStartingMoney}
+              startingMoneyRef={editor.startingMoneyRef}
               headerSubtext={editor.headerSubtext}
               currentStyle={editor.currentStyle}
               headerTextColor={editor.headerTextColor}
-              hasEnteredMoney={editor.startingMoney.trim() !== ""}
+              hasEnteredItems={editor.items.some(
+                (item) => item.amount.trim() !== "",
+              )}
             />
 
             <View style={styles.taxOnlySection}>
