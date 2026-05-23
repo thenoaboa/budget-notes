@@ -118,10 +118,6 @@ export default function BudgetScreen() {
               />
             ))}
 
-            <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
-              <Text style={styles.addButtonText}>+ Add Item</Text>
-            </TouchableOpacity>
-
             <BudgetSummaryBox
               items={editor.items}
               subtotal={editor.subtotal}
@@ -131,6 +127,10 @@ export default function BudgetScreen() {
               affirmingMessage={editor.affirmingMessage}
               currentStyle={editor.currentStyle}
             />
+
+            <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
+              <Text style={styles.addButtonText}>+ Add Item</Text>
+            </TouchableOpacity>
 
             {false && (
               <BudgetBottomBar
