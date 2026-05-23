@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
 
   taxOnlySection: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
 
   label: {
