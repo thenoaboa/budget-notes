@@ -172,6 +172,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: "#344657",
+    marginBottom: 18,
   },
 
   summaryRow: {
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     backgroundColor: "#2ECC71",
     borderRadius: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
