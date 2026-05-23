@@ -1,4 +1,5 @@
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -25,6 +26,15 @@ export default function HomeScreen() {
     confirmDeleteBudget,
     renameBudget,
   } = useBudgetNotes();
+
+  useFocusEffect(
+    useCallback(() => {
+      setSearchVisible(false);
+      setSearchQuery("");
+
+      return undefined;
+    }, [setSearchVisible, setSearchQuery]),
+  );
 
   function createNewBudget() {
     const id = Date.now().toString();
