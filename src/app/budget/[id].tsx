@@ -83,16 +83,18 @@ export default function BudgetScreen() {
               hasEnteredMoney={editor.startingMoney.trim() !== ""}
             />
 
-            <MoneyAvailableSection
-              startingMoney={editor.startingMoney}
-              setStartingMoney={editor.setStartingMoney}
-              salesTaxEnabled={editor.salesTaxEnabled}
-              setSalesTaxEnabled={editor.setSalesTaxEnabled}
-              taxRate={editor.taxRate}
-              setTaxRate={editor.setTaxRate}
-              startingMoneyRef={editor.startingMoneyRef}
-              taxRateRef={editor.taxRateRef}
-            />
+            <View style={styles.taxOnlySection}>
+              <MoneyAvailableSection
+                startingMoney=""
+                setStartingMoney={() => {}}
+                salesTaxEnabled={editor.salesTaxEnabled}
+                setSalesTaxEnabled={editor.setSalesTaxEnabled}
+                taxRate={editor.taxRate}
+                setTaxRate={editor.setTaxRate}
+                startingMoneyRef={editor.startingMoneyRef}
+                taxRateRef={editor.taxRateRef}
+              />
+            </View>
 
             <Text style={styles.label}>Things to cover</Text>
 
@@ -173,6 +175,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 80,
     backgroundColor: "#101820",
+  },
+
+  taxOnlySection: {
+    marginBottom: 12,
   },
 
   label: {
