@@ -264,12 +264,10 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   const status = useMemo(() => {
     if (moneyAvailableIsEmpty) {
-      return "neutral" as keyof typeof budgetStatusStyles;
+      return "green";
     }
 
-    return safeToSpend >= 0
-      ? ("positive" as keyof typeof budgetStatusStyles)
-      : ("negative" as keyof typeof budgetStatusStyles);
+    return safeToSpend >= 0 ? "green" : "red";
   }, [safeToSpend, moneyAvailableIsEmpty]);
 
   const affirmingMessage = useMemo(() => {
