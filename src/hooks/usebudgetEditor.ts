@@ -262,6 +262,8 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   const safeToSpend = starting - totalSpent;
 
+  // Controls the header card color only.
+  // No yellow color state: green at $0.00 and above, red below $0.00.
   const status = useMemo(() => {
     if (moneyAvailableIsEmpty) {
       return "green";
@@ -270,9 +272,32 @@ export function useBudgetEditor(budgetId: string | undefined) {
     return safeToSpend >= 0 ? "green" : "red";
   }, [safeToSpend, moneyAvailableIsEmpty]);
 
+  // Controls the message text only.
+  // Yellow messages can still appear when money is low,
+  // but the card color stays green until the balance is negative.
+  const messageStatus = useMemo(() => {
+    if (moneyAvailableIsEmpty) {
+      return "green";
+    }
+
+    if (safeToSpend < 0) {
+      return "red";
+    }
+
+    if (safeToSpend <= 50) {
+      return "yellow";
+    }
+
+    return "green";
+  }, [safeToSpend, moneyAvailableIsEmpty]);
+
   const affirmingMessage = useMemo(() => {
-    return getAffirmingMessage(safeToSpend, status, moneyAvailableIsEmpty);
-  }, [safeToSpend, status, moneyAvailableIsEmpty]);
+    return getAffirmingMessage(
+      safeToSpend,
+      messageStatus,
+      moneyAvailableIsEmpty,
+    );
+  }, [safeToSpend, messageStatus, moneyAvailableIsEmpty]);
 
   const headerSubtext = moneyAvailableIsEmpty
     ? "Add money available below"
