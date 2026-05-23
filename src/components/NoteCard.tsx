@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "800",
     opacity: 0.55,
+    transform: [{ scaleX: -1 }],
   },
 
   cardSubtitle: {
