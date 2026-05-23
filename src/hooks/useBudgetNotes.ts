@@ -2,7 +2,11 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { Alert, Platform } from "react-native";
 
-import { deleteBudgetById, loadBudgets } from "../storage/budgetStorage";
+import {
+  deleteBudgetById,
+  loadBudgets,
+  renameBudgetById,
+} from "../storage/budgetStorage";
 import type { Budget } from "../types/budget";
 import { getVisibleBudgets } from "../utils/budgetSearch";
 
@@ -24,6 +28,12 @@ export function useBudgetNotes() {
 
   async function deleteBudget(budgetId: string) {
     const updatedBudgets = await deleteBudgetById(budgets, budgetId);
+
+    setBudgets(updatedBudgets);
+  }
+
+  async function renameBudget(budgetId: string, newTitle: string) {
+    const updatedBudgets = await renameBudgetById(budgets, budgetId, newTitle);
 
     setBudgets(updatedBudgets);
   }
@@ -64,6 +74,7 @@ export function useBudgetNotes() {
     setSearchVisible,
     setSearchQuery,
     deleteBudget,
+    renameBudget,
     confirmDeleteBudget,
   };
 }

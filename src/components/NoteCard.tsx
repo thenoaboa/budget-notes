@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useRef, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { Budget } from "../types/budget";
@@ -9,10 +9,16 @@ type Props = {
   budget: Budget;
   onPress: () => void;
   onDelete: () => void;
+  onRename: (newTitle: string) => void;
 };
 
-export function NoteCard({ budget, onPress, onDelete }: Props) {
+export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(
+    budget.budgetName || "Untitled Note",
+  );
 
   function handleDelete() {
     swipeableRef.current?.close();
@@ -20,8 +26,19 @@ export function NoteCard({ budget, onPress, onDelete }: Props) {
   }
 
   function handlePress() {
+    if (isEditing) {
+      return;
+    }
+
     swipeableRef.current?.close();
     onPress();
+  }
+
+  function saveTitle() {
+    const cleanedTitle = draftTitle.trim() || "Untitled";
+    setDraftTitle(cleanedTitle);
+    setIsEditing(false);
+    onRename(cleanedTitle);
   }
 
   function renderRightActions() {
@@ -40,11 +57,29 @@ export function NoteCard({ budget, onPress, onDelete }: Props) {
     >
       <Pressable style={styles.card} onPress={handlePress}>
         <View style={styles.titleRow}>
-          <Text style={styles.cardTitle} numberOfLines={1}>
-            {budget.budgetName || "Untitled Note"}
-          </Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.cardTitleInput}
+              value={draftTitle}
+              onChangeText={setDraftTitle}
+              onBlur={saveTitle}
+              onSubmitEditing={saveTitle}
+              autoFocus
+              selectTextOnFocus
+              returnKeyType="done"
+            />
+          ) : (
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {budget.budgetName || "Untitled Note"}
+            </Text>
+          )}
 
-          <Text style={styles.editIcon}>✎</Text>
+          <Pressable
+            style={styles.editIconButton}
+            onPress={() => setIsEditing(true)}
+          >
+            <Text style={styles.editIcon}>✎</Text>
+          </Pressable>
         </View>
 
         <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
@@ -66,15 +101,26 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
 
   cardTitle: {
-    flex: 1,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
-    marginRight: 10,
+    maxWidth: "88%",
+  },
+
+  cardTitleInput: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "900",
+    padding: 0,
+    maxWidth: "88%",
+  },
+
+  editIconButton: {
+    marginLeft: 8,
+    padding: 4,
   },
 
   editIcon: {

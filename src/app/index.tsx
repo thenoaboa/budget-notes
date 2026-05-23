@@ -23,6 +23,7 @@ export default function HomeScreen() {
     setSearchVisible,
     setSearchQuery,
     confirmDeleteBudget,
+    renameBudget,
   } = useBudgetNotes();
 
   function createNewBudget() {
@@ -83,17 +84,13 @@ export default function HomeScreen() {
       )}
 
       {visibleBudgets.map((budget) => (
-        <View key={budget.id} style={styles.noteCardWrap}>
-          <NoteCard
-            budget={budget}
-            onPress={() => router.push(`/budget/${budget.id}` as any)}
-            onDelete={() => confirmDeleteBudget(budget.id)}
-          />
-
-          <Pressable style={styles.editIconButton}>
-            <Text style={styles.editIconText}>✎</Text>
-          </Pressable>
-        </View>
+        <NoteCard
+          key={budget.id}
+          budget={budget}
+          onPress={() => router.push(`/budget/${budget.id}` as any)}
+          onDelete={() => confirmDeleteBudget(budget.id)}
+          onRename={(newTitle) => renameBudget(budget.id, newTitle)}
+        />
       ))}
     </ScrollView>
   );
@@ -179,26 +176,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 21,
-  },
-
-  noteCardWrap: {
-    position: "relative",
-  },
-
-  editIconButton: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    opacity: 0.55,
-  },
-
-  editIconText: {
-    color: "#8A98A8",
-    fontSize: 18,
-    fontWeight: "800",
   },
 });
