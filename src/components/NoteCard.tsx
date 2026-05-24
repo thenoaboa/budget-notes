@@ -8,18 +8,11 @@ import { formatNoteDate } from "../utils/budgetDates";
 type Props = {
   budget: Budget;
   onPress: () => void;
-  onPressIn?: () => void;
   onDelete: () => void;
   onRename: (newTitle: string) => void;
 };
 
-export function NoteCard({
-  budget,
-  onPress,
-  onPressIn,
-  onDelete,
-  onRename,
-}: Props) {
+export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -30,14 +23,6 @@ export function NoteCard({
   function handleDelete() {
     swipeableRef.current?.close();
     onDelete();
-  }
-
-  function handlePressIn() {
-    if (isEditing) {
-      return;
-    }
-
-    onPressIn?.();
   }
 
   function handlePress() {
@@ -70,11 +55,7 @@ export function NoteCard({
       renderRightActions={renderRightActions}
       overshootRight={false}
     >
-      <Pressable
-        style={styles.card}
-        onPressIn={handlePressIn}
-        onPress={handlePress}
-      >
+      <Pressable style={styles.card} onPress={handlePress}>
         <View style={styles.titleRow}>
           {isEditing ? (
             <TextInput

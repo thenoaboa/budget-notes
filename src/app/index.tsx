@@ -26,18 +26,23 @@ export default function HomeScreen() {
     renameBudget,
   } = useBudgetNotes();
 
-  function resetSearch() {
-    setSearchVisible(false);
-    setSearchQuery("");
+  function resetSearchInBackground() {
+    setTimeout(() => {
+      setSearchVisible(false);
+      setSearchQuery("");
+    }, 300);
   }
 
   function createNewBudget() {
     const id = Date.now().toString();
+
     router.push(`/budget/${id}` as any);
+    resetSearchInBackground();
   }
 
   function openBudgetNote(id: string) {
     router.push(`/budget/${id}` as any);
+    resetSearchInBackground();
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -64,11 +69,7 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <Pressable
-        style={styles.newButton}
-        onPressIn={resetSearch}
-        onPress={createNewBudget}
-      >
+      <Pressable style={styles.newButton} onPress={createNewBudget}>
         <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
 
@@ -100,7 +101,6 @@ export default function HomeScreen() {
         <NoteCard
           key={budget.id}
           budget={budget}
-          onPressIn={resetSearch}
           onPress={() => openBudgetNote(budget.id)}
           onDelete={() => confirmDeleteBudget(budget.id)}
           onRename={(newTitle) => renameBudget(budget.id, newTitle)}
