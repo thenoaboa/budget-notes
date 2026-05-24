@@ -1,5 +1,4 @@
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useRouter } from "expo-router";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,7 +15,6 @@ import { useBudgetNotes } from "../hooks/useBudgetNotes";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [screenFocused, setScreenFocused] = useState(true);
 
   const {
     visibleBudgets,
@@ -27,18 +25,6 @@ export default function HomeScreen() {
     confirmDeleteBudget,
     renameBudget,
   } = useBudgetNotes();
-
-  const shouldShowSearch = searchVisible && screenFocused;
-
-  useFocusEffect(
-    useCallback(() => {
-      setScreenFocused(true);
-
-      return () => {
-        setScreenFocused(false);
-      };
-    }, []),
-  );
 
   function resetSearch() {
     setSearchVisible(false);
@@ -65,7 +51,7 @@ export default function HomeScreen() {
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const yOffset = event.nativeEvent.contentOffset.y;
 
-    if (yOffset < -24 && screenFocused) {
+    if (yOffset < -24) {
       setSearchVisible(true);
     }
   }
@@ -90,7 +76,7 @@ export default function HomeScreen() {
         <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
 
-      {shouldShowSearch && (
+      {searchVisible && (
         <TextInput
           style={styles.searchInput}
           placeholder="Search notes..."
