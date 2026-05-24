@@ -1,3 +1,4 @@
+import { useIsFocused } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import {
   NativeScrollEvent,
@@ -15,6 +16,7 @@ import { useBudgetNotes } from "../hooks/useBudgetNotes";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const isFocused = useIsFocused();
 
   const {
     visibleBudgets,
@@ -26,32 +28,30 @@ export default function HomeScreen() {
     renameBudget,
   } = useBudgetNotes();
 
+  const shouldShowSearch = searchVisible && isFocused;
+
   function resetSearch() {
     setSearchVisible(false);
     setSearchQuery("");
   }
 
-  function navigateAfterSearchReset(path: string) {
+  function createNewBudget() {
     resetSearch();
 
-    requestAnimationFrame(() => {
-      router.push(path as any);
-    });
-  }
-
-  function createNewBudget() {
     const id = Date.now().toString();
-    navigateAfterSearchReset(`/budget/${id}`);
+    router.push(`/budget/${id}` as any);
   }
 
   function openBudgetNote(id: string) {
-    navigateAfterSearchReset(`/budget/${id}`);
+    resetSearch();
+
+    router.push(`/budget/${id}` as any);
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const yOffset = event.nativeEvent.contentOffset.y;
 
-    if (yOffset < -24) {
+    if (yOffset < -24 && isFocused) {
       setSearchVisible(true);
     }
   }
@@ -76,7 +76,7 @@ export default function HomeScreen() {
         <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
 
-      {searchVisible && (
+      {shouldShowSearch && (
         <TextInput
           style={styles.searchInput}
           placeholder="Search notes..."
