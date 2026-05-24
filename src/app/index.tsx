@@ -1,5 +1,4 @@
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useRouter } from "expo-router";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -27,17 +26,21 @@ export default function HomeScreen() {
     renameBudget,
   } = useBudgetNotes();
 
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        setSearchVisible(false);
-        setSearchQuery("");
-      };
-    }, [setSearchVisible, setSearchQuery]),
-  );
+  function resetSearch() {
+    setSearchVisible(false);
+    setSearchQuery("");
+  }
 
   function createNewBudget() {
+    resetSearch();
+
     const id = Date.now().toString();
+    router.push(`/budget/${id}` as any);
+  }
+
+  function openBudgetNote(id: string) {
+    resetSearch();
+
     router.push(`/budget/${id}` as any);
   }
 
@@ -97,7 +100,7 @@ export default function HomeScreen() {
         <NoteCard
           key={budget.id}
           budget={budget}
-          onPress={() => router.push(`/budget/${budget.id}` as any)}
+          onPress={() => openBudgetNote(budget.id)}
           onDelete={() => confirmDeleteBudget(budget.id)}
           onRename={(newTitle) => renameBudget(budget.id, newTitle)}
         />
