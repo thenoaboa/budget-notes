@@ -1,5 +1,5 @@
-import { useIsFocused } from "@react-navigation/native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,7 +16,7 @@ import { useBudgetNotes } from "../hooks/useBudgetNotes";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const isFocused = useIsFocused();
+  const [screenFocused, setScreenFocused] = useState(true);
 
   const {
     visibleBudgets,
@@ -28,30 +28,44 @@ export default function HomeScreen() {
     renameBudget,
   } = useBudgetNotes();
 
-  const shouldShowSearch = searchVisible && isFocused;
+  const shouldShowSearch = searchVisible && screenFocused;
+
+  useFocusEffect(
+    useCallback(() => {
+      setScreenFocused(true);
+
+      return () => {
+        setScreenFocused(false);
+      };
+    }, []),
+  );
 
   function resetSearch() {
     setSearchVisible(false);
     setSearchQuery("");
   }
 
-  function createNewBudget() {
+  function navigateAfterSearchReset(path: string) {
     resetSearch();
 
+    requestAnimationFrame(() => {
+      router.push(path as any);
+    });
+  }
+
+  function createNewBudget() {
     const id = Date.now().toString();
-    router.push(`/budget/${id}` as any);
+    navigateAfterSearchReset(`/budget/${id}`);
   }
 
   function openBudgetNote(id: string) {
-    resetSearch();
-
-    router.push(`/budget/${id}` as any);
+    navigateAfterSearchReset(`/budget/${id}`);
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const yOffset = event.nativeEvent.contentOffset.y;
 
-    if (yOffset < -24 && isFocused) {
+    if (yOffset < -24 && screenFocused) {
       setSearchVisible(true);
     }
   }
