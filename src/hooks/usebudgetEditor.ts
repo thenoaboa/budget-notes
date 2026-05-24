@@ -70,12 +70,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
           setTaxRate(existingBudget.taxRate || "8.25");
 
-          if (
-            existingBudget.spendingItems &&
-            existingBudget.spendingItems.length > 0
-          ) {
-            setItems(mapStoredItemsToEditorItems(existingBudget.spendingItems));
-          }
+          setItems(
+            mapStoredItemsToEditorItems(existingBudget.spendingItems || []),
+          );
         } else {
           setCreatedAt(getCreatedDateFromId(budgetId));
         }
@@ -111,8 +108,13 @@ export function useBudgetEditor(budgetId: string | undefined) {
           taxRate,
         });
 
-        setCreatedAt(savedDates.createdAt);
-        setLastEditedAt(savedDates.updatedAt);
+        const savedCreatedAt =
+          savedDates.createdAt || createdAt || getCreatedDateFromId(budgetId);
+
+        const savedUpdatedAt = savedDates.updatedAt || new Date().toISOString();
+
+        setCreatedAt(savedCreatedAt);
+        setLastEditedAt(savedUpdatedAt);
       } catch (error) {
         console.log("Auto-save failed:", error);
       }

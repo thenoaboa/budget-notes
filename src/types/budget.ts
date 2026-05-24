@@ -1,17 +1,20 @@
-export type SpendingItem = {
-  id: string;
-  amount: string;
+export type StoredBudgetItem = {
+  id: number;
   name: string;
-  quantity: string;
-  included: boolean;
+  amount: string;
+  quantity?: number;
+  included?: boolean;
 };
 
 export type Budget = {
   id: string;
   budgetName: string;
   amount: string;
-  spendingItems: SpendingItem[];
-  notes: string;
+  spendingItems: StoredBudgetItem[];
+
   createdAt?: string;
   updatedAt?: string;
+
+  salesTaxEnabled?: boolean;
+  taxRate?: string;
 };
