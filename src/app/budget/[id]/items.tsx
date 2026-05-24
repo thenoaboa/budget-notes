@@ -1,0 +1,105 @@
+// Save as: src/app/budget/[id]/items.tsx
+
+import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+    KeyboardAvoidingView,
+    Platform,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+
+import { SpendingItemRow } from "../../../components/SpendingItemCard";
+import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
+
+export default function BudgetItemsScreen() {
+  const router = useRouter();
+
+  const { id } = useLocalSearchParams();
+
+  const budgetId = Array.isArray(id) ? id[0] : id;
+
+  const editor = useBudgetEditor(budgetId);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={20}
+      >
+        <View style={styles.page}>
+          <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
+            <Text style={styles.addButtonText}>+ Add Item</Text>
+          </TouchableOpacity>
+
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            alwaysBounceVertical
+            bounces
+          >
+            {editor.items.map((item) => (
+              <SpendingItemRow
+                key={item.id}
+                item={item}
+                itemNameRefs={editor.itemNameRefs}
+                itemAmountRefs={editor.itemAmountRefs}
+                updateItem={editor.updateItem}
+                increaseQuantity={editor.increaseQuantity}
+                resetQuantity={editor.resetQuantity}
+                toggleIncluded={editor.toggleIncluded}
+                deleteItem={editor.deleteItem}
+                focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#101820",
+  },
+
+  keyboardView: {
+    flex: 1,
+  },
+
+  page: {
+    flex: 1,
+    backgroundColor: "#101820",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+
+  scroll: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingBottom: 120,
+  },
+
+  addButton: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginBottom: 14,
+  },
+
+  addButtonText: {
+    color: "#101820",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+});
