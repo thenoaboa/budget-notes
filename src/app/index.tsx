@@ -73,7 +73,10 @@ export default function HomeScreen() {
         <Text style={styles.newButtonText}>+ New Note</Text>
       </Pressable>
 
-      {searchVisible && (
+      <View
+        style={[styles.searchSlot, !searchVisible && styles.searchSlotHidden]}
+        pointerEvents={searchVisible ? "auto" : "none"}
+      >
         <TextInput
           style={styles.searchInput}
           placeholder="Search notes..."
@@ -81,7 +84,7 @@ export default function HomeScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-      )}
+      </View>
 
       {visibleBudgets.length === 0 && (
         <View style={styles.emptyCard}>
@@ -156,6 +159,14 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  searchSlot: {
+    marginBottom: 18,
+  },
+
+  searchSlotHidden: {
+    opacity: 0,
+  },
+
   searchInput: {
     backgroundColor: "#243342",
     color: "#FFFFFF",
@@ -166,7 +177,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     borderWidth: 1,
     borderColor: "#3B4D5F",
-    marginBottom: 18,
   },
 
   emptyCard: {
