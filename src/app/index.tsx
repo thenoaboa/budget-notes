@@ -31,17 +31,21 @@ export default function HomeScreen() {
     setSearchQuery("");
   }
 
-  function createNewBudget() {
+  function navigateAfterSearchReset(path: string) {
     resetSearch();
 
+    requestAnimationFrame(() => {
+      router.push(path as any);
+    });
+  }
+
+  function createNewBudget() {
     const id = Date.now().toString();
-    router.push(`/budget/${id}` as any);
+    navigateAfterSearchReset(`/budget/${id}`);
   }
 
   function openBudgetNote(id: string) {
-    resetSearch();
-
-    router.push(`/budget/${id}` as any);
+    navigateAfterSearchReset(`/budget/${id}`);
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
