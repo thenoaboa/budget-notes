@@ -72,7 +72,7 @@ export function BudgetSummaryBox({
     return isIncluded && (name !== "" || amount > 0);
   });
 
-  function renderLeftActions(itemId: number) {
+  function renderRightActions(itemId: number) {
     return (
       <Pressable
         style={styles.deleteAction}
@@ -124,8 +124,8 @@ export function BudgetSummaryBox({
             return (
               <Swipeable
                 key={item.id}
-                renderLeftActions={() => renderLeftActions(item.id)}
-                overshootLeft={false}
+                renderRightActions={() => renderRightActions(item.id)}
+                overshootRight={false}
               >
                 <Pressable
                   style={styles.itemRow}
