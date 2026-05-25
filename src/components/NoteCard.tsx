@@ -184,21 +184,20 @@ const styles = StyleSheet.create({
   },
 
   editIconButton: {
-    width: 30,
-    height: 30,
-
-    borderRadius: 9,
+    width: 32,
+    height: 32,
 
     alignItems: "center",
     justifyContent: "center",
+
+    marginRight: 8,
   },
 
   editIcon: {
     color: "#8A98A8",
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "900",
-    opacity: 0.75,
-    transform: [{ scaleX: -1 }],
+    opacity: 0.9,
   },
 
   shareButton: {
