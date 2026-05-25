@@ -1,4 +1,6 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+// Save as: src/components/ReceiptItemOverlay.tsx
+
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SpendingItemRow } from "./SpendingItemCard";
 
@@ -47,6 +49,14 @@ export function ReceiptItemOverlay({
         <Pressable style={styles.background} onPress={onClose} />
 
         <View style={styles.card}>
+          <View style={styles.topRow}>
+            <Text style={styles.title}>Edit Item</Text>
+
+            <Pressable onPress={onClose}>
+              <Text style={styles.close}>×</Text>
+            </Pressable>
+          </View>
+
           <SpendingItemRow
             item={item}
             itemNameRefs={itemNameRefs}
@@ -58,6 +68,10 @@ export function ReceiptItemOverlay({
             deleteItem={deleteItem}
             focusNextItemOrAddCurrent={focusNextItemOrAddCurrent}
           />
+
+          <Pressable style={styles.finishButton} onPress={onClose}>
+            <Text style={styles.finishButtonText}>Finish</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -77,6 +91,44 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: "92%",
+    width: "88%",
+    backgroundColor: "#1B2633",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+  },
+
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+
+  title: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  close: {
+    color: "#A7B1BD",
+    fontSize: 28,
+    fontWeight: "800",
+  },
+
+  finishButton: {
+    marginTop: 8,
+    backgroundColor: "#2ECC71",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+
+  finishButtonText: {
+    color: "#101820",
+    fontSize: 17,
+    fontWeight: "900",
   },
 });
