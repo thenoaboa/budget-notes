@@ -20,6 +20,16 @@ import {
 
 import { getCreatedDateFromId } from "../utils/budgetEditorDates";
 
+function createEmptyItem(): BudgetItem {
+  return {
+    id: Date.now(),
+    name: "",
+    amount: "",
+    quantity: 1,
+    included: true,
+  };
+}
+
 export function useBudgetEditor(budgetId: string | undefined) {
   const [noteTitle, setNoteTitle] = useState("");
   const [createdAt, setCreatedAt] = useState("");
@@ -31,6 +41,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
   const [taxRate, setTaxRate] = useState("8.25");
 
   const [items, setItems] = useState<BudgetItem[]>([]);
+
+  const [showAddItemOverlay, setShowAddItemOverlay] = useState(false);
+  const [draftItem, setDraftItem] = useState<BudgetItem>(createEmptyItem());
 
   const [hasLoaded, setHasLoaded] = useState(false);
 
@@ -133,22 +146,45 @@ export function useBudgetEditor(budgetId: string | undefined) {
   ]);
 
   function addItem() {
-    const newId = Date.now();
+    const newItem = createEmptyItem();
+
+    setItems((prev) => [newItem, ...prev]);
+
+    setTimeout(() => {
+      itemAmountRefs.current[newItem.id]?.focus();
+    }, 100);
+  }
+
+  function openAddItemOverlay() {
+    setDraftItem(createEmptyItem());
+    setShowAddItemOverlay(true);
+  }
+
+  function closeAddItemOverlay() {
+    setShowAddItemOverlay(false);
+  }
+
+  function addItemFromDraft() {
+    const hasName = draftItem.name.trim() !== "";
+    const hasAmount = draftItem.amount.trim() !== "";
+
+    if (!hasName && !hasAmount) {
+      setShowAddItemOverlay(false);
+      return;
+    }
 
     setItems((prev) => [
       {
-        id: newId,
-        name: "",
-        amount: "",
-        quantity: 1,
-        included: true,
+        ...draftItem,
+        id: draftItem.id || Date.now(),
+        quantity: draftItem.quantity || 1,
+        included: draftItem.included ?? true,
       },
       ...prev,
     ]);
 
-    setTimeout(() => {
-      itemAmountRefs.current[newId]?.focus();
-    }, 100);
+    setShowAddItemOverlay(false);
+    setDraftItem(createEmptyItem());
   }
 
   function updateItem(id: number, field: "name" | "amount", value: string) {
@@ -338,6 +374,13 @@ export function useBudgetEditor(budgetId: string | undefined) {
     toggleIncluded,
     deleteItem,
     focusNextItemOrAddCurrent,
+
+    showAddItemOverlay,
+    draftItem,
+    setDraftItem,
+    openAddItemOverlay,
+    closeAddItemOverlay,
+    addItemFromDraft,
 
     startingMoneyRef,
     taxRateRef,

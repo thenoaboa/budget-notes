@@ -1,6 +1,6 @@
 // Save as: src/app/budget/[id]/index.tsx
 
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -11,13 +11,12 @@ import {
 } from "react-native";
 
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
+import { AddItemOverlay } from "../../../components/AddItemOverlay";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 
 export default function BudgetDashboardScreen() {
-  const router = useRouter();
-
   const { id } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
@@ -74,9 +73,17 @@ export default function BudgetDashboardScreen() {
               salesTaxEnabled={editor.salesTaxEnabled}
               affirmingMessage={editor.affirmingMessage}
               currentStyle={editor.currentStyle}
-              onAddItem={() => router.push(`/budget/${budgetId}/items` as any)}
+              onAddItem={editor.openAddItemOverlay}
             />
           </ScrollView>
+
+          <AddItemOverlay
+            visible={editor.showAddItemOverlay}
+            draftItem={editor.draftItem}
+            setDraftItem={editor.setDraftItem}
+            onClose={editor.closeAddItemOverlay}
+            onAdd={editor.addItemFromDraft}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
