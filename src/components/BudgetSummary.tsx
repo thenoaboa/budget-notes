@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 4,
+    paddingRight: 10,
     backgroundColor: "#1B2633",
   },
 
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
   },
 
   itemAmount: {
-    width: 90,
+    width: 120,
     color: "#CAD3DD",
     fontSize: 15,
     fontWeight: "800",
