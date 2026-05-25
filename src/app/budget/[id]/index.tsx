@@ -1,16 +1,20 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Sharing from "expo-sharing";
+import { useRef } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { captureRef } from "react-native-view-shot";
 
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
@@ -27,6 +31,39 @@ export default function BudgetDashboardScreen() {
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
+
+  const receiptCaptureRef = useRef<View>(null);
+
+  async function shareReceipt() {
+    if (!receiptCaptureRef.current) {
+      return;
+    }
+
+    try {
+      const uri = await captureRef(receiptCaptureRef, {
+        format: "png",
+        quality: 1,
+      });
+
+      const sharingAvailable = await Sharing.isAvailableAsync();
+
+      if (!sharingAvailable) {
+        Alert.alert(
+          "Sharing unavailable",
+          "Sharing is not available on this device.",
+        );
+        return;
+      }
+
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.log("Share receipt failed:", error);
+      Alert.alert(
+        "Share failed",
+        "Something went wrong while sharing this receipt.",
+      );
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -70,23 +107,26 @@ export default function BudgetDashboardScreen() {
               />
             </View>
 
-            <BudgetTitleCard
-              noteTitle={editor.noteTitle}
-              setNoteTitle={editor.setNoteTitle}
-            />
+            <View ref={receiptCaptureRef} collapsable={false}>
+              <BudgetTitleCard
+                noteTitle={editor.noteTitle}
+                setNoteTitle={editor.setNoteTitle}
+                onShare={shareReceipt}
+              />
 
-            <BudgetSummaryBox
-              items={editor.items}
-              subtotal={editor.subtotal}
-              taxAmount={editor.taxAmount}
-              totalSpent={editor.totalSpent}
-              salesTaxEnabled={editor.salesTaxEnabled}
-              affirmingMessage={editor.affirmingMessage}
-              currentStyle={editor.currentStyle}
-              onAddItem={editor.openAddItemOverlay}
-              onPressItem={editor.openReceiptItemOverlay}
-              onDeleteItem={editor.deleteItem}
-            />
+              <BudgetSummaryBox
+                items={editor.items}
+                subtotal={editor.subtotal}
+                taxAmount={editor.taxAmount}
+                totalSpent={editor.totalSpent}
+                salesTaxEnabled={editor.salesTaxEnabled}
+                affirmingMessage={editor.affirmingMessage}
+                currentStyle={editor.currentStyle}
+                onAddItem={editor.openAddItemOverlay}
+                onPressItem={editor.openReceiptItemOverlay}
+                onDeleteItem={editor.deleteItem}
+              />
+            </View>
 
             <View style={styles.bottomButtonRow}>
               <TouchableOpacity
