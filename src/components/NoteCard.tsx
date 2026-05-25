@@ -198,6 +198,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "900",
     opacity: 0.9,
+    transform: [{ scaleX: -1 }],
   },
 
   shareButton: {
