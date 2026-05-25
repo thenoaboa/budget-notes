@@ -169,6 +169,9 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
+
+    borderWidth: 1,
+    borderColor: "rgba(46, 204, 113, 0.35)",
   },
 
   backButtonText: {
