@@ -163,7 +163,6 @@ const styles = StyleSheet.create({
 
   quantityButton: {
     width: 54,
-    height: 54,
     marginLeft: 2,
     paddingVertical: 14,
     borderRadius: 14,
