@@ -15,6 +15,7 @@ import {
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
+import { BudgetTitleCard } from "../../../components/BudgetTitleCard";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
@@ -68,6 +69,11 @@ export default function BudgetDashboardScreen() {
                 taxRateRef={editor.taxRateRef}
               />
             </View>
+
+            <BudgetTitleCard
+              noteTitle={editor.noteTitle}
+              setNoteTitle={editor.setNoteTitle}
+            />
 
             <BudgetSummaryBox
               items={editor.items}
@@ -127,39 +133,17 @@ export default function BudgetDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#101820",
-  },
-
-  keyboardView: {
-    flex: 1,
-  },
-
-  page: {
-    flex: 1,
-    backgroundColor: "#101820",
-    paddingHorizontal: 16,
-  },
-
-  scroll: {
-    flex: 1,
-    backgroundColor: "#101820",
-  },
-
-  scrollContent: {
-    paddingBottom: 80,
-    backgroundColor: "#101820",
-  },
-
-  taxOnlySection: {
-    marginBottom: 8,
-  },
+  safeArea: { flex: 1, backgroundColor: "#101820" },
+  keyboardView: { flex: 1 },
+  page: { flex: 1, backgroundColor: "#101820", paddingHorizontal: 16 },
+  scroll: { flex: 1, backgroundColor: "#101820" },
+  scrollContent: { paddingBottom: 80, backgroundColor: "#101820" },
+  taxOnlySection: { marginBottom: 8 },
 
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 2,
+    marginTop: 1,
   },
 
   backButton: {
@@ -169,9 +153,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
-
-    borderWidth: 1,
-    borderColor: "rgba(46, 204, 113, 0.35)",
   },
 
   backButtonText: {
