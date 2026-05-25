@@ -21,13 +21,15 @@ export function BudgetTitleCard({ noteTitle, setNoteTitle, onShare }: Props) {
           returnKeyType="done"
         />
 
-        <Pressable
-          style={styles.shareButton}
-          onPress={onShare}
-          disabled={!onShare}
-        >
-          <Text style={styles.shareButtonText}>↑</Text>
-        </Pressable>
+        {false && (
+          <Pressable
+            style={styles.shareButton}
+            onPress={onShare}
+            disabled={!onShare}
+          >
+            <Text style={styles.shareButtonText}>↑</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

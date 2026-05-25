@@ -129,9 +129,11 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
               <Text style={styles.editIcon}>✎</Text>
             </Pressable>
 
-            <Pressable style={styles.shareButton} onPress={handleShare}>
-              <Text style={styles.shareIcon}>↑</Text>
-            </Pressable>
+            {false && (
+              <Pressable style={styles.shareButton} onPress={handleShare}>
+                <Text style={styles.shareIcon}>↑</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
