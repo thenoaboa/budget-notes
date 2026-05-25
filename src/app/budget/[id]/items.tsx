@@ -2,14 +2,14 @@
 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { SpendingItemRow } from "../../../components/SpendingItemCard";
@@ -32,6 +32,13 @@ export default function BudgetItemsScreen() {
         keyboardVerticalOffset={20}
       >
         <View style={styles.page}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>← Back To Budget</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
             <Text style={styles.addButtonText}>+ Add Item</Text>
           </TouchableOpacity>
@@ -87,6 +94,22 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingBottom: 120,
+  },
+
+  backButton: {
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    marginBottom: 14,
+  },
+
+  backButtonText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
   },
 
   addButton: {
