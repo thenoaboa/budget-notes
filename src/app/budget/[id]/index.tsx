@@ -82,19 +82,21 @@ export default function BudgetDashboardScreen() {
               onDeleteItem={editor.deleteItem}
             />
 
-            <TouchableOpacity
-              style={styles.editReceiptButton}
-              onPress={() => router.push(`/budget/${budgetId}/items` as any)}
-            >
-              <Text style={styles.editReceiptButtonText}>Edit Receipt</Text>
-            </TouchableOpacity>
+            <View style={styles.bottomButtonRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.push("/" as any)}
+              >
+                <Text style={styles.backButtonText}>← Back To Menu</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.push("/" as any)}
-            >
-              <Text style={styles.backButtonText}>← Back To Menu</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.editReceiptButton}
+                onPress={() => router.push(`/budget/${budgetId}/items` as any)}
+              >
+                <Text style={styles.editReceiptButtonText}>Edit Receipt →</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
 
           <AddItemOverlay
@@ -154,33 +156,43 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  editReceiptButton: {
-    backgroundColor: "#243342",
-    borderRadius: 14,
-    paddingVertical: 13,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#3B4D5F",
-    marginTop: -8,
-  },
-
-  editReceiptButtonText: {
-    color: "#CAD3DD",
-    fontSize: 15,
-    fontWeight: "900",
+  bottomButtonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
   },
 
   backButton: {
+    flex: 1,
     backgroundColor: "#123527",
     borderRadius: 14,
     paddingVertical: 13,
     alignItems: "center",
-    marginTop: 12,
+    justifyContent: "center",
   },
 
   backButtonText: {
     color: "#2ECC71",
     fontSize: 15,
     fontWeight: "900",
+    textAlign: "center",
+  },
+
+  editReceiptButton: {
+    flex: 1,
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+  },
+
+  editReceiptButtonText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
+    textAlign: "center",
   },
 });
