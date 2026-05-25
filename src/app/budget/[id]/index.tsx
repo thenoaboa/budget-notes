@@ -88,6 +88,13 @@ export default function BudgetDashboardScreen() {
             >
               <Text style={styles.editReceiptButtonText}>Edit Receipt</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.push("/" as any)}
+            >
+              <Text style={styles.backButtonText}>← Back To Menu</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <AddItemOverlay
@@ -159,6 +166,22 @@ const styles = StyleSheet.create({
 
   editReceiptButtonText: {
     color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  backButton: {
+    backgroundColor: "#123527",
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#2ECC71",
+    marginTop: 12,
+  },
+
+  backButtonText: {
+    color: "#2ECC71",
     fontSize: 15,
     fontWeight: "900",
   },
