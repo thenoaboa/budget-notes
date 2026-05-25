@@ -1,12 +1,14 @@
 // Save as: src/app/budget/[id]/index.tsx
 
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
     ScrollView,
     StyleSheet,
+    Text,
+    TouchableOpacity,
     View,
 } from "react-native";
 
@@ -17,6 +19,7 @@ import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 
 export default function BudgetDashboardScreen() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
@@ -75,6 +78,13 @@ export default function BudgetDashboardScreen() {
               currentStyle={editor.currentStyle}
               onAddItem={editor.openAddItemOverlay}
             />
+
+            <TouchableOpacity
+              style={styles.editReceiptButton}
+              onPress={() => router.push(`/budget/${budgetId}/items` as any)}
+            >
+              <Text style={styles.editReceiptButtonText}>Edit Receipt</Text>
+            </TouchableOpacity>
           </ScrollView>
 
           <AddItemOverlay
@@ -118,5 +128,21 @@ const styles = StyleSheet.create({
 
   taxOnlySection: {
     marginBottom: 8,
+  },
+
+  editReceiptButton: {
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    marginTop: -8,
+  },
+
+  editReceiptButtonText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
   },
 });
