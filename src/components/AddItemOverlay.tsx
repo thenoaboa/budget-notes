@@ -26,6 +26,20 @@ export function AddItemOverlay({
   onClose,
   onAdd,
 }: Props) {
+  function increaseQuantity() {
+    setDraftItem((prev) => ({
+      ...prev,
+      quantity: prev.quantity + 1,
+    }));
+  }
+
+  function resetQuantity() {
+    setDraftItem((prev) => ({
+      ...prev,
+      quantity: 1,
+    }));
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -40,19 +54,31 @@ export function AddItemOverlay({
             </Pressable>
           </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="$0"
-            placeholderTextColor="#8A98A8"
-            keyboardType="decimal-pad"
-            value={draftItem.amount}
-            onChangeText={(text) =>
-              setDraftItem((prev) => ({
-                ...prev,
-                amount: text,
-              }))
-            }
-          />
+          <View style={styles.amountRow}>
+            <TextInput
+              style={styles.amountInput}
+              placeholder="$0"
+              placeholderTextColor="#8A98A8"
+              keyboardType="decimal-pad"
+              value={draftItem.amount}
+              onChangeText={(text) =>
+                setDraftItem((prev) => ({
+                  ...prev,
+                  amount: text,
+                }))
+              }
+            />
+
+            <Pressable
+              style={styles.quantityButton}
+              onPress={increaseQuantity}
+              onLongPress={resetQuantity}
+            >
+              <Text style={styles.quantityButtonText}>
+                x{draftItem.quantity}
+              </Text>
+            </Pressable>
+          </View>
 
           <TextInput
             style={styles.input}
@@ -114,6 +140,39 @@ const styles = StyleSheet.create({
     color: "#A7B1BD",
     fontSize: 28,
     fontWeight: "800",
+  },
+
+  amountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+
+  amountInput: {
+    flex: 1,
+    backgroundColor: "#2A3948",
+    color: "#FFFFFF",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  quantityButton: {
+    width: 54,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#2A3948",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  quantityButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
   },
 
   input: {
