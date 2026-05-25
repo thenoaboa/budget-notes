@@ -21,6 +21,7 @@ type Props = {
   affirmingMessage: string;
   currentStyle: BudgetStatusStyle;
   onAddItem?: () => void;
+  onPressItem?: (itemId: number) => void;
 };
 
 function parseMoney(value: unknown) {
@@ -51,6 +52,7 @@ export function BudgetSummaryBox({
   affirmingMessage,
   currentStyle,
   onAddItem,
+  onPressItem,
 }: Props) {
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
@@ -108,13 +110,17 @@ export function BudgetSummaryBox({
             const lineTotal = amount * quantity;
 
             return (
-              <View key={item.id} style={styles.itemRow}>
+              <Pressable
+                key={item.id}
+                style={styles.itemRow}
+                onPress={() => onPressItem?.(item.id)}
+              >
                 <Text style={styles.itemText} numberOfLines={1}>
                   {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
                 </Text>
 
                 <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
-              </View>
+              </Pressable>
             );
           })}
 

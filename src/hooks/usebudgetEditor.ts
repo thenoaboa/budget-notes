@@ -45,6 +45,10 @@ export function useBudgetEditor(budgetId: string | undefined) {
   const [showAddItemOverlay, setShowAddItemOverlay] = useState(false);
   const [draftItem, setDraftItem] = useState<BudgetItem>(createEmptyItem());
 
+  const [selectedReceiptItemId, setSelectedReceiptItemId] = useState<
+    number | null
+  >(null);
+
   const [hasLoaded, setHasLoaded] = useState(false);
 
   const skipNextAutoSaveRef = useRef(true);
@@ -76,11 +80,8 @@ export function useBudgetEditor(budgetId: string | undefined) {
           );
 
           setLastEditedAt(existingBudget.updatedAt || "");
-
           setStartingMoney(existingBudget.amount || "");
-
           setSalesTaxEnabled(existingBudget.salesTaxEnabled ?? false);
-
           setTaxRate(existingBudget.taxRate || "8.25");
 
           setItems(
@@ -91,7 +92,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
         }
       } catch (error) {
         console.log("Load budget failed:", error);
-
         setCreatedAt(getCreatedDateFromId(budgetId));
       } finally {
         setHasLoaded(true);
@@ -187,6 +187,14 @@ export function useBudgetEditor(budgetId: string | undefined) {
     setDraftItem(createEmptyItem());
   }
 
+  function openReceiptItemOverlay(itemId: number) {
+    setSelectedReceiptItemId(itemId);
+  }
+
+  function closeReceiptItemOverlay() {
+    setSelectedReceiptItemId(null);
+  }
+
   function updateItem(id: number, field: "name" | "amount", value: string) {
     setItems((prev) =>
       prev.map((item) =>
@@ -245,6 +253,10 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
       delete itemNameRefs.current[id];
       delete itemAmountRefs.current[id];
+
+      if (selectedReceiptItemId === id) {
+        setSelectedReceiptItemId(null);
+      }
     };
 
     if (Platform.OS === "web") {
@@ -349,6 +361,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
     ? "#FFFFFF"
     : currentStyle.textColor;
 
+  const selectedReceiptItem =
+    items.find((item) => item.id === selectedReceiptItemId) || null;
+
   return {
     noteTitle,
     setNoteTitle,
@@ -381,6 +396,11 @@ export function useBudgetEditor(budgetId: string | undefined) {
     openAddItemOverlay,
     closeAddItemOverlay,
     addItemFromDraft,
+
+    selectedReceiptItemId,
+    selectedReceiptItem,
+    openReceiptItemOverlay,
+    closeReceiptItemOverlay,
 
     startingMoneyRef,
     taxRateRef,

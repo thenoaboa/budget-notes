@@ -16,6 +16,7 @@ import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
+import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 
 export default function BudgetDashboardScreen() {
@@ -77,6 +78,7 @@ export default function BudgetDashboardScreen() {
               affirmingMessage={editor.affirmingMessage}
               currentStyle={editor.currentStyle}
               onAddItem={editor.openAddItemOverlay}
+              onPressItem={editor.openReceiptItemOverlay}
             />
 
             <TouchableOpacity
@@ -93,6 +95,20 @@ export default function BudgetDashboardScreen() {
             setDraftItem={editor.setDraftItem}
             onClose={editor.closeAddItemOverlay}
             onAdd={editor.addItemFromDraft}
+          />
+
+          <ReceiptItemOverlay
+            visible={editor.selectedReceiptItemId !== null}
+            item={editor.selectedReceiptItem}
+            itemNameRefs={editor.itemNameRefs}
+            itemAmountRefs={editor.itemAmountRefs}
+            updateItem={editor.updateItem}
+            increaseQuantity={editor.increaseQuantity}
+            resetQuantity={editor.resetQuantity}
+            toggleIncluded={editor.toggleIncluded}
+            deleteItem={editor.deleteItem}
+            focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
+            onClose={editor.closeReceiptItemOverlay}
           />
         </View>
       </KeyboardAvoidingView>
