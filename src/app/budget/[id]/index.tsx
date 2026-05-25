@@ -93,14 +93,14 @@ export default function BudgetDashboardScreen() {
                 style={styles.backButton}
                 onPress={() => router.push("/" as any)}
               >
-                <Text style={styles.backButtonText}>← Back To Menu</Text>
+                <Text style={styles.backButtonText}>← Menu</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.editReceiptButton}
                 onPress={() => router.push(`/budget/${budgetId}/items` as any)}
               >
-                <Text style={styles.editReceiptButtonText}>Edit Receipt →</Text>
+                <Text style={styles.editReceiptButtonText}>Receipt →</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
