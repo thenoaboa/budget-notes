@@ -151,6 +151,7 @@ const styles = StyleSheet.create({
 
   amountInput: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: "#2A3948",
     color: "#FFFFFF",
     borderRadius: 14,
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
 
   quantityButton: {
     width: 54,
-    paddingVertical: 14,
+    paddingVertical: 8,
     borderRadius: 14,
     backgroundColor: "#2A3948",
     alignItems: "center",
