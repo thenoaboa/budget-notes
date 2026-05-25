@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 4,
+    marginTop: 2,
   },
 
   backButton: {
