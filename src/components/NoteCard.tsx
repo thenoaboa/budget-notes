@@ -43,9 +43,11 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
 
   function renderRightActions() {
     return (
-      <Pressable style={styles.deleteAction} onPress={handleDelete}>
-        <Text style={styles.deleteActionText}>Delete</Text>
-      </Pressable>
+      <View style={styles.deleteActionWrapper}>
+        <Pressable style={styles.deleteAction} onPress={handleDelete}>
+          <Text style={styles.deleteActionText}>Delete</Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -138,6 +140,11 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
+  deleteActionWrapper: {
+    paddingLeft: 12,
+    marginBottom: 14,
+  },
+
   deleteAction: {
     backgroundColor: "#3A1C1C",
     borderColor: "#FF6B6B",
@@ -145,7 +152,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: 90,
-    marginBottom: 14,
+    height: "100%",
     borderRadius: 18,
   },
 
