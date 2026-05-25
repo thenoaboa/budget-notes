@@ -1,6 +1,6 @@
 // Save as: src/components/BudgetTitleCard.tsx
 
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 
 type Props = {
   noteTitle: string;
@@ -10,8 +10,6 @@ type Props = {
 export function BudgetTitleCard({ noteTitle, setNoteTitle }: Props) {
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Budget Title</Text>
-
       <TextInput
         style={styles.input}
         placeholder="Untitled Budget"
@@ -26,29 +24,21 @@ export function BudgetTitleCard({ noteTitle, setNoteTitle }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#1B2633",
+    backgroundColor: "#2A3948",
     borderRadius: 18,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+
     borderWidth: 1,
     borderColor: "#344657",
+
     marginBottom: 14,
   },
 
-  label: {
-    color: "#8A98A8",
-    fontSize: 13,
-    fontWeight: "800",
-    marginBottom: 10,
-    letterSpacing: 0.3,
-  },
-
   input: {
-    backgroundColor: "#2A3948",
     color: "#FFFFFF",
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
     fontSize: 22,
     fontWeight: "900",
+    padding: 0,
   },
 });
