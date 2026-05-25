@@ -23,7 +23,6 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
   const [isEditing, setIsEditing] = useState(false);
-
   const [draftTitle, setDraftTitle] = useState(
     budget.budgetName || "Untitled Note",
   );
@@ -42,12 +41,16 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     onPress();
   }
 
+  function startEditing() {
+    swipeableRef.current?.close();
+    setIsEditing(true);
+  }
+
   function saveTitle() {
     const cleanedTitle = draftTitle.trim() || "Untitled";
 
     setDraftTitle(cleanedTitle);
     setIsEditing(false);
-
     onRename(cleanedTitle);
   }
 
@@ -72,9 +75,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
 
       if (typeof navigator !== "undefined" && navigator.clipboard && shareUrl) {
         await navigator.clipboard.writeText(shareUrl);
-
         Alert.alert("Link copied", "Budget link copied to clipboard.");
-
         return;
       }
 
@@ -84,7 +85,6 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
       );
     } catch (error) {
       console.log("Share failed:", error);
-
       Alert.alert("Share failed", "Something went wrong while sharing.");
     }
   }
@@ -125,15 +125,12 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
           )}
 
           <View style={styles.iconRow}>
-            <Pressable style={styles.shareButton} onPress={handleShare}>
-              <Text style={styles.shareIcon}>↑</Text>
+            <Pressable style={styles.editIconButton} onPress={startEditing}>
+              <Text style={styles.editIcon}>✎</Text>
             </Pressable>
 
-            <Pressable
-              style={styles.editIconButton}
-              onPress={() => setIsEditing(true)}
-            >
-              <Text style={styles.editIcon}>✎</Text>
+            <Pressable style={styles.shareButton} onPress={handleShare}>
+              <Text style={styles.shareIcon}>↑</Text>
             </Pressable>
           </View>
         </View>
@@ -157,10 +154,12 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
+    width: "100%",
   },
 
   cardTitle: {
     flex: 1,
+    minWidth: 0,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
@@ -169,6 +168,7 @@ const styles = StyleSheet.create({
 
   cardTitleInput: {
     flex: 1,
+    minWidth: 0,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
@@ -180,30 +180,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-
-  shareButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-
-    backgroundColor: "#243342",
-
-    borderWidth: 1,
-    borderColor: "#3B4D5F",
-
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  shareIcon: {
-    color: "#CAD3DD",
-    fontSize: 16,
-    fontWeight: "900",
+    flexShrink: 0,
   },
 
   editIconButton: {
-    padding: 4,
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   editIcon: {
@@ -212,6 +197,24 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     opacity: 0.55,
     transform: [{ scaleX: -1 }],
+  },
+
+  shareButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: "#243342",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+
+  shareIcon: {
+    color: "#CAD3DD",
+    fontSize: 16,
+    fontWeight: "900",
   },
 
   cardSubtitle: {
