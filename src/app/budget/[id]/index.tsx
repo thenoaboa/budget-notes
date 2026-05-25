@@ -1,8 +1,6 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as Sharing from "expo-sharing";
-import { useRef } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +12,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { captureRef } from "react-native-view-shot";
 
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
@@ -32,32 +29,37 @@ export default function BudgetDashboardScreen() {
 
   const editor = useBudgetEditor(budgetId);
 
-  const receiptCaptureRef = useRef<View>(null);
-
   async function shareReceipt() {
-    if (!receiptCaptureRef.current) {
-      return;
-    }
+    const shareTitle = editor.noteTitle.trim() || "Budget Note";
 
     try {
-      const uri = await captureRef(receiptCaptureRef, {
-        format: "png",
-        quality: 1,
-      });
+      const shareUrl =
+        typeof window !== "undefined" ? window.location.href : "";
 
-      const sharingAvailable = await Sharing.isAvailableAsync();
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: `Check out this budget: ${shareTitle}`,
+          url: shareUrl,
+        });
 
-      if (!sharingAvailable) {
-        Alert.alert(
-          "Sharing unavailable",
-          "Sharing is not available on this device.",
-        );
         return;
       }
 
-      await Sharing.shareAsync(uri);
+      if (typeof navigator !== "undefined" && navigator.clipboard && shareUrl) {
+        await navigator.clipboard.writeText(shareUrl);
+
+        Alert.alert("Link copied", "Budget link copied to clipboard.");
+        return;
+      }
+
+      Alert.alert(
+        "Sharing unavailable",
+        "Sharing is not available on this device.",
+      );
     } catch (error) {
       console.log("Share receipt failed:", error);
+
       Alert.alert(
         "Share failed",
         "Something went wrong while sharing this receipt.",
@@ -107,26 +109,24 @@ export default function BudgetDashboardScreen() {
               />
             </View>
 
-            <View ref={receiptCaptureRef} collapsable={false}>
-              <BudgetTitleCard
-                noteTitle={editor.noteTitle}
-                setNoteTitle={editor.setNoteTitle}
-                onShare={shareReceipt}
-              />
+            <BudgetTitleCard
+              noteTitle={editor.noteTitle}
+              setNoteTitle={editor.setNoteTitle}
+              onShare={shareReceipt}
+            />
 
-              <BudgetSummaryBox
-                items={editor.items}
-                subtotal={editor.subtotal}
-                taxAmount={editor.taxAmount}
-                totalSpent={editor.totalSpent}
-                salesTaxEnabled={editor.salesTaxEnabled}
-                affirmingMessage={editor.affirmingMessage}
-                currentStyle={editor.currentStyle}
-                onAddItem={editor.openAddItemOverlay}
-                onPressItem={editor.openReceiptItemOverlay}
-                onDeleteItem={editor.deleteItem}
-              />
-            </View>
+            <BudgetSummaryBox
+              items={editor.items}
+              subtotal={editor.subtotal}
+              taxAmount={editor.taxAmount}
+              totalSpent={editor.totalSpent}
+              salesTaxEnabled={editor.salesTaxEnabled}
+              affirmingMessage={editor.affirmingMessage}
+              currentStyle={editor.currentStyle}
+              onAddItem={editor.openAddItemOverlay}
+              onPressItem={editor.openReceiptItemOverlay}
+              onDeleteItem={editor.deleteItem}
+            />
 
             <View style={styles.bottomButtonRow}>
               <TouchableOpacity
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(46, 204, 113, 0.35)",
   },
+
   backButtonText: {
     color: "#2ECC71",
     fontSize: 15,
