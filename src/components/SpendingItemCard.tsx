@@ -191,13 +191,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#2A3948",
+    backgroundColor: "#3A1C1C",
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
     alignItems: "center",
     justifyContent: "center",
   },
 
   deleteButtonText: {
-    color: "#A7B1BD",
+    color: "#FF6B6B",
     fontSize: 24,
     lineHeight: 26,
   },
