@@ -1,10 +1,10 @@
 import {
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 import type { BudgetItem } from "../types/budgetEditor";
@@ -47,10 +47,14 @@ export function AddItemOverlay({
 
         <View style={styles.card}>
           <View style={styles.topRow}>
-            <Text style={styles.title}>New Item</Text>
+            <Text selectable={false} style={styles.title}>
+              New Item
+            </Text>
 
             <Pressable onPress={onClose}>
-              <Text style={styles.close}>×</Text>
+              <Text selectable={false} style={styles.close}>
+                ×
+              </Text>
             </Pressable>
           </View>
 
@@ -74,7 +78,7 @@ export function AddItemOverlay({
               onPress={increaseQuantity}
               onLongPress={resetQuantity}
             >
-              <Text style={styles.quantityButtonText}>
+              <Text selectable={false} style={styles.quantityButtonText}>
                 x{draftItem.quantity}
               </Text>
             </Pressable>
@@ -94,13 +98,21 @@ export function AddItemOverlay({
           />
 
           <Pressable style={styles.addButton} onPress={onAdd}>
-            <Text style={styles.addButtonText}>Add To Receipt</Text>
+            <Text selectable={false} style={styles.addButtonText}>
+              Add To Receipt
+            </Text>
           </Pressable>
         </View>
       </View>
     </Modal>
   );
 }
+
+const nonSelectableText = {
+  userSelect: "none",
+  WebkitUserSelect: "none",
+  WebkitTouchCallout: "none",
+} as any;
 
 const styles = StyleSheet.create({
   overlay: {
@@ -134,12 +146,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 22,
     fontWeight: "900",
+    ...nonSelectableText,
   },
 
   close: {
     color: "#A7B1BD",
     fontSize: 28,
     fontWeight: "800",
+    ...nonSelectableText,
   },
 
   amountRow: {
@@ -169,12 +183,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A3948",
     alignItems: "center",
     justifyContent: "center",
+    ...nonSelectableText,
   },
 
   quantityButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "900",
+    ...nonSelectableText,
   },
 
   input: {
@@ -194,11 +210,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: "center",
+    ...nonSelectableText,
   },
 
   addButtonText: {
     color: "#101820",
     fontSize: 17,
     fontWeight: "900",
+    ...nonSelectableText,
   },
 });
