@@ -244,6 +244,6 @@ const styles = StyleSheet.create({
 
   deleteActionText: {
     color: "#FF6B6B",
-    fontWeight: "900",
+    fontWeight: "800",
   },
 });
