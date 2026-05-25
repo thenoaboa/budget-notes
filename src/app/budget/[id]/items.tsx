@@ -97,27 +97,17 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    backgroundColor: "rgba(36, 51, 66, 0.78)",
+    backgroundColor: "#123527",
     borderRadius: 14,
     paddingVertical: 13,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: "#2ECC71",
     marginBottom: 14,
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-
-    elevation: 5,
   },
 
   backButtonText: {
-    color: "#CAD3DD",
+    color: "#2ECC71",
     fontSize: 15,
     fontWeight: "900",
   },
