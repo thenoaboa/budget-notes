@@ -24,6 +24,17 @@ type Props = {
   hideDeleteButton?: boolean;
 };
 
+function cleanAmountInput(text: string) {
+  const cleaned = text.replace(/[^0-9.]/g, "");
+  const parts = cleaned.split(".");
+
+  if (parts.length <= 2) {
+    return cleaned;
+  }
+
+  return `${parts[0]}.${parts.slice(1).join("")}`;
+}
+
 export function SpendingItemRow({
   item,
   itemNameRefs,
@@ -36,23 +47,39 @@ export function SpendingItemRow({
   focusNextItemOrAddCurrent,
   hideDeleteButton = false,
 }: Props) {
+  const amountValue = item.amount ?? "";
+  const showDollarSign = amountValue.length > 0;
+
   return (
     <View style={[styles.itemCard, !item.included && styles.itemExcluded]}>
       <View style={styles.itemControlsRow}>
-        <TextInput
-          ref={(ref) => {
-            itemAmountRefs.current[item.id] = ref;
-          }}
-          style={styles.itemAmountInput}
-          placeholder="$0"
-          placeholderTextColor="#8A98A8"
-          keyboardType="decimal-pad"
-          returnKeyType="next"
-          value={item.amount}
-          blurOnSubmit={false}
-          onChangeText={(text) => updateItem(item.id, "amount", text)}
-          onSubmitEditing={() => itemNameRefs.current[item.id]?.focus()}
-        />
+        <View style={styles.itemAmountInputWrapper}>
+          {showDollarSign && (
+            <Text pointerEvents="none" style={styles.dollarSign}>
+              $
+            </Text>
+          )}
+
+          <TextInput
+            ref={(ref) => {
+              itemAmountRefs.current[item.id] = ref;
+            }}
+            style={[
+              styles.itemAmountInput,
+              showDollarSign ? styles.itemAmountInputWithDollar : null,
+            ]}
+            placeholder="$0"
+            placeholderTextColor="#8A98A8"
+            keyboardType="decimal-pad"
+            returnKeyType="next"
+            value={amountValue}
+            blurOnSubmit={false}
+            onChangeText={(text) =>
+              updateItem(item.id, "amount", cleanAmountInput(text))
+            }
+            onSubmitEditing={() => itemNameRefs.current[item.id]?.focus()}
+          />
+        </View>
 
         <TouchableOpacity
           style={styles.quantityButton}
@@ -138,9 +165,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  itemAmountInput: {
+  itemAmountInputWrapper: {
     flex: 1,
     minWidth: 85,
+    position: "relative",
+    justifyContent: "center",
+  },
+
+  dollarSign: {
+    position: "absolute",
+    left: 10,
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+    zIndex: 1,
+  },
+
+  itemAmountInput: {
+    width: "100%",
     backgroundColor: "#2A3948",
     color: "#FFFFFF",
     fontSize: 16,
@@ -148,6 +190,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 10,
     borderRadius: 12,
+  },
+
+  itemAmountInputWithDollar: {
+    paddingLeft: 24,
   },
 
   quantityButton: {

@@ -19,6 +19,17 @@ type Props = {
   onAdd: () => void;
 };
 
+function cleanAmountInput(text: string) {
+  const cleaned = text.replace(/[^0-9.]/g, "");
+  const parts = cleaned.split(".");
+
+  if (parts.length <= 2) {
+    return cleaned;
+  }
+
+  return `${parts[0]}.${parts.slice(1).join("")}`;
+}
+
 export function AddItemOverlay({
   visible,
   draftItem,
@@ -26,6 +37,9 @@ export function AddItemOverlay({
   onClose,
   onAdd,
 }: Props) {
+  const amountValue = draftItem.amount ?? "";
+  const showDollarSign = amountValue.length > 0;
+
   function increaseQuantity() {
     setDraftItem((prev) => ({
       ...prev,
@@ -59,19 +73,30 @@ export function AddItemOverlay({
           </View>
 
           <View style={styles.amountRow}>
-            <TextInput
-              style={styles.amountInput}
-              placeholder="$0"
-              placeholderTextColor="#8A98A8"
-              keyboardType="decimal-pad"
-              value={draftItem.amount}
-              onChangeText={(text) =>
-                setDraftItem((prev) => ({
-                  ...prev,
-                  amount: text,
-                }))
-              }
-            />
+            <View style={styles.amountInputWrapper}>
+              {showDollarSign && (
+                <Text pointerEvents="none" style={styles.dollarSign}>
+                  $
+                </Text>
+              )}
+
+              <TextInput
+                style={[
+                  styles.amountInput,
+                  showDollarSign ? styles.amountInputWithDollar : null,
+                ]}
+                placeholder="$0"
+                placeholderTextColor="#8A98A8"
+                keyboardType="decimal-pad"
+                value={amountValue}
+                onChangeText={(text) =>
+                  setDraftItem((prev) => ({
+                    ...prev,
+                    amount: cleanAmountInput(text),
+                  }))
+                }
+              />
+            </View>
 
             <Pressable
               style={styles.quantityButton}
@@ -163,9 +188,24 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  amountInput: {
+  amountInputWrapper: {
     flex: 1,
     minWidth: 0,
+    position: "relative",
+    justifyContent: "center",
+  },
+
+  dollarSign: {
+    position: "absolute",
+    left: 14,
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+    zIndex: 1,
+  },
+
+  amountInput: {
+    width: "100%",
     backgroundColor: "#2A3948",
     color: "#FFFFFF",
     borderRadius: 14,
@@ -173,6 +213,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     fontSize: 18,
     fontWeight: "800",
+  },
+
+  amountInputWithDollar: {
+    paddingLeft: 34,
   },
 
   quantityButton: {
