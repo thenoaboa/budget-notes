@@ -54,36 +54,49 @@ export default function BudgetDashboardScreen() {
       const canvas = await html2canvas(target, {
         backgroundColor: "#101820",
         scale: 2,
+        useCORS: true,
       });
 
       const dataUrl = canvas.toDataURL("image/png");
 
-      const response = await fetch(dataUrl);
-      const blob = await response.blob();
+      const newWindow = window.open();
 
-      const file = new File(
-        [blob],
-        `${editor.noteTitle || "budget-note"}.png`,
-        {
-          type: "image/png",
-        },
-      );
-
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({
-          files: [file],
-          title: editor.noteTitle || "Budget Note",
-        });
-
+      if (!newWindow) {
+        Alert.alert("Popup blocked", "Please allow popups for image export.");
         return;
       }
 
-      const link = document.createElement("a");
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Budget Export</title>
 
-      link.href = dataUrl;
-      link.download = `${editor.noteTitle || "budget-note"}.png`;
+            <style>
+              body {
+                margin: 0;
+                background: #101820;
 
-      link.click();
+                display: flex;
+                justify-content: center;
+                align-items: center;
+
+                min-height: 100vh;
+              }
+
+              img {
+                max-width: 100%;
+                height: auto;
+              }
+            </style>
+          </head>
+
+          <body>
+            <img src="${dataUrl}" />
+          </body>
+        </html>
+      `);
+
+      newWindow.document.close();
     } catch (error) {
       console.log("Export failed:", error);
 
