@@ -1,5 +1,12 @@
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { Budget } from "../types/budget";
@@ -16,6 +23,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+
   const [draftTitle, setDraftTitle] = useState(
     budget.budgetName || "Untitled Note",
   );
@@ -36,9 +44,49 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
 
   function saveTitle() {
     const cleanedTitle = draftTitle.trim() || "Untitled";
+
     setDraftTitle(cleanedTitle);
     setIsEditing(false);
+
     onRename(cleanedTitle);
+  }
+
+  async function handleShare() {
+    try {
+      const shareUrl =
+        typeof window !== "undefined"
+          ? `${window.location.origin}/budget/${budget.id}`
+          : "";
+
+      const shareTitle = budget.budgetName || "Budget Note";
+
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: `Check out this budget: ${shareTitle}`,
+          url: shareUrl,
+        });
+
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard && shareUrl) {
+        await navigator.clipboard.writeText(shareUrl);
+
+        Alert.alert("Link copied", "Budget link copied to clipboard.");
+
+        return;
+      }
+
+      Alert.alert(
+        "Sharing unavailable",
+        "Sharing is not available on this device.",
+      );
+    } catch (error) {
+      console.log("Share failed:", error);
+
+      Alert.alert("Share failed", "Something went wrong while sharing.");
+    }
   }
 
   function renderRightActions() {
@@ -76,12 +124,18 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
             </Text>
           )}
 
-          <Pressable
-            style={styles.editIconButton}
-            onPress={() => setIsEditing(true)}
-          >
-            <Text style={styles.editIcon}>✎</Text>
-          </Pressable>
+          <View style={styles.iconRow}>
+            <Pressable style={styles.shareButton} onPress={handleShare}>
+              <Text style={styles.shareIcon}>↑</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.editIconButton}
+              onPress={() => setIsEditing(true)}
+            >
+              <Text style={styles.editIcon}>✎</Text>
+            </Pressable>
+          </View>
         </View>
 
         <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
@@ -106,22 +160,49 @@ const styles = StyleSheet.create({
   },
 
   cardTitle: {
+    flex: 1,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
-    maxWidth: "88%",
+    paddingRight: 10,
   },
 
   cardTitleInput: {
+    flex: 1,
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
     padding: 0,
-    maxWidth: "88%",
+    paddingRight: 10,
+  },
+
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
+  shareButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+
+    backgroundColor: "#243342",
+
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  shareIcon: {
+    color: "#CAD3DD",
+    fontSize: 16,
+    fontWeight: "900",
   },
 
   editIconButton: {
-    marginLeft: 8,
     padding: 4,
   },
 
