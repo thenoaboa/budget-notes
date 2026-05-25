@@ -1,6 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRef } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+import html2canvas from "html2canvas";
 
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
@@ -29,40 +32,64 @@ export default function BudgetDashboardScreen() {
 
   const editor = useBudgetEditor(budgetId);
 
-  async function shareReceipt() {
-    const shareTitle = editor.noteTitle.trim() || "Budget Note";
+  const exportRef = useRef<View>(null);
 
+  async function shareReceipt() {
     try {
-      const shareUrl =
-        typeof window !== "undefined" ? window.location.href : "";
+      if (typeof window === "undefined") {
+        Alert.alert(
+          "Unsupported",
+          "Image export is only supported on web right now.",
+        );
+        return;
+      }
+
+      const target = document.getElementById("receipt-export");
+
+      if (!target) {
+        Alert.alert("Export failed", "Could not find receipt content.");
+        return;
+      }
+
+      const canvas = await html2canvas(target, {
+        backgroundColor: "#101820",
+        scale: 2,
+      });
+
+      const dataUrl = canvas.toDataURL("image/png");
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+
+      const file = new File(
+        [blob],
+        `${editor.noteTitle || "budget-note"}.png`,
+        {
+          type: "image/png",
+        },
+      );
 
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({
-          title: shareTitle,
-          text: `Check out this budget: ${shareTitle}`,
-          url: shareUrl,
+          files: [file],
+          title: editor.noteTitle || "Budget Note",
         });
 
         return;
       }
 
-      if (typeof navigator !== "undefined" && navigator.clipboard && shareUrl) {
-        await navigator.clipboard.writeText(shareUrl);
+      const link = document.createElement("a");
 
-        Alert.alert("Link copied", "Budget link copied to clipboard.");
-        return;
-      }
+      link.href = dataUrl;
+      link.download = `${editor.noteTitle || "budget-note"}.png`;
 
-      Alert.alert(
-        "Sharing unavailable",
-        "Sharing is not available on this device.",
-      );
+      link.click();
     } catch (error) {
-      console.log("Share receipt failed:", error);
+      console.log("Export failed:", error);
 
       Alert.alert(
-        "Share failed",
-        "Something went wrong while sharing this receipt.",
+        "Export failed",
+        "Something went wrong while exporting the image.",
       );
     }
   }
@@ -96,37 +123,39 @@ export default function BudgetDashboardScreen() {
             alwaysBounceVertical
             bounces
           >
-            <View style={styles.taxOnlySection}>
-              <MoneyAvailableSection
-                startingMoney=""
-                setStartingMoney={() => {}}
+            <View id="receipt-export" ref={exportRef}>
+              <View style={styles.taxOnlySection}>
+                <MoneyAvailableSection
+                  startingMoney=""
+                  setStartingMoney={() => {}}
+                  salesTaxEnabled={editor.salesTaxEnabled}
+                  setSalesTaxEnabled={editor.setSalesTaxEnabled}
+                  taxRate={editor.taxRate}
+                  setTaxRate={editor.setTaxRate}
+                  startingMoneyRef={editor.startingMoneyRef}
+                  taxRateRef={editor.taxRateRef}
+                />
+              </View>
+
+              <BudgetTitleCard
+                noteTitle={editor.noteTitle}
+                setNoteTitle={editor.setNoteTitle}
+                onShare={shareReceipt}
+              />
+
+              <BudgetSummaryBox
+                items={editor.items}
+                subtotal={editor.subtotal}
+                taxAmount={editor.taxAmount}
+                totalSpent={editor.totalSpent}
                 salesTaxEnabled={editor.salesTaxEnabled}
-                setSalesTaxEnabled={editor.setSalesTaxEnabled}
-                taxRate={editor.taxRate}
-                setTaxRate={editor.setTaxRate}
-                startingMoneyRef={editor.startingMoneyRef}
-                taxRateRef={editor.taxRateRef}
+                affirmingMessage={editor.affirmingMessage}
+                currentStyle={editor.currentStyle}
+                onAddItem={editor.openAddItemOverlay}
+                onPressItem={editor.openReceiptItemOverlay}
+                onDeleteItem={editor.deleteItem}
               />
             </View>
-
-            <BudgetTitleCard
-              noteTitle={editor.noteTitle}
-              setNoteTitle={editor.setNoteTitle}
-              onShare={shareReceipt}
-            />
-
-            <BudgetSummaryBox
-              items={editor.items}
-              subtotal={editor.subtotal}
-              taxAmount={editor.taxAmount}
-              totalSpent={editor.totalSpent}
-              salesTaxEnabled={editor.salesTaxEnabled}
-              affirmingMessage={editor.affirmingMessage}
-              currentStyle={editor.currentStyle}
-              onAddItem={editor.openAddItemOverlay}
-              onPressItem={editor.openReceiptItemOverlay}
-              onDeleteItem={editor.deleteItem}
-            />
 
             <View style={styles.bottomButtonRow}>
               <TouchableOpacity
@@ -173,12 +202,34 @@ export default function BudgetDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#101820" },
-  keyboardView: { flex: 1 },
-  page: { flex: 1, backgroundColor: "#101820", paddingHorizontal: 16 },
-  scroll: { flex: 1, backgroundColor: "#101820" },
-  scrollContent: { paddingBottom: 80, backgroundColor: "#101820" },
-  taxOnlySection: { marginBottom: 8 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#101820",
+  },
+
+  keyboardView: {
+    flex: 1,
+  },
+
+  page: {
+    flex: 1,
+    backgroundColor: "#101820",
+    paddingHorizontal: 16,
+  },
+
+  scroll: {
+    flex: 1,
+    backgroundColor: "#101820",
+  },
+
+  scrollContent: {
+    paddingBottom: 80,
+    backgroundColor: "#101820",
+  },
+
+  taxOnlySection: {
+    marginBottom: 8,
+  },
 
   bottomButtonRow: {
     flexDirection: "row",
@@ -193,7 +244,6 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
-
     borderWidth: 1,
     borderColor: "rgba(46, 204, 113, 0.35)",
   },
