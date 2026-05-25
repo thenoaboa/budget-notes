@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
 
     padding: 0,
 
-    textAlign: "center",
+    textAlign: "left",
 
     marginRight: 12,
   },
