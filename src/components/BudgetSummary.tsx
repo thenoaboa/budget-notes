@@ -1,6 +1,7 @@
 // Save as: src/components/BudgetSummary.tsx
 
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
@@ -22,6 +23,7 @@ type Props = {
   currentStyle: BudgetStatusStyle;
   onAddItem?: () => void;
   onPressItem?: (itemId: number) => void;
+  onDeleteItem?: (itemId: number) => void;
 };
 
 function parseMoney(value: unknown) {
@@ -53,6 +55,7 @@ export function BudgetSummaryBox({
   currentStyle,
   onAddItem,
   onPressItem,
+  onDeleteItem,
 }: Props) {
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
@@ -68,6 +71,17 @@ export function BudgetSummaryBox({
 
     return isIncluded && (name !== "" || amount > 0);
   });
+
+  function renderLeftActions(itemId: number) {
+    return (
+      <Pressable
+        style={styles.deleteAction}
+        onPress={() => onDeleteItem?.(itemId)}
+      >
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
+    );
+  }
 
   return (
     <View style={styles.summaryBox}>
@@ -87,7 +101,6 @@ export function BudgetSummaryBox({
         <>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryHeaderText}>Items:</Text>
-
             <Text style={styles.summaryHeaderText}>
               {formatMoney(subtotal)}
             </Text>
@@ -106,21 +119,29 @@ export function BudgetSummaryBox({
                 : 1;
 
             const itemName = item.name.trim() || "Unnamed item";
-
             const lineTotal = amount * quantity;
 
             return (
-              <Pressable
+              <Swipeable
                 key={item.id}
-                style={styles.itemRow}
-                onPress={() => onPressItem?.(item.id)}
+                renderLeftActions={() => renderLeftActions(item.id)}
+                overshootLeft={false}
               >
-                <Text style={styles.itemText} numberOfLines={1}>
-                  {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
-                </Text>
+                <Pressable
+                  style={styles.itemRow}
+                  onPress={() => onPressItem?.(item.id)}
+                >
+                  <Text style={styles.itemText} numberOfLines={1}>
+                    {quantity > 1
+                      ? `${itemName} x${quantity}:`
+                      : `${itemName}:`}
+                  </Text>
 
-                <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
-              </Pressable>
+                  <Text style={styles.itemAmount}>
+                    {formatMoney(lineTotal)}
+                  </Text>
+                </Pressable>
+              </Swipeable>
             );
           })}
 
@@ -130,7 +151,6 @@ export function BudgetSummaryBox({
 
               <View style={styles.itemRow}>
                 <Text style={styles.itemText}>Estimated tax:</Text>
-
                 <Text style={styles.itemAmount}>{formatMoney(taxAmount)}</Text>
               </View>
             </>
@@ -140,7 +160,6 @@ export function BudgetSummaryBox({
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryTotal}>Planned total:</Text>
-
             <Text style={styles.summaryTotal}>{formatMoney(totalSpent)}</Text>
           </View>
         </>
@@ -205,6 +224,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 4,
+    backgroundColor: "#1B2633",
   },
 
   itemText: {
@@ -221,6 +241,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     textAlign: "right",
+  },
+
+  deleteAction: {
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 90,
+    borderRadius: 12,
+    marginVertical: 2,
+  },
+
+  deleteActionText: {
+    color: "#FF6B6B",
+    fontWeight: "900",
   },
 
   summaryTotal: {

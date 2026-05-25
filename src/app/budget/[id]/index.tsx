@@ -79,6 +79,7 @@ export default function BudgetDashboardScreen() {
               currentStyle={editor.currentStyle}
               onAddItem={editor.openAddItemOverlay}
               onPressItem={editor.openReceiptItemOverlay}
+              onDeleteItem={editor.deleteItem}
             />
 
             <TouchableOpacity
