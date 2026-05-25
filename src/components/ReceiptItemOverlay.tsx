@@ -67,6 +67,7 @@ export function ReceiptItemOverlay({
             toggleIncluded={toggleIncluded}
             deleteItem={deleteItem}
             focusNextItemOrAddCurrent={focusNextItemOrAddCurrent}
+            hideDeleteButton
           />
 
           <Pressable style={styles.finishButton} onPress={onClose}>

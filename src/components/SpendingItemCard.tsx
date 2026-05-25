@@ -21,6 +21,7 @@ type Props = {
   toggleIncluded: (id: number) => void;
   deleteItem: (id: number) => void;
   focusNextItemOrAddCurrent: (id: number) => void;
+  hideDeleteButton?: boolean;
 };
 
 export function SpendingItemRow({
@@ -33,6 +34,7 @@ export function SpendingItemRow({
   toggleIncluded,
   deleteItem,
   focusNextItemOrAddCurrent,
+  hideDeleteButton = false,
 }: Props) {
   return (
     <View style={[styles.itemCard, !item.included && styles.itemExcluded]}>
@@ -77,12 +79,14 @@ export function SpendingItemRow({
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => deleteItem(item.id)}
-        >
-          <Text style={styles.deleteButtonText}>×</Text>
-        </TouchableOpacity>
+        {!hideDeleteButton && (
+          <TouchableOpacity
+            style={styles.deleteButton}
+            onPress={() => deleteItem(item.id)}
+          >
+            <Text style={styles.deleteButtonText}>×</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       <TextInput
