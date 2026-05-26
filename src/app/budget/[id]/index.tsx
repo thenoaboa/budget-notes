@@ -209,11 +209,12 @@ export default function BudgetDashboardScreen() {
                 currentStyle={editor.currentStyle}
                 highlightAddButton={tutorialStep === "addItemHighlight"}
                 onAddItem={() => {
-                  editor.openAddItemOverlay();
-
                   if (tutorialStep === "addItemHighlight") {
                     setTutorialStep("donePopup");
+                    return;
                   }
+
+                  editor.openAddItemOverlay();
                 }}
                 onPressItem={editor.openReceiptItemOverlay}
                 onDeleteItem={editor.deleteItem}
