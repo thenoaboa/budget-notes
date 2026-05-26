@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useEffect, useState } from "react";
 import {
   NativeScrollEvent,
@@ -20,6 +21,7 @@ type HomeTutorialStep = "hidden" | "popup" | "highlightNewNote";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
 
   const [homeTutorialStep, setHomeTutorialStep] =
     useState<HomeTutorialStep>("hidden");
@@ -56,6 +58,8 @@ export default function HomeScreen() {
 
   function replayWelcomeTutorial() {
     setHomeTutorialStep("popup");
+
+    posthog?.capture("welcome_tutorial_replayed");
   }
 
   function resetSearchInBackground() {
@@ -66,6 +70,8 @@ export default function HomeScreen() {
   }
 
   async function createNewBudget() {
+    posthog?.capture("budget_created");
+
     await completeWelcomeTutorial();
 
     await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
@@ -78,6 +84,8 @@ export default function HomeScreen() {
   }
 
   function openBudgetNote(id: string) {
+    posthog?.capture("budget_opened");
+
     router.push(`/budget/${id}` as any);
 
     resetSearchInBackground();
@@ -220,7 +228,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 20,
-
     width: "100%",
   },
 
@@ -228,15 +235,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     top: 1,
-
     width: 22,
     height: 22,
     borderRadius: 11,
-
     backgroundColor: "#243342",
     borderWidth: 1,
     borderColor: "#3B4D5F",
-
     alignItems: "center",
     justifyContent: "center",
   },
