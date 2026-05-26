@@ -1,7 +1,8 @@
 // Save as: src/components/BudgetHeaderCard.tsx
 
 import { RefObject, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+
+import { Pressable, StyleSheet, Text, TextInput } from "react-native";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
@@ -43,22 +44,31 @@ export function BudgetHeaderCard({
 
   function handleAmountChange(value: string) {
     const cleanedValue = value.replace(/[^0-9.]/g, "");
+
     setStartingMoney(cleanedValue);
   }
 
   function handleAmountFocus() {
     setIsEditingAmount(true);
+
     onBudgetAmountTutorialFocus?.();
   }
 
   return (
-    <View
+    <Pressable
+      onPress={() => {
+        if (highlightBudgetAmount) {
+          onBudgetAmountTutorialFocus?.();
+        }
+      }}
       style={[
         styles.headerCard,
         {
           backgroundColor: currentStyle.backgroundColor,
+
           borderColor: currentStyle.borderColor,
         },
+
         highlightBudgetAmount && styles.highlightedHeaderCard,
       ]}
     >
@@ -68,11 +78,16 @@ export function BudgetHeaderCard({
         ref={startingMoneyRef}
         style={[
           styles.headerAmount,
+
           highlightBudgetAmount && styles.highlightedAmountInput,
         ]}
         value={inputValue}
         onChangeText={handleAmountChange}
-        onFocus={handleAmountFocus}
+        onFocus={() => {
+          if (!highlightBudgetAmount) {
+            handleAmountFocus();
+          }
+        }}
         onBlur={() => setIsEditingAmount(false)}
         placeholder="$0.00"
         placeholderTextColor="#FFFFFF"
@@ -88,7 +103,7 @@ export function BudgetHeaderCard({
       {highlightBudgetAmount && (
         <Text style={styles.highlightText}>Tap the amount to continue</Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -105,13 +120,16 @@ const styles = StyleSheet.create({
   highlightedHeaderCard: {
     borderWidth: 3,
     borderColor: "#FFFFFF",
+
     shadowColor: "#2ECC71",
     shadowOpacity: 0.95,
     shadowRadius: 18,
+
     shadowOffset: {
       width: 0,
       height: 0,
     },
+
     elevation: 14,
   },
 
@@ -131,10 +149,12 @@ const styles = StyleSheet.create({
 
   highlightedAmountInput: {
     textShadowColor: "#2ECC71",
+
     textShadowOffset: {
       width: 0,
       height: 0,
     },
+
     textShadowRadius: 10,
   },
 
