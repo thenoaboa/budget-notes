@@ -2,6 +2,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -37,6 +38,7 @@ type TutorialStep =
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
   const { id } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
@@ -58,20 +60,99 @@ export default function BudgetDashboardScreen() {
       );
 
       if (!completed) {
+        posthog?.capture("tutorial_started", {
+          tutorialVersion: "budget_v2",
+          source: "budget_screen",
+        });
+
         setTutorialStep("budgetPopup");
       }
     }
 
     loadTutorial();
-  }, []);
+  }, [posthog]);
 
   async function completeTutorial() {
+    posthog?.capture("tutorial_completed", {
+      tutorialVersion: "budget_v2",
+      itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+    });
+
     await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
 
     setTutorialStep("hidden");
   }
 
+  async function skipTutorial() {
+    posthog?.capture("tutorial_skipped", {
+      tutorialVersion: "budget_v2",
+      step: tutorialStep,
+      itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+    });
+
+    await completeTutorial();
+  }
+
+  function toggleSalesTaxEnabled(value: boolean) {
+    posthog?.capture(value ? "sales_tax_enabled" : "sales_tax_disabled", {
+      itemCount: editor.items.length,
+      totalSpent: editor.totalSpent,
+    });
+
+    editor.setSalesTaxEnabled(value);
+  }
+
+  function addItemFromDraftWithAnalytics() {
+    posthog?.capture("item_added", {
+      existingItems: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+      hasName: editor.draftItem.name.trim().length > 0,
+      hasAmount: editor.draftItem.amount.trim().length > 0,
+      quantity: editor.draftItem.quantity,
+    });
+
+    editor.addItemFromDraft();
+  }
+
+  function deleteItemWithAnalytics(id: number) {
+    posthog?.capture("item_deleted", {
+      itemCountBeforeDelete: editor.items.length,
+      itemCountAfterDelete: Math.max(editor.items.length - 1, 0),
+      salesTaxEnabled: editor.salesTaxEnabled,
+    });
+
+    editor.deleteItem(id);
+  }
+
+  function openReceiptItemOverlayWithAnalytics(id: number) {
+    posthog?.capture("item_edited", {
+      itemCount: editor.items.length,
+      source: "receipt_card",
+    });
+
+    editor.openReceiptItemOverlay(id);
+  }
+
+  function openReceiptPage() {
+    posthog?.capture("receipt_edited", {
+      itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+      totalSpent: editor.totalSpent,
+    });
+
+    router.push(`/budget/${budgetId}/items` as any);
+  }
+
   async function shareReceipt() {
+    posthog?.capture("share_pressed", {
+      itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+      totalSpent: editor.totalSpent,
+      source: "budget_title_card",
+    });
+
     try {
       if (typeof window === "undefined") {
         Alert.alert(
@@ -185,7 +266,7 @@ export default function BudgetDashboardScreen() {
                   startingMoney=""
                   setStartingMoney={() => {}}
                   salesTaxEnabled={editor.salesTaxEnabled}
-                  setSalesTaxEnabled={editor.setSalesTaxEnabled}
+                  setSalesTaxEnabled={toggleSalesTaxEnabled}
                   taxRate={editor.taxRate}
                   setTaxRate={editor.setTaxRate}
                   startingMoneyRef={editor.startingMoneyRef}
@@ -210,14 +291,19 @@ export default function BudgetDashboardScreen() {
                 highlightAddButton={tutorialStep === "addItemHighlight"}
                 onAddItem={() => {
                   if (tutorialStep === "addItemHighlight") {
+                    posthog?.capture("tutorial_step_completed", {
+                      tutorialVersion: "budget_v2",
+                      step: "add_item_highlight",
+                    });
+
                     setTutorialStep("donePopup");
                     return;
                   }
 
                   editor.openAddItemOverlay();
                 }}
-                onPressItem={editor.openReceiptItemOverlay}
-                onDeleteItem={editor.deleteItem}
+                onPressItem={openReceiptItemOverlayWithAnalytics}
+                onDeleteItem={deleteItemWithAnalytics}
               />
             </View>
 
@@ -231,7 +317,7 @@ export default function BudgetDashboardScreen() {
 
               <TouchableOpacity
                 style={styles.editReceiptButton}
-                onPress={() => router.push(`/budget/${budgetId}/items` as any)}
+                onPress={openReceiptPage}
               >
                 <Text style={styles.editReceiptButtonText}>Receipt →</Text>
               </TouchableOpacity>
@@ -265,7 +351,7 @@ export default function BudgetDashboardScreen() {
               body="Start with the amount you want to spend before adding purchases."
               buttonText="OK"
               onNext={() => setTutorialStep("budgetHighlight")}
-              onSkip={completeTutorial}
+              onSkip={skipTutorial}
             />
           )}
 
@@ -275,7 +361,7 @@ export default function BudgetDashboardScreen() {
               body="Use the Add Item button to quickly enter purchases while shopping or planning."
               buttonText="OK"
               onNext={() => setTutorialStep("addItemHighlight")}
-              onSkip={completeTutorial}
+              onSkip={skipTutorial}
             />
           )}
 
@@ -285,7 +371,7 @@ export default function BudgetDashboardScreen() {
               body="Your remaining balance updates automatically with every purchase you add."
               buttonText="Start"
               onNext={completeTutorial}
-              onSkip={completeTutorial}
+              onSkip={skipTutorial}
             />
           )}
 
@@ -294,7 +380,7 @@ export default function BudgetDashboardScreen() {
             draftItem={editor.draftItem}
             setDraftItem={editor.setDraftItem}
             onClose={editor.closeAddItemOverlay}
-            onAdd={editor.addItemFromDraft}
+            onAdd={addItemFromDraftWithAnalytics}
           />
 
           <ReceiptItemOverlay
@@ -306,7 +392,7 @@ export default function BudgetDashboardScreen() {
             increaseQuantity={editor.increaseQuantity}
             resetQuantity={editor.resetQuantity}
             toggleIncluded={editor.toggleIncluded}
-            deleteItem={editor.deleteItem}
+            deleteItem={deleteItemWithAnalytics}
             focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
             onClose={editor.closeReceiptItemOverlay}
           />

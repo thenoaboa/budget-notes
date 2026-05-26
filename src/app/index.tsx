@@ -51,6 +51,11 @@ export default function HomeScreen() {
   }, []);
 
   async function completeWelcomeTutorial() {
+    posthog?.capture("tutorial_completed", {
+      tutorialVersion: "welcome_v1",
+      source: "welcome_overlay",
+    });
+
     await AsyncStorage.setItem("budget-note-welcome-tutorial-complete", "true");
 
     setHomeTutorialStep("hidden");
@@ -70,6 +75,14 @@ export default function HomeScreen() {
   }
 
   async function createNewBudget() {
+    posthog?.capture("budget_created", {
+      existingBudgetCount: visibleBudgets.length,
+      source:
+        homeTutorialStep === "highlightNewNote"
+          ? "welcome_tutorial"
+          : "main_menu",
+    });
+
     const shouldStartBudgetTutorial = homeTutorialStep === "highlightNewNote";
 
     await completeWelcomeTutorial();
@@ -86,7 +99,9 @@ export default function HomeScreen() {
   }
 
   function openBudgetNote(id: string) {
-    posthog?.capture("budget_opened");
+    posthog?.capture("budget_opened", {
+      existingBudgetCount: visibleBudgets.length,
+    });
 
     router.push(`/budget/${id}` as any);
 
@@ -96,7 +111,11 @@ export default function HomeScreen() {
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const yOffset = event.nativeEvent.contentOffset.y;
 
-    if (yOffset < -24) {
+    if (yOffset < -24 && !searchVisible) {
+      posthog?.capture("search_used", {
+        source: "main_menu_pull_down",
+      });
+
       setSearchVisible(true);
     }
   }
@@ -183,7 +202,14 @@ export default function HomeScreen() {
           body="Tap “+ New Note” to start your first budget."
           buttonText="OK"
           onNext={() => setHomeTutorialStep("highlightNewNote")}
-          onSkip={completeWelcomeTutorial}
+          onSkip={() => {
+            posthog?.capture("tutorial_skipped", {
+              tutorialVersion: "welcome_v1",
+              source: "welcome_overlay",
+            });
+
+            completeWelcomeTutorial();
+          }}
         />
       )}
     </View>
