@@ -346,6 +346,5 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     outlineStyle: "none" as any,
     overflow: "hidden",
-    hhh,
   },
 });
