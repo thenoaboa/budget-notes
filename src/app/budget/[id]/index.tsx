@@ -27,6 +27,14 @@ import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 
+type TutorialStep =
+  | "hidden"
+  | "budgetPopup"
+  | "budgetHighlight"
+  | "addItemPopup"
+  | "addItemHighlight"
+  | "donePopup";
+
 export default function BudgetDashboardScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
@@ -37,7 +45,7 @@ export default function BudgetDashboardScreen() {
 
   const exportRef = useRef<View>(null);
 
-  const [tutorialStep, setTutorialStep] = useState(0);
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -50,7 +58,7 @@ export default function BudgetDashboardScreen() {
       );
 
       if (!completed) {
-        setTutorialStep(1);
+        setTutorialStep("budgetPopup");
       }
     }
 
@@ -60,7 +68,7 @@ export default function BudgetDashboardScreen() {
   async function completeTutorial() {
     await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
 
-    setTutorialStep(0);
+    setTutorialStep("hidden");
   }
 
   async function shareReceipt() {
@@ -158,6 +166,12 @@ export default function BudgetDashboardScreen() {
             )}
           />
 
+          {tutorialStep === "budgetHighlight" && (
+            <Text style={styles.highlightText}>
+              Tap the budget amount field to continue
+            </Text>
+          )}
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -193,7 +207,14 @@ export default function BudgetDashboardScreen() {
                 salesTaxEnabled={editor.salesTaxEnabled}
                 affirmingMessage={editor.affirmingMessage}
                 currentStyle={editor.currentStyle}
-                onAddItem={editor.openAddItemOverlay}
+                highlightAddButton={tutorialStep === "addItemHighlight"}
+                onAddItem={() => {
+                  editor.openAddItemOverlay();
+
+                  if (tutorialStep === "addItemHighlight") {
+                    setTutorialStep("donePopup");
+                  }
+                }}
                 onPressItem={editor.openReceiptItemOverlay}
                 onDeleteItem={editor.deleteItem}
               />
@@ -233,29 +254,36 @@ export default function BudgetDashboardScreen() {
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
+                onFocus={() => {
+                  if (tutorialStep === "budgetHighlight") {
+                    setTutorialStep("addItemPopup");
+                  }
+                }}
               />
             </View>
           </ScrollView>
 
-          {tutorialStep === 1 && (
+          {tutorialStep === "budgetPopup" && (
             <TutorialOverlay
               title="Set your budget"
               body="Start with the amount you want to spend before adding purchases."
-              onNext={() => setTutorialStep(2)}
+              buttonText="OK"
+              onNext={() => setTutorialStep("budgetHighlight")}
               onSkip={completeTutorial}
             />
           )}
 
-          {tutorialStep === 2 && (
+          {tutorialStep === "addItemPopup" && (
             <TutorialOverlay
               title="Add purchases"
               body="Use the Add Item button to quickly enter purchases while shopping or planning."
-              onNext={() => setTutorialStep(3)}
+              buttonText="OK"
+              onNext={() => setTutorialStep("addItemHighlight")}
               onSkip={completeTutorial}
             />
           )}
 
-          {tutorialStep === 3 && (
+          {tutorialStep === "donePopup" && (
             <TutorialOverlay
               title="Track what’s left"
               body="Your remaining balance updates automatically with every purchase you add."
@@ -316,6 +344,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80,
     backgroundColor: "#101820",
+  },
+
+  highlightText: {
+    color: "#2ECC71",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 10,
+    marginTop: 4,
   },
 
   taxOnlySection: {

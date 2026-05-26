@@ -21,6 +21,7 @@ type Props = {
   salesTaxEnabled: boolean;
   affirmingMessage: string;
   currentStyle: BudgetStatusStyle;
+  highlightAddButton?: boolean;
   onAddItem?: () => void;
   onPressItem?: (itemId: number) => void;
   onDeleteItem?: (itemId: number) => void;
@@ -53,6 +54,7 @@ export function BudgetSummaryBox({
   salesTaxEnabled,
   affirmingMessage,
   currentStyle,
+  highlightAddButton,
   onAddItem,
   onPressItem,
   onDeleteItem,
@@ -183,9 +185,19 @@ export function BudgetSummaryBox({
         </View>
       )}
 
-      <Pressable style={styles.inlineAddButton} onPress={onAddItem}>
+      <Pressable
+        style={[
+          styles.inlineAddButton,
+          highlightAddButton && styles.highlightedAddButton,
+        ]}
+        onPress={onAddItem}
+      >
         <Text style={styles.inlineAddButtonText}>+ Add Item</Text>
       </Pressable>
+
+      {highlightAddButton && (
+        <Text style={styles.highlightText}>Tap here to add an item</Text>
+      )}
     </View>
   );
 }
@@ -293,6 +305,27 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  highlightedAddButton: {
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    shadowColor: "#2ECC71",
+    shadowOpacity: 0.95,
+    shadowRadius: 18,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 14,
+  },
+
+  highlightText: {
+    color: "#2ECC71",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "900",
+    marginTop: 8,
   },
 
   inlineAddButtonText: {

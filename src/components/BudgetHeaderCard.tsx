@@ -15,6 +15,8 @@ type Props = {
   currentStyle: BudgetStatusStyle;
   headerTextColor: string;
   hasEnteredItems: boolean;
+  highlightBudgetAmount?: boolean;
+  onBudgetAmountTutorialFocus?: () => void;
 };
 
 export function BudgetHeaderCard({
@@ -26,6 +28,8 @@ export function BudgetHeaderCard({
   headerSubtext,
   currentStyle,
   hasEnteredItems,
+  highlightBudgetAmount,
+  onBudgetAmountTutorialFocus,
 }: Props) {
   const [isEditingAmount, setIsEditingAmount] = useState(false);
 
@@ -42,6 +46,11 @@ export function BudgetHeaderCard({
     setStartingMoney(cleanedValue);
   }
 
+  function handleAmountFocus() {
+    setIsEditingAmount(true);
+    onBudgetAmountTutorialFocus?.();
+  }
+
   return (
     <View
       style={[
@@ -50,6 +59,7 @@ export function BudgetHeaderCard({
           backgroundColor: currentStyle.backgroundColor,
           borderColor: currentStyle.borderColor,
         },
+        highlightBudgetAmount && styles.highlightedHeaderCard,
       ]}
     >
       <Text style={styles.headerMessage}>{affirmingMessage}</Text>
@@ -59,18 +69,22 @@ export function BudgetHeaderCard({
         style={styles.headerAmount}
         value={inputValue}
         onChangeText={handleAmountChange}
-        onFocus={() => setIsEditingAmount(true)}
+        onFocus={handleAmountFocus}
         onBlur={() => setIsEditingAmount(false)}
         placeholder="$0.00"
         placeholderTextColor="#FFFFFF"
         keyboardType="decimal-pad"
         returnKeyType="done"
-        selectTextOnFocus={true}
+        selectTextOnFocus
       />
 
       <Text style={styles.headerSubtext}>
         {startingMoney.trim() === "" ? "Tap amount to edit" : headerSubtext}
       </Text>
+
+      {highlightBudgetAmount && (
+        <Text style={styles.highlightText}>Tap the amount to continue</Text>
+      )}
     </View>
   );
 }
@@ -83,6 +97,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: 12,
     marginBottom: 12,
+  },
+
+  highlightedHeaderCard: {
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    shadowColor: "#2ECC71",
+    shadowOpacity: 0.95,
+    shadowRadius: 18,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 14,
   },
 
   headerMessage: {
@@ -103,5 +130,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "700",
+  },
+
+  highlightText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "900",
+    marginTop: 8,
   },
 });
