@@ -66,7 +66,10 @@ export function BudgetHeaderCard({
 
       <TextInput
         ref={startingMoneyRef}
-        style={styles.headerAmount}
+        style={[
+          styles.headerAmount,
+          highlightBudgetAmount && styles.highlightedAmountInput,
+        ]}
         value={inputValue}
         onChangeText={handleAmountChange}
         onFocus={handleAmountFocus}
@@ -126,6 +129,15 @@ const styles = StyleSheet.create({
     padding: 0,
   },
 
+  highlightedAmountInput: {
+    textShadowColor: "#2ECC71",
+    textShadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    textShadowRadius: 10,
+  },
+
   headerSubtext: {
     color: "#FFFFFF",
     fontSize: 15,
@@ -133,8 +145,8 @@ const styles = StyleSheet.create({
   },
 
   highlightText: {
-    color: "#FFFFFF",
-    fontSize: 13,
+    color: "#2ECC71",
+    fontSize: 14,
     fontWeight: "900",
     marginTop: 8,
   },

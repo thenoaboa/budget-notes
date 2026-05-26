@@ -164,13 +164,13 @@ export default function BudgetDashboardScreen() {
             hasEnteredItems={editor.items.some(
               (item) => item.amount.trim() !== "",
             )}
+            highlightBudgetAmount={tutorialStep === "budgetHighlight"}
+            onBudgetAmountTutorialFocus={() => {
+              if (tutorialStep === "budgetHighlight") {
+                setTutorialStep("addItemPopup");
+              }
+            }}
           />
-
-          {tutorialStep === "budgetHighlight" && (
-            <Text style={styles.highlightText}>
-              Tap the budget amount field to continue
-            </Text>
-          )}
 
           <ScrollView
             style={styles.scroll}
@@ -254,11 +254,6 @@ export default function BudgetDashboardScreen() {
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
-                onFocus={() => {
-                  if (tutorialStep === "budgetHighlight") {
-                    setTutorialStep("addItemPopup");
-                  }
-                }}
               />
             </View>
           </ScrollView>
@@ -344,15 +339,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80,
     backgroundColor: "#101820",
-  },
-
-  highlightText: {
-    color: "#2ECC71",
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 10,
-    marginTop: 4,
   },
 
   taxOnlySection: {
