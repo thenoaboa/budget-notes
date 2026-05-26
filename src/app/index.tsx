@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
 
   helpButton: {
     position: "absolute",
-    right: 0,
-    top: 1,
+    right: 2,
+    top: 4,
 
     width: 22,
     height: 22,
