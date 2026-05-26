@@ -51,6 +51,10 @@ export default function HomeScreen() {
     setShowWelcomeTutorial(false);
   }
 
+  function replayWelcomeTutorial() {
+    setShowWelcomeTutorial(true);
+  }
+
   function resetSearchInBackground() {
     setTimeout(() => {
       setSearchVisible(false);
@@ -92,9 +96,18 @@ export default function HomeScreen() {
         <View style={styles.simpleHeader}>
           <Text style={styles.simpleTitle}>Budget Note</Text>
 
-          <Text style={styles.simpleSubtitle}>
-            Plan today, spend confidently.
-          </Text>
+          <View style={styles.subtitleRow}>
+            <Text style={styles.simpleSubtitle}>
+              Plan today, spend confidently.
+            </Text>
+
+            <Pressable
+              style={styles.helpButton}
+              onPress={replayWelcomeTutorial}
+            >
+              <Text style={styles.helpButtonText}>?</Text>
+            </Pressable>
+          </View>
         </View>
 
         <Pressable style={styles.newButton} onPress={createNewBudget}>
@@ -178,12 +191,38 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
 
+  subtitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 6,
+  },
+
   simpleSubtitle: {
+    flex: 1,
     color: "#8A98A8",
     fontSize: 16,
     fontWeight: "700",
-    marginTop: 6,
     lineHeight: 22,
+  },
+
+  helpButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#243342",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  helpButtonText: {
+    color: "#CAD3DD",
+    fontSize: 18,
+    fontWeight: "900",
+    lineHeight: 20,
   },
 
   newButton: {
