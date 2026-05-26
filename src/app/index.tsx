@@ -68,6 +68,8 @@ export default function HomeScreen() {
   async function createNewBudget() {
     await completeWelcomeTutorial();
 
+    await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+
     const id = Date.now().toString();
 
     router.push(`/budget/${id}` as any);
@@ -118,7 +120,6 @@ export default function HomeScreen() {
         <Pressable
           style={[
             styles.newButton,
-
             homeTutorialStep === "highlightNewNote" &&
               styles.highlightedNewButton,
           ]}
@@ -253,7 +254,6 @@ const styles = StyleSheet.create({
   highlightedNewButton: {
     borderWidth: 3,
     borderColor: "#FFFFFF",
-
     shadowColor: "#2ECC71",
     shadowOpacity: 0.9,
     shadowRadius: 18,
@@ -261,7 +261,6 @@ const styles = StyleSheet.create({
       width: 0,
       height: 0,
     },
-
     elevation: 12,
   },
 
