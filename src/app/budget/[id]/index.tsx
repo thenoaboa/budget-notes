@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -33,6 +33,10 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
+
+  const receiptItems = useMemo(() => {
+    return [...editor.items].reverse();
+  }, [editor.items]);
 
   async function shareReceipt() {
     try {
@@ -157,7 +161,7 @@ export default function BudgetDashboardScreen() {
               />
 
               <BudgetSummaryBox
-                items={editor.items}
+                items={receiptItems}
                 subtotal={editor.subtotal}
                 taxAmount={editor.taxAmount}
                 totalSpent={editor.totalSpent}
