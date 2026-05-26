@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,8 +34,6 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
-
-  const [notesHeight, setNotesHeight] = useState(88);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -193,24 +191,17 @@ export default function BudgetDashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            <View
-              style={[
-                styles.notesCard,
-                {
-                  minHeight: Math.max(88, notesHeight + 28),
-                },
-              ]}
-            >
+            <View style={styles.notesCard}>
+              <Text style={styles.notesMirror}>
+                {editor.receiptNote.length > 0
+                  ? `${editor.receiptNote}\n`
+                  : "Note..."}
+              </Text>
+
               <TextInput
                 style={styles.notesInput}
                 value={editor.receiptNote}
-                onChangeText={(text) => {
-                  editor.setReceiptNote(text);
-
-                  if (text.trim() === "") {
-                    setNotesHeight(88);
-                  }
-                }}
+                onChangeText={editor.setReceiptNote}
                 placeholder="Note..."
                 placeholderTextColor="#6F7F8F"
                 multiline
@@ -218,11 +209,6 @@ export default function BudgetDashboardScreen() {
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
-                onContentSizeChange={(event) => {
-                  const nextHeight = event.nativeEvent.contentSize.height;
-
-                  setNotesHeight(nextHeight);
-                }}
               />
             </View>
           </ScrollView>
@@ -335,9 +321,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 14,
+    minHeight: 116,
+    position: "relative",
+  },
+
+  notesMirror: {
+    minHeight: 88,
+    color: "transparent",
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: 21,
+    padding: 0,
   },
 
   notesInput: {
+    position: "absolute",
+    top: 14,
+    left: 14,
+    right: 14,
+    bottom: 14,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
@@ -345,6 +347,6 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
     outlineStyle: "none" as any,
-    minHeight: 88,
+    overflow: "hidden",
   },
 });
