@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,6 +34,8 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
+
+  const [notesHeight, setNotesHeight] = useState(88);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -191,11 +193,24 @@ export default function BudgetDashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.notesCard}>
+            <View
+              style={[
+                styles.notesCard,
+                {
+                  minHeight: Math.max(88, notesHeight + 28),
+                },
+              ]}
+            >
               <TextInput
                 style={styles.notesInput}
                 value={editor.receiptNote}
-                onChangeText={editor.setReceiptNote}
+                onChangeText={(text) => {
+                  editor.setReceiptNote(text);
+
+                  if (text.trim() === "") {
+                    setNotesHeight(88);
+                  }
+                }}
                 placeholder="Note..."
                 placeholderTextColor="#6F7F8F"
                 multiline
@@ -203,6 +218,11 @@ export default function BudgetDashboardScreen() {
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
+                onContentSizeChange={(event) => {
+                  const nextHeight = event.nativeEvent.contentSize.height;
+
+                  setNotesHeight(nextHeight);
+                }}
               />
             </View>
           </ScrollView>
@@ -267,7 +287,7 @@ const styles = StyleSheet.create({
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 6,
+    marginTop: 0,
   },
 
   backButton: {
@@ -307,7 +327,7 @@ const styles = StyleSheet.create({
   },
 
   notesCard: {
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: "#17232F",
     borderRadius: 18,
     borderWidth: 1,
@@ -318,7 +338,6 @@ const styles = StyleSheet.create({
   },
 
   notesInput: {
-    minHeight: 88,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
@@ -326,5 +345,6 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
     outlineStyle: "none" as any,
+    minHeight: 88,
   },
 });
