@@ -210,15 +210,12 @@ const styles = StyleSheet.create({
   },
 
   subtitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
+    position: "relative",
     marginTop: 6,
+    paddingRight: 52,
   },
 
   simpleSubtitle: {
-    flex: 1,
     color: "#8A98A8",
     fontSize: 16,
     fontWeight: "700",
@@ -226,21 +223,27 @@ const styles = StyleSheet.create({
   },
 
   helpButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    position: "absolute",
+    right: 0,
+    top: -2,
+
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+
     backgroundColor: "#243342",
     borderWidth: 1,
     borderColor: "#3B4D5F",
+
     alignItems: "center",
     justifyContent: "center",
   },
 
   helpButtonText: {
     color: "#CAD3DD",
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "900",
-    lineHeight: 20,
+    lineHeight: 24,
   },
 
   newButton: {
