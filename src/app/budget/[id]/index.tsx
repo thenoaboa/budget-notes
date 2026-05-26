@@ -241,7 +241,7 @@ export default function BudgetDashboardScreen() {
               <Text style={styles.notesMirror}>
                 {editor.receiptNote.length > 0
                   ? `${editor.receiptNote}\n`
-                  : "Note..."}
+                  : "Notes..."}
               </Text>
 
               <TextInput

@@ -350,12 +350,20 @@ export function useBudgetEditor(budgetId: string | undefined) {
   }, [safeToSpend, moneyAvailableIsEmpty]);
 
   const affirmingMessage = useMemo(() => {
+    const hasEnteredItems = items.some(
+      (item) => item.name.trim() !== "" || item.amount.trim() !== "",
+    );
+
+    if (hasEnteredItems && !moneyAvailableIsEmpty && safeToSpend === 0) {
+      return "Everything is accounted for.";
+    }
+
     return getAffirmingMessage(
       safeToSpend,
       messageStatus,
       moneyAvailableIsEmpty,
     );
-  }, [safeToSpend, messageStatus, moneyAvailableIsEmpty]);
+  }, [safeToSpend, messageStatus, moneyAvailableIsEmpty, items]);
 
   const headerSubtext = moneyAvailableIsEmpty
     ? "Add money available below"
