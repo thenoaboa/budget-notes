@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,8 +34,6 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
-
-  const [notesHeight, setNotesHeight] = useState(88);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -112,18 +110,6 @@ export default function BudgetDashboardScreen() {
         "Something went wrong while exporting the image.",
       );
     }
-  }
-
-  function handleReceiptNoteChange(text: string) {
-    editor.setReceiptNote(text);
-
-    if (text.trim() === "") {
-      setNotesHeight(88);
-    }
-  }
-
-  function handleReceiptNoteSizeChange(height: number) {
-    setNotesHeight(Math.max(88, height));
   }
 
   return (
@@ -206,15 +192,16 @@ export default function BudgetDashboardScreen() {
             </View>
 
             <View style={styles.notesCard}>
+              <Text style={styles.notesMirror}>
+                {editor.receiptNote.length > 0
+                  ? `${editor.receiptNote}\n`
+                  : "Note..."}
+              </Text>
+
               <TextInput
-                style={[
-                  styles.notesInput,
-                  {
-                    height: notesHeight,
-                  },
-                ]}
+                style={styles.notesInput}
                 value={editor.receiptNote}
-                onChangeText={handleReceiptNoteChange}
+                onChangeText={editor.setReceiptNote}
                 placeholder="Note..."
                 placeholderTextColor="#6F7F8F"
                 multiline
@@ -222,11 +209,6 @@ export default function BudgetDashboardScreen() {
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
-                onContentSizeChange={(event) => {
-                  handleReceiptNoteSizeChange(
-                    event.nativeEvent.contentSize.height,
-                  );
-                }}
               />
             </View>
           </ScrollView>
@@ -291,7 +273,7 @@ const styles = StyleSheet.create({
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 6,
+    marginTop: 0,
   },
 
   backButton: {
@@ -331,7 +313,7 @@ const styles = StyleSheet.create({
   },
 
   notesCard: {
-    marginTop: 14,
+    marginTop: 12,
     backgroundColor: "#17232F",
     borderRadius: 18,
     borderWidth: 1,
@@ -339,10 +321,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 14,
+    minHeight: 116,
+  },
+
+  notesMirror: {
+    minHeight: 88,
+    color: "transparent",
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: 21,
   },
 
   notesInput: {
-    minHeight: 88,
+    position: "absolute",
+    top: 14,
+    left: 14,
+    right: 14,
+    bottom: 14,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
