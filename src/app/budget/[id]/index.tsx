@@ -114,6 +114,18 @@ export default function BudgetDashboardScreen() {
     }
   }
 
+  function handleReceiptNoteChange(text: string) {
+    editor.setReceiptNote(text);
+
+    if (text.trim() === "") {
+      setNotesHeight(88);
+    }
+  }
+
+  function handleReceiptNoteSizeChange(height: number) {
+    setNotesHeight(Math.max(88, height));
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -193,24 +205,16 @@ export default function BudgetDashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            <View
-              style={[
-                styles.notesCard,
-                {
-                  minHeight: Math.max(88, notesHeight + 28),
-                },
-              ]}
-            >
+            <View style={styles.notesCard}>
               <TextInput
-                style={styles.notesInput}
+                style={[
+                  styles.notesInput,
+                  {
+                    height: notesHeight,
+                  },
+                ]}
                 value={editor.receiptNote}
-                onChangeText={(text) => {
-                  editor.setReceiptNote(text);
-
-                  if (text.trim() === "") {
-                    setNotesHeight(88);
-                  }
-                }}
+                onChangeText={handleReceiptNoteChange}
                 placeholder="Note..."
                 placeholderTextColor="#6F7F8F"
                 multiline
@@ -219,9 +223,9 @@ export default function BudgetDashboardScreen() {
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
                 onContentSizeChange={(event) => {
-                  const nextHeight = event.nativeEvent.contentSize.height;
-
-                  setNotesHeight(nextHeight);
+                  handleReceiptNoteSizeChange(
+                    event.nativeEvent.contentSize.height,
+                  );
                 }}
               />
             </View>
@@ -287,7 +291,7 @@ const styles = StyleSheet.create({
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 0,
+    marginTop: 6,
   },
 
   backButton: {
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
   },
 
   notesCard: {
-    marginTop: 12,
+    marginTop: 14,
     backgroundColor: "#17232F",
     borderRadius: 18,
     borderWidth: 1,
@@ -338,6 +342,7 @@ const styles = StyleSheet.create({
   },
 
   notesInput: {
+    minHeight: 88,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
@@ -345,6 +350,6 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
     outlineStyle: "none" as any,
-    minHeight: 88,
+    overflow: "hidden",
   },
 });
