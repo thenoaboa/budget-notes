@@ -1,4 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -11,10 +13,13 @@ import {
 } from "react-native";
 
 import { NoteCard } from "../components/NoteCard";
+import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
 
 export default function HomeScreen() {
   const router = useRouter();
+
+  const [showWelcomeTutorial, setShowWelcomeTutorial] = useState(false);
 
   const {
     visibleBudgets,
@@ -26,6 +31,26 @@ export default function HomeScreen() {
     renameBudget,
   } = useBudgetNotes();
 
+  useEffect(() => {
+    async function loadWelcomeTutorial() {
+      const completed = await AsyncStorage.getItem(
+        "budget-note-welcome-tutorial-complete",
+      );
+
+      if (!completed) {
+        setShowWelcomeTutorial(true);
+      }
+    }
+
+    loadWelcomeTutorial();
+  }, []);
+
+  async function completeWelcomeTutorial() {
+    await AsyncStorage.setItem("budget-note-welcome-tutorial-complete", "true");
+
+    setShowWelcomeTutorial(false);
+  }
+
   function resetSearchInBackground() {
     setTimeout(() => {
       setSearchVisible(false);
@@ -33,7 +58,9 @@ export default function HomeScreen() {
     }, 300);
   }
 
-  function createNewBudget() {
+  async function createNewBudget() {
+    await completeWelcomeTutorial();
+
     const id = Date.now().toString();
 
     router.push(`/budget/${id}` as any);
@@ -54,63 +81,80 @@ export default function HomeScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      onScroll={handleScroll}
-      scrollEventThrottle={16}
-      alwaysBounceVertical
-    >
-      <View style={styles.simpleHeader}>
-        <Text style={styles.simpleTitle}>Budget Note</Text>
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        alwaysBounceVertical
+      >
+        <View style={styles.simpleHeader}>
+          <Text style={styles.simpleTitle}>Budget Note</Text>
 
-        <Text style={styles.simpleSubtitle}>
-          Plan today, spend confidently.
-        </Text>
-      </View>
-
-      <Pressable style={styles.newButton} onPress={createNewBudget}>
-        <Text style={styles.newButtonText}>+ New Note</Text>
-      </Pressable>
-
-      {searchVisible && (
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search notes..."
-          placeholderTextColor="#8A98A8"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      )}
-
-      {visibleBudgets.length === 0 && (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>
-            {searchQuery.trim() ? "No matches found." : "Nothing here yet."}
-          </Text>
-
-          <Text style={styles.emptyText}>
-            {searchQuery.trim()
-              ? "Try searching by title, item, amount, or date."
-              : "Start a note when you want a clearer picture before spending."}
+          <Text style={styles.simpleSubtitle}>
+            Plan today, spend confidently.
           </Text>
         </View>
-      )}
 
-      {visibleBudgets.map((budget) => (
-        <NoteCard
-          key={budget.id}
-          budget={budget}
-          onPress={() => openBudgetNote(budget.id)}
-          onDelete={() => confirmDeleteBudget(budget.id)}
-          onRename={(newTitle) => renameBudget(budget.id, newTitle)}
+        <Pressable style={styles.newButton} onPress={createNewBudget}>
+          <Text style={styles.newButtonText}>+ New Note</Text>
+        </Pressable>
+
+        {searchVisible && (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notes..."
+            placeholderTextColor="#8A98A8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        )}
+
+        {visibleBudgets.length === 0 && (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>
+              {searchQuery.trim() ? "No matches found." : "Nothing here yet."}
+            </Text>
+
+            <Text style={styles.emptyText}>
+              {searchQuery.trim()
+                ? "Try searching by title, item, amount, or date."
+                : "Start a note when you want a clearer picture before spending."}
+            </Text>
+          </View>
+        )}
+
+        {visibleBudgets.map((budget) => (
+          <NoteCard
+            key={budget.id}
+            budget={budget}
+            onPress={() => openBudgetNote(budget.id)}
+            onDelete={() => confirmDeleteBudget(budget.id)}
+            onRename={(newTitle) => renameBudget(budget.id, newTitle)}
+          />
+        ))}
+      </ScrollView>
+
+      {showWelcomeTutorial && (
+        <TutorialOverlay
+          title="Hi, welcome to Budget Note."
+          body="Tap “+ New Note” to start your first budget."
+          buttonText="Got it"
+          onNext={completeWelcomeTutorial}
+          onSkip={completeWelcomeTutorial}
         />
-      ))}
-    </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#101820",
+  },
+
   container: {
     flex: 1,
     backgroundColor: "#101820",
