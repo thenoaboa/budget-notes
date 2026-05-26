@@ -70,11 +70,13 @@ export default function HomeScreen() {
   }
 
   async function createNewBudget() {
-    posthog?.capture("budget_created");
+    const shouldStartBudgetTutorial = homeTutorialStep === "highlightNewNote";
 
     await completeWelcomeTutorial();
 
-    await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+    if (shouldStartBudgetTutorial) {
+      await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+    }
 
     const id = Date.now().toString();
 
