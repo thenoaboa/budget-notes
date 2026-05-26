@@ -1,7 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -34,6 +34,8 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
+
+  const [notesHeight, setNotesHeight] = useState(88);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -193,7 +195,12 @@ export default function BudgetDashboardScreen() {
 
             <View style={styles.notesCard}>
               <TextInput
-                style={styles.notesInput}
+                style={[
+                  styles.notesInput,
+                  {
+                    height: Math.max(88, notesHeight),
+                  },
+                ]}
                 value={editor.receiptNote}
                 onChangeText={editor.setReceiptNote}
                 placeholder="Notes..."
@@ -202,6 +209,10 @@ export default function BudgetDashboardScreen() {
                 textAlignVertical="top"
                 selectionColor="#2ECC71"
                 underlineColorAndroid="transparent"
+                scrollEnabled={false}
+                onContentSizeChange={(event) => {
+                  setNotesHeight(event.nativeEvent.contentSize.height);
+                }}
               />
             </View>
           </ScrollView>
@@ -312,11 +323,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2D3D4D",
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
 
   notesInput: {
-    minHeight: 88,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
