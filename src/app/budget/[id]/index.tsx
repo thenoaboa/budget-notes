@@ -198,10 +198,8 @@ export default function BudgetDashboardScreen() {
                 style={[
                   styles.notesInput,
                   {
-                    height:
-                      editor.receiptNote.trim() === ""
-                        ? 88
-                        : Math.max(88, notesHeight),
+                    minHeight: 88,
+                    height: notesHeight,
                   },
                 ]}
                 value={editor.receiptNote}
