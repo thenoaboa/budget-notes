@@ -198,12 +198,21 @@ export default function BudgetDashboardScreen() {
                 style={[
                   styles.notesInput,
                   {
-                    height: Math.max(88, notesHeight),
+                    height:
+                      editor.receiptNote.trim() === ""
+                        ? 88
+                        : Math.max(88, notesHeight),
                   },
                 ]}
                 value={editor.receiptNote}
-                onChangeText={editor.setReceiptNote}
-                placeholder="Notes..."
+                onChangeText={(text) => {
+                  editor.setReceiptNote(text);
+
+                  if (text.trim() === "") {
+                    setNotesHeight(88);
+                  }
+                }}
+                placeholder="Note..."
                 placeholderTextColor="#6F7F8F"
                 multiline
                 textAlignVertical="top"
@@ -211,7 +220,9 @@ export default function BudgetDashboardScreen() {
                 underlineColorAndroid="transparent"
                 scrollEnabled={false}
                 onContentSizeChange={(event) => {
-                  setNotesHeight(event.nativeEvent.contentSize.height);
+                  const nextHeight = event.nativeEvent.contentSize.height;
+
+                  setNotesHeight(Math.max(88, nextHeight));
                 }}
               />
             </View>
