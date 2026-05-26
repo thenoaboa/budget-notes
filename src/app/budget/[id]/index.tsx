@@ -192,17 +192,16 @@ export default function BudgetDashboardScreen() {
             </View>
 
             <View style={styles.notesCard}>
-              <Text style={styles.notesTitle}>Notes</Text>
-
               <TextInput
                 style={styles.notesInput}
                 value={editor.receiptNote}
                 onChangeText={editor.setReceiptNote}
-                placeholder="Add notes, reminders, or context..."
+                placeholder="Notes..."
                 placeholderTextColor="#6F7F8F"
                 multiline
                 textAlignVertical="top"
                 selectionColor="#2ECC71"
+                underlineColorAndroid="transparent"
               />
             </View>
           </ScrollView>
@@ -313,15 +312,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2D3D4D",
     paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 14,
-  },
-
-  notesTitle: {
-    color: "#CAD3DD",
-    fontSize: 14,
-    fontWeight: "900",
-    marginBottom: 8,
+    paddingVertical: 14,
   },
 
   notesInput: {
@@ -331,5 +322,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 21,
     padding: 0,
+    borderWidth: 0,
+    outlineStyle: "none" as any,
   },
 });
