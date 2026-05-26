@@ -221,15 +221,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     lineHeight: 22,
   },
-
   helpButton: {
     position: "absolute",
     right: 0,
-    top: 0,
+    top: 2,
 
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
 
     backgroundColor: "#243342",
     borderWidth: 1,
@@ -241,9 +240,9 @@ const styles = StyleSheet.create({
 
   helpButtonText: {
     color: "#CAD3DD",
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "900",
-    lineHeight: 20,
+    lineHeight: 16,
   },
 
   newButton: {
