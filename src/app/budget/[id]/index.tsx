@@ -1,7 +1,8 @@
 // Save as: src/app/budget/[id]/index.tsx
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -23,6 +24,7 @@ import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { BudgetTitleCard } from "../../../components/BudgetTitleCard";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
+import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 
 export default function BudgetDashboardScreen() {
@@ -35,9 +37,31 @@ export default function BudgetDashboardScreen() {
 
   const exportRef = useRef<View>(null);
 
+  const [tutorialStep, setTutorialStep] = useState(0);
+
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
   }, [editor.items]);
+
+  useEffect(() => {
+    async function loadTutorial() {
+      const completed = await AsyncStorage.getItem(
+        "budget-note-tutorial-complete",
+      );
+
+      if (!completed) {
+        setTutorialStep(1);
+      }
+    }
+
+    loadTutorial();
+  }, []);
+
+  async function completeTutorial() {
+    await AsyncStorage.setItem("budget-note-tutorial-complete", "true");
+
+    setTutorialStep(0);
+  }
 
   async function shareReceipt() {
     try {
@@ -212,6 +236,34 @@ export default function BudgetDashboardScreen() {
               />
             </View>
           </ScrollView>
+
+          {tutorialStep === 1 && (
+            <TutorialOverlay
+              title="Set your budget"
+              body="Start with the amount you want to spend before adding purchases."
+              onNext={() => setTutorialStep(2)}
+              onSkip={completeTutorial}
+            />
+          )}
+
+          {tutorialStep === 2 && (
+            <TutorialOverlay
+              title="Add purchases"
+              body="Use the Add Item button to quickly enter purchases while shopping or planning."
+              onNext={() => setTutorialStep(3)}
+              onSkip={completeTutorial}
+            />
+          )}
+
+          {tutorialStep === 3 && (
+            <TutorialOverlay
+              title="Track what’s left"
+              body="Your remaining balance updates automatically with every purchase you add."
+              buttonText="Start"
+              onNext={completeTutorial}
+              onSkip={completeTutorial}
+            />
+          )}
 
           <AddItemOverlay
             visible={editor.showAddItemOverlay}
