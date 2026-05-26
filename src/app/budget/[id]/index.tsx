@@ -192,12 +192,6 @@ export default function BudgetDashboardScreen() {
             </View>
 
             <View style={styles.notesCard}>
-              <Text style={styles.notesMirror}>
-                {editor.receiptNote.length > 0
-                  ? `${editor.receiptNote}\n`
-                  : "Note..."}
-              </Text>
-
               <TextInput
                 style={styles.notesInput}
                 value={editor.receiptNote}
@@ -321,23 +315,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 14,
-    minHeight: 116,
-  },
-
-  notesMirror: {
-    minHeight: 88,
-    color: "transparent",
-    fontSize: 15,
-    fontWeight: "600",
-    lineHeight: 21,
   },
 
   notesInput: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    right: 14,
-    bottom: 14,
+    minHeight: 88,
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
@@ -345,6 +326,5 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
     outlineStyle: "none" as any,
-    overflow: "hidden",
   },
 });
