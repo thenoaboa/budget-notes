@@ -46,7 +46,7 @@ export default function BudgetDashboardScreen() {
   useEffect(() => {
     async function loadTutorial() {
       const completed = await AsyncStorage.getItem(
-        "budget-note-tutorial-complete",
+        "budget-note-tutorial-complete-v2",
       );
 
       if (!completed) {
@@ -58,7 +58,7 @@ export default function BudgetDashboardScreen() {
   }, []);
 
   async function completeTutorial() {
-    await AsyncStorage.setItem("budget-note-tutorial-complete", "true");
+    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
 
     setTutorialStep(0);
   }
