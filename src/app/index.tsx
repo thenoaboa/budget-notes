@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   subtitleRow: {
     position: "relative",
     marginTop: 6,
-    paddingRight: 28,
+    paddingRight: 34,
   },
 
   simpleSubtitle: {
@@ -220,6 +220,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 20,
+
     width: "100%",
   },
 
@@ -228,9 +229,9 @@ const styles = StyleSheet.create({
     right: 0,
     top: 1,
 
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
 
     backgroundColor: "#243342",
     borderWidth: 1,
@@ -242,9 +243,9 @@ const styles = StyleSheet.create({
 
   helpButtonText: {
     color: "#CAD3DD",
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: "900",
-    lineHeight: 12,
+    lineHeight: 14,
   },
 
   newButton: {
