@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   bottomButtonRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 0,
+    marginTop: 6,
   },
 
   backButton: {
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
 
   notesCard: {
-    marginTop: 12,
+    marginTop: 14,
     backgroundColor: "#17232F",
     borderRadius: 18,
     borderWidth: 1,
@@ -322,7 +322,6 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 14,
     minHeight: 116,
-    position: "relative",
   },
 
   notesMirror: {
@@ -331,7 +330,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     lineHeight: 21,
-    padding: 0,
   },
 
   notesInput: {
