@@ -16,10 +16,13 @@ import { NoteCard } from "../components/NoteCard";
 import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
 
+type HomeTutorialStep = "hidden" | "popup" | "highlightNewNote";
+
 export default function HomeScreen() {
   const router = useRouter();
 
-  const [showWelcomeTutorial, setShowWelcomeTutorial] = useState(false);
+  const [homeTutorialStep, setHomeTutorialStep] =
+    useState<HomeTutorialStep>("hidden");
 
   const {
     visibleBudgets,
@@ -38,7 +41,7 @@ export default function HomeScreen() {
       );
 
       if (!completed) {
-        setShowWelcomeTutorial(true);
+        setHomeTutorialStep("popup");
       }
     }
 
@@ -48,11 +51,11 @@ export default function HomeScreen() {
   async function completeWelcomeTutorial() {
     await AsyncStorage.setItem("budget-note-welcome-tutorial-complete", "true");
 
-    setShowWelcomeTutorial(false);
+    setHomeTutorialStep("hidden");
   }
 
   function replayWelcomeTutorial() {
-    setShowWelcomeTutorial(true);
+    setHomeTutorialStep("popup");
   }
 
   function resetSearchInBackground() {
@@ -68,11 +71,13 @@ export default function HomeScreen() {
     const id = Date.now().toString();
 
     router.push(`/budget/${id}` as any);
+
     resetSearchInBackground();
   }
 
   function openBudgetNote(id: string) {
     router.push(`/budget/${id}` as any);
+
     resetSearchInBackground();
   }
 
@@ -110,9 +115,21 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Pressable style={styles.newButton} onPress={createNewBudget}>
+        <Pressable
+          style={[
+            styles.newButton,
+
+            homeTutorialStep === "highlightNewNote" &&
+              styles.highlightedNewButton,
+          ]}
+          onPress={createNewBudget}
+        >
           <Text style={styles.newButtonText}>+ New Note</Text>
         </Pressable>
+
+        {homeTutorialStep === "highlightNewNote" && (
+          <Text style={styles.highlightText}>Tap here to continue</Text>
+        )}
 
         {searchVisible && (
           <TextInput
@@ -149,12 +166,12 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      {showWelcomeTutorial && (
+      {homeTutorialStep === "popup" && (
         <TutorialOverlay
           title="Hi, welcome to Budget Note."
           body="Tap “+ New Note” to start your first budget."
-          buttonText="Got it"
-          onNext={completeWelcomeTutorial}
+          buttonText="OK"
+          onNext={() => setHomeTutorialStep("highlightNewNote")}
           onSkip={completeWelcomeTutorial}
         />
       )}
@@ -231,6 +248,29 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: "center",
     marginBottom: 14,
+  },
+
+  highlightedNewButton: {
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+
+    shadowColor: "#2ECC71",
+    shadowOpacity: 0.9,
+    shadowRadius: 18,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+
+    elevation: 12,
+  },
+
+  highlightText: {
+    color: "#2ECC71",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 18,
   },
 
   newButtonText: {
