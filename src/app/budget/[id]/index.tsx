@@ -193,15 +193,16 @@ export default function BudgetDashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.notesCard}>
+            <View
+              style={[
+                styles.notesCard,
+                {
+                  minHeight: Math.max(88, notesHeight + 28),
+                },
+              ]}
+            >
               <TextInput
-                style={[
-                  styles.notesInput,
-                  {
-                    minHeight: 88,
-                    height: notesHeight,
-                  },
-                ]}
+                style={styles.notesInput}
                 value={editor.receiptNote}
                 onChangeText={(text) => {
                   editor.setReceiptNote(text);
@@ -220,7 +221,7 @@ export default function BudgetDashboardScreen() {
                 onContentSizeChange={(event) => {
                   const nextHeight = event.nativeEvent.contentSize.height;
 
-                  setNotesHeight(Math.max(88, nextHeight));
+                  setNotesHeight(nextHeight);
                 }}
               />
             </View>
@@ -344,5 +345,6 @@ const styles = StyleSheet.create({
     padding: 0,
     borderWidth: 0,
     outlineStyle: "none" as any,
+    minHeight: 88,
   },
 });
