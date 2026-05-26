@@ -32,6 +32,8 @@ function createEmptyItem(): BudgetItem {
 
 export function useBudgetEditor(budgetId: string | undefined) {
   const [noteTitle, setNoteTitle] = useState("");
+  const [receiptNote, setReceiptNote] = useState("");
+
   const [createdAt, setCreatedAt] = useState("");
   const [lastEditedAt, setLastEditedAt] = useState("");
 
@@ -75,6 +77,8 @@ export function useBudgetEditor(budgetId: string | undefined) {
               : existingBudget.budgetName || "",
           );
 
+          setReceiptNote(existingBudget.receiptNote || "");
+
           setCreatedAt(
             existingBudget.createdAt || getCreatedDateFromId(budgetId),
           );
@@ -114,6 +118,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         const savedDates = await autoSaveBudgetById({
           budgetId,
           noteTitle,
+          receiptNote,
           startingMoney,
           items,
           createdAt,
@@ -138,6 +143,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     budgetId,
     hasLoaded,
     noteTitle,
+    receiptNote,
     startingMoney,
     items,
     createdAt,
@@ -367,6 +373,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
   return {
     noteTitle,
     setNoteTitle,
+
+    receiptNote,
+    setReceiptNote,
 
     createdAt,
     lastEditedAt,

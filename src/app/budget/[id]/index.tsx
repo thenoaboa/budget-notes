@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -189,6 +190,21 @@ export default function BudgetDashboardScreen() {
                 <Text style={styles.editReceiptButtonText}>Receipt →</Text>
               </TouchableOpacity>
             </View>
+
+            <View style={styles.notesCard}>
+              <Text style={styles.notesTitle}>Notes</Text>
+
+              <TextInput
+                style={styles.notesInput}
+                value={editor.receiptNote}
+                onChangeText={editor.setReceiptNote}
+                placeholder="Add notes, reminders, or context..."
+                placeholderTextColor="#6F7F8F"
+                multiline
+                textAlignVertical="top"
+                selectionColor="#2ECC71"
+              />
+            </View>
           </ScrollView>
 
           <AddItemOverlay
@@ -288,5 +304,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
     textAlign: "center",
+  },
+
+  notesCard: {
+    marginTop: 12,
+    backgroundColor: "#17232F",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#2D3D4D",
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+
+  notesTitle: {
+    color: "#CAD3DD",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  notesInput: {
+    minHeight: 88,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "600",
+    lineHeight: 21,
+    padding: 0,
   },
 });

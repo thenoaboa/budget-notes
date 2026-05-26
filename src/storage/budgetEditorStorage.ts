@@ -8,6 +8,7 @@ const BUDGETS_STORAGE_KEY = "budgets";
 type AutoSaveBudgetParams = {
   budgetId: string;
   noteTitle: string;
+  receiptNote: string;
   startingMoney: string;
   items: BudgetItem[];
   createdAt: string;
@@ -17,6 +18,7 @@ type AutoSaveBudgetParams = {
 
 export async function loadBudgets() {
   const savedBudgets = await AsyncStorage.getItem(BUDGETS_STORAGE_KEY);
+
   const parsedBudgets: Budget[] = savedBudgets ? JSON.parse(savedBudgets) : [];
 
   return parsedBudgets;
@@ -47,6 +49,7 @@ export function mapStoredItemsToEditorItems(
 export async function autoSaveBudgetById({
   budgetId,
   noteTitle,
+  receiptNote,
   startingMoney,
   items,
   createdAt,
@@ -61,12 +64,21 @@ export async function autoSaveBudgetById({
 
   const savedBudget: Budget = {
     id: budgetId,
+
     budgetName: noteTitle.trim() || "Untitled",
+
+    receiptNote,
+
     amount: startingMoney,
+
     spendingItems: items,
+
     createdAt: existingBudget?.createdAt || createdAt || now,
+
     updatedAt: now,
+
     salesTaxEnabled,
+
     taxRate,
   };
 
@@ -100,6 +112,7 @@ export async function renameBudgetById(
       ? {
           ...budget,
           budgetName: newTitle.trim() || "Untitled",
+
           updatedAt: new Date().toISOString(),
         }
       : budget,

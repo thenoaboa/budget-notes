@@ -10,6 +10,9 @@ export type Budget = {
   id: string;
   budgetName: string;
   amount: string;
+
+  receiptNote?: string;
+
   spendingItems: StoredBudgetItem[];
 
   createdAt?: string;
