@@ -104,7 +104,7 @@ export default function HomeScreen() {
           <Text style={styles.simpleTitle}>Budget Note</Text>
 
           <View style={styles.subtitleRow}>
-            <Text style={styles.simpleSubtitle}>
+            <Text style={styles.simpleSubtitle} numberOfLines={1}>
               Plan today, spend confidently.
             </Text>
 
@@ -212,23 +212,25 @@ const styles = StyleSheet.create({
   subtitleRow: {
     position: "relative",
     marginTop: 6,
-    paddingRight: 52,
+    paddingRight: 28,
   },
 
   simpleSubtitle: {
     color: "#8A98A8",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
-    lineHeight: 22,
+    lineHeight: 20,
+    width: "100%",
   },
+
   helpButton: {
     position: "absolute",
     right: 0,
-    top: 2,
+    top: 1,
 
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
 
     backgroundColor: "#243342",
     borderWidth: 1,
@@ -240,9 +242,9 @@ const styles = StyleSheet.create({
 
   helpButtonText: {
     color: "#CAD3DD",
-    fontSize: 15,
+    fontSize: 11,
     fontWeight: "900",
-    lineHeight: 16,
+    lineHeight: 12,
   },
 
   newButton: {
