@@ -50,8 +50,6 @@ export function BudgetHeaderCard({
 
   function handleAmountFocus() {
     setIsEditingAmount(true);
-
-    onBudgetAmountTutorialFocus?.();
   }
 
   return (
@@ -65,10 +63,8 @@ export function BudgetHeaderCard({
         styles.headerCard,
         {
           backgroundColor: currentStyle.backgroundColor,
-
           borderColor: currentStyle.borderColor,
         },
-
         highlightBudgetAmount && styles.highlightedHeaderCard,
       ]}
     >
@@ -78,7 +74,6 @@ export function BudgetHeaderCard({
         ref={startingMoneyRef}
         style={[
           styles.headerAmount,
-
           highlightBudgetAmount && styles.highlightedAmountInput,
         ]}
         value={inputValue}
@@ -94,6 +89,7 @@ export function BudgetHeaderCard({
         keyboardType="decimal-pad"
         returnKeyType="done"
         selectTextOnFocus
+        editable={!highlightBudgetAmount}
       />
 
       <Text style={styles.headerSubtext}>
@@ -120,16 +116,13 @@ const styles = StyleSheet.create({
   highlightedHeaderCard: {
     borderWidth: 3,
     borderColor: "#FFFFFF",
-
     shadowColor: "#2ECC71",
     shadowOpacity: 0.95,
     shadowRadius: 18,
-
     shadowOffset: {
       width: 0,
       height: 0,
     },
-
     elevation: 14,
   },
 
@@ -149,12 +142,10 @@ const styles = StyleSheet.create({
 
   highlightedAmountInput: {
     textShadowColor: "#2ECC71",
-
     textShadowOffset: {
       width: 0,
       height: 0,
     },
-
     textShadowRadius: 10,
   },
 
