@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   },
 
   notesCard: {
-    marginTop: 18,
+    marginTop: 19,
     backgroundColor: "#17232F",
     borderRadius: 18,
     borderWidth: 1,
