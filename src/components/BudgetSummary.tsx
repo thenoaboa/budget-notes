@@ -1,6 +1,6 @@
 // Save as: src/components/BudgetSummary.tsx
 
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
@@ -59,6 +59,8 @@ export function BudgetSummaryBox({
   onPressItem,
   onDeleteItem,
 }: Props) {
+  const isWeb = Platform.OS === "web";
+
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
     const amount = parseMoney(item.amount);
@@ -81,6 +83,23 @@ export function BudgetSummaryBox({
         onPress={() => onDeleteItem?.(itemId)}
       >
         <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
+    );
+  }
+
+  function renderItemRow(
+    itemId: number,
+    itemName: string,
+    quantity: number,
+    lineTotal: number,
+  ) {
+    return (
+      <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
+        <Text style={styles.itemText} numberOfLines={1}>
+          {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
+        </Text>
+
+        <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
       </Pressable>
     );
   }
@@ -123,26 +142,30 @@ export function BudgetSummaryBox({
             const itemName = item.name.trim() || "Unnamed item";
             const lineTotal = amount * quantity;
 
+            if (isWeb) {
+              return (
+                <View key={item.id} style={styles.webItemRow}>
+                  <View style={styles.webItemContent}>
+                    {renderItemRow(item.id, itemName, quantity, lineTotal)}
+                  </View>
+
+                  <Pressable
+                    style={styles.webDeleteButton}
+                    onPress={() => onDeleteItem?.(item.id)}
+                  >
+                    <Text style={styles.webDeleteText}>Delete</Text>
+                  </Pressable>
+                </View>
+              );
+            }
+
             return (
               <Swipeable
                 key={item.id}
                 renderRightActions={() => renderRightActions(item.id)}
                 overshootRight={false}
               >
-                <Pressable
-                  style={styles.itemRow}
-                  onPress={() => onPressItem?.(item.id)}
-                >
-                  <Text style={styles.itemText} numberOfLines={1}>
-                    {quantity > 1
-                      ? `${itemName} x${quantity}:`
-                      : `${itemName}:`}
-                  </Text>
-
-                  <Text style={styles.itemAmount}>
-                    {formatMoney(lineTotal)}
-                  </Text>
-                </Pressable>
+                {renderItemRow(item.id, itemName, quantity, lineTotal)}
               </Swipeable>
             );
           })}
@@ -228,6 +251,30 @@ const styles = StyleSheet.create({
   summaryHeaderText: {
     color: "#CAD3DD",
     fontSize: 17,
+    fontWeight: "900",
+  },
+
+  webItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  webItemContent: {
+    flex: 1,
+  },
+
+  webDeleteButton: {
+    marginLeft: 8,
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  webDeleteText: {
+    color: "#FF6B6B",
     fontWeight: "900",
   },
 

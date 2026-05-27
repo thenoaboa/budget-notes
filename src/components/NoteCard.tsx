@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import {
-  Alert,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
@@ -27,15 +27,15 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     budget.budgetName || "Untitled Note",
   );
 
+  const isWeb = Platform.OS === "web";
+
   function handleDelete() {
     swipeableRef.current?.close();
     onDelete();
   }
 
   function handlePress() {
-    if (isEditing) {
-      return;
-    }
+    if (isEditing) return;
 
     swipeableRef.current?.close();
     onPress();
@@ -54,57 +54,8 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     onRename(cleanedTitle);
   }
 
-  async function handleShare() {
-    try {
-      const shareUrl =
-        typeof window !== "undefined"
-          ? `${window.location.origin}/budget/${budget.id}`
-          : "";
-
-      const shareTitle = budget.budgetName || "Budget Note";
-
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({
-          title: shareTitle,
-          text: `Check out this budget: ${shareTitle}`,
-          url: shareUrl,
-        });
-
-        return;
-      }
-
-      if (typeof navigator !== "undefined" && navigator.clipboard && shareUrl) {
-        await navigator.clipboard.writeText(shareUrl);
-        Alert.alert("Link copied", "Budget link copied to clipboard.");
-        return;
-      }
-
-      Alert.alert(
-        "Sharing unavailable",
-        "Sharing is not available on this device.",
-      );
-    } catch (error) {
-      console.log("Share failed:", error);
-      Alert.alert("Share failed", "Something went wrong while sharing.");
-    }
-  }
-
-  function renderRightActions() {
+  function CardContent() {
     return (
-      <View style={styles.deleteActionWrapper}>
-        <Pressable style={styles.deleteAction} onPress={handleDelete}>
-          <Text style={styles.deleteActionText}>Delete</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  return (
-    <Swipeable
-      ref={swipeableRef}
-      renderRightActions={renderRightActions}
-      overshootRight={false}
-    >
       <Pressable style={styles.card} onPress={handlePress}>
         <View style={styles.titleRow}>
           {isEditing ? (
@@ -128,22 +79,67 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
             <Pressable style={styles.editIconButton} onPress={startEditing}>
               <Text style={styles.editIcon}>✎</Text>
             </Pressable>
-
-            {false && (
-              <Pressable style={styles.shareButton} onPress={handleShare}>
-                <Text style={styles.shareIcon}>↑</Text>
-              </Pressable>
-            )}
           </View>
         </View>
 
         <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
       </Pressable>
+    );
+  }
+
+  if (isWeb) {
+    return (
+      <View style={styles.webContainer}>
+        <View style={{ flex: 1 }}>
+          <CardContent />
+        </View>
+
+        <Pressable style={styles.webDeleteButton} onPress={handleDelete}>
+          <Text style={styles.webDeleteText}>Delete</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderRightActions={() => (
+        <View style={styles.deleteActionWrapper}>
+          <Pressable style={styles.deleteAction} onPress={handleDelete}>
+            <Text style={styles.deleteActionText}>Delete</Text>
+          </Pressable>
+        </View>
+      )}
+      overshootRight={false}
+    >
+      <CardContent />
     </Swipeable>
   );
 }
 
 const styles = StyleSheet.create({
+  webContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  webDeleteButton: {
+    marginLeft: 8,
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+
+  webDeleteText: {
+    color: "#FF6B6B",
+    fontWeight: "900",
+  },
+
   card: {
     backgroundColor: "#1B2633",
     borderRadius: 18,
@@ -188,10 +184,8 @@ const styles = StyleSheet.create({
   editIconButton: {
     width: 32,
     height: 32,
-
     alignItems: "center",
     justifyContent: "center",
-
     marginRight: 8,
   },
 
@@ -201,24 +195,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     opacity: 0.9,
     transform: [{ scaleX: -1 }],
-  },
-
-  shareButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    backgroundColor: "#243342",
-    borderWidth: 1,
-    borderColor: "#3B4D5F",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-
-  shareIcon: {
-    color: "#CAD3DD",
-    fontSize: 16,
-    fontWeight: "900",
   },
 
   cardSubtitle: {
