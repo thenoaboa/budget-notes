@@ -84,11 +84,15 @@ export function BudgetSummaryBox({
     return isIncluded && (name !== "" || amount > 0);
   });
 
+  function handleDeleteItem(itemId: number) {
+    onDeleteItem?.(itemId);
+  }
+
   function renderRightActions(itemId: number) {
     return (
       <Pressable
         style={styles.deleteAction}
-        onPress={() => onDeleteItem?.(itemId)}
+        onPressIn={() => handleDeleteItem(itemId)}
       >
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
@@ -159,7 +163,7 @@ export function BudgetSummaryBox({
 
                   <Pressable
                     style={styles.webDeleteButton}
-                    onPress={() => onDeleteItem?.(item.id)}
+                    onPress={() => handleDeleteItem(item.id)}
                   >
                     <Text style={styles.webDeleteText}>Delete</Text>
                   </Pressable>
