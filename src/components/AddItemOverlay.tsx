@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   Dimensions,
   Modal,
@@ -39,6 +40,8 @@ export function AddItemOverlay({
   onClose,
   onAdd,
 }: Props) {
+  const itemNameRef = useRef<TextInput>(null);
+
   const amountValue = draftItem.amount ?? "";
   const showDollarSign = amountValue.length > 0;
 
@@ -62,6 +65,17 @@ export function AddItemOverlay({
   function handleNameSubmit() {
     if (isDesktopWeb) {
       onAdd();
+    }
+  }
+
+  function handleAmountKeyPress(event: any) {
+    if (!isDesktopWeb) {
+      return;
+    }
+
+    if (event.nativeEvent.key === "Tab") {
+      event.preventDefault?.();
+      itemNameRef.current?.focus();
     }
   }
 
@@ -100,6 +114,8 @@ export function AddItemOverlay({
                 placeholderTextColor="#8A98A8"
                 keyboardType="decimal-pad"
                 value={amountValue}
+                blurOnSubmit={false}
+                onKeyPress={handleAmountKeyPress}
                 onChangeText={(text) =>
                   setDraftItem((prev) => ({
                     ...prev,
@@ -121,6 +137,7 @@ export function AddItemOverlay({
           </View>
 
           <TextInput
+            ref={itemNameRef}
             style={styles.input}
             placeholder="Item name"
             placeholderTextColor="#8A98A8"
