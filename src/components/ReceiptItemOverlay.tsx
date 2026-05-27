@@ -1,6 +1,14 @@
 // Save as: src/components/ReceiptItemOverlay.tsx
 
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { SpendingItemRow } from "./SpendingItemCard";
 
@@ -39,10 +47,21 @@ export function ReceiptItemOverlay({
 
   onClose,
 }: Props) {
+  const isDesktopWeb =
+    Platform.OS === "web" && Dimensions.get("window").width >= 768;
+
   if (!item) {
     return null;
   }
 
+  function handleDesktopFinishOrNext(...args: any[]) {
+    if (isDesktopWeb) {
+      onClose();
+      return;
+    }
+
+    focusNextItemOrAddCurrent(...args);
+  }
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -66,7 +85,7 @@ export function ReceiptItemOverlay({
             resetQuantity={resetQuantity}
             toggleIncluded={toggleIncluded}
             deleteItem={deleteItem}
-            focusNextItemOrAddCurrent={focusNextItemOrAddCurrent}
+            focusNextItemOrAddCurrent={handleDesktopFinishOrNext}
             hideDeleteButton
           />
 

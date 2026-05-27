@@ -1,5 +1,7 @@
 import {
+  Dimensions,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -40,6 +42,9 @@ export function AddItemOverlay({
   const amountValue = draftItem.amount ?? "";
   const showDollarSign = amountValue.length > 0;
 
+  const isDesktopWeb =
+    Platform.OS === "web" && Dimensions.get("window").width >= 768;
+
   function increaseQuantity() {
     setDraftItem((prev) => ({
       ...prev,
@@ -52,6 +57,12 @@ export function AddItemOverlay({
       ...prev,
       quantity: 1,
     }));
+  }
+
+  function handleNameSubmit() {
+    if (isDesktopWeb) {
+      onAdd();
+    }
   }
 
   return (
@@ -114,6 +125,8 @@ export function AddItemOverlay({
             placeholder="Item name"
             placeholderTextColor="#8A98A8"
             value={draftItem.name}
+            returnKeyType={isDesktopWeb ? "done" : "default"}
+            onSubmitEditing={handleNameSubmit}
             onChangeText={(text) =>
               setDraftItem((prev) => ({
                 ...prev,
