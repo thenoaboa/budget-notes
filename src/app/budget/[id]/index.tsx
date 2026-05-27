@@ -48,6 +48,7 @@ export default function BudgetDashboardScreen() {
   const exportRef = useRef<View>(null);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -117,22 +118,30 @@ export default function BudgetDashboardScreen() {
   }
 
   function deleteItemWithAnalytics(id: number) {
+    setIsDeletingItem(true);
+
+    editor.closeReceiptItemOverlay();
+
     posthog?.capture("item_deleted", {
       itemCountBeforeDelete: editor.items.length,
       itemCountAfterDelete: Math.max(editor.items.length - 1, 0),
       salesTaxEnabled: editor.salesTaxEnabled,
     });
 
-    // Important for iPhone app:
-    // clear selected/editing state before deleting
-    editor.closeReceiptItemOverlay();
-
     setTimeout(() => {
       editor.deleteItem(id);
+
+      setTimeout(() => {
+        setIsDeletingItem(false);
+      }, 250);
     }, 0);
   }
 
   function openReceiptItemOverlayWithAnalytics(id: number) {
+    if (isDeletingItem) {
+      return;
+    }
+
     posthog?.capture("item_edited", {
       itemCount: editor.items.length,
       source: "receipt_card",
@@ -390,7 +399,7 @@ export default function BudgetDashboardScreen() {
           />
 
           <ReceiptItemOverlay
-            visible={editor.selectedReceiptItemId !== null}
+            visible={editor.selectedReceiptItemId !== null && !isDeletingItem}
             item={editor.selectedReceiptItem}
             itemNameRefs={editor.itemNameRefs}
             itemAmountRefs={editor.itemAmountRefs}
