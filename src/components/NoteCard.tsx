@@ -123,7 +123,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
 const styles = StyleSheet.create({
   webContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "stretch",
   },
 
   webDeleteButton: {
@@ -131,10 +131,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#3A1C1C",
     borderColor: "#FF6B6B",
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingHorizontal: 12,
-    paddingVertical: 10,
     marginBottom: 14,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   webDeleteText: {
