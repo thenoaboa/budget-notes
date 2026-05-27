@@ -239,11 +239,17 @@ export default function BudgetDashboardScreen() {
                 <TextInput
                   style={styles.budgetIdentityAmountInput}
                   value={
-                    isBudgetAmountFocused
-                      ? editor.startingMoney
-                      : formatBudgetCardAmount(editor.startingMoney)
+                    editor.startingMoney.trim().length === 0
+                      ? "$"
+                      : `$${editor.startingMoney}`
                   }
-                  onChangeText={updateBudgetCardAmount}
+                  onChangeText={(value) => {
+                    const cleanedValue = value
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/(\..*)\./g, "$1");
+
+                    editor.setStartingMoney(cleanedValue);
+                  }}
                   onFocus={() => {
                     setIsBudgetAmountFocused(true);
 
