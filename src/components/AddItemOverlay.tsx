@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
 
   amountInputWithDollar: {
-    paddingLeft: 34,
+    paddingLeft: 26,
   },
 
   quantityButton: {
