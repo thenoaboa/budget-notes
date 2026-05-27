@@ -5,7 +5,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -17,12 +16,9 @@ import {
   View,
 } from "react-native";
 
-import html2canvas from "html2canvas";
-
 import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
-import { BudgetTitleCard } from "../../../components/BudgetTitleCard";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
@@ -49,6 +45,7 @@ export default function BudgetDashboardScreen() {
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [isBudgetAmountFocused, setIsBudgetAmountFocused] = useState(false);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -160,84 +157,22 @@ export default function BudgetDashboardScreen() {
     router.push(`/budget/${budgetId}/items` as any);
   }
 
-  async function shareReceipt() {
-    posthog?.capture("share_pressed", {
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-      totalSpent: editor.totalSpent,
-      source: "budget_title_card",
-    });
+  function formatBudgetCardAmount(value: string) {
+    const trimmedValue = value.trim();
 
-    try {
-      if (typeof window === "undefined") {
-        Alert.alert(
-          "Unsupported",
-          "Image export is only supported on web right now.",
-        );
-        return;
-      }
-
-      const target = document.getElementById("receipt-export");
-
-      if (!target) {
-        Alert.alert("Export failed", "Could not find receipt content.");
-        return;
-      }
-
-      const canvas = await html2canvas(target, {
-        backgroundColor: "#101820",
-        scale: 2,
-        useCORS: true,
-      });
-
-      const dataUrl = canvas.toDataURL("image/png");
-
-      const newWindow = window.open();
-
-      if (!newWindow) {
-        Alert.alert("Popup blocked", "Please allow popups for image export.");
-        return;
-      }
-
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>Budget Export</title>
-
-            <style>
-              body {
-                margin: 0;
-                background: #101820;
-
-                display: flex;
-                justify-content: center;
-                align-items: center;
-
-                min-height: 100vh;
-              }
-
-              img {
-                max-width: 100%;
-                height: auto;
-              }
-            </style>
-          </head>
-
-          <body>
-            <img src="${dataUrl}" />
-          </body>
-        </html>
-      `);
-
-      newWindow.document.close();
-    } catch (error) {
-      console.log("Export failed:", error);
-
-      Alert.alert(
-        "Export failed",
-        "Something went wrong while exporting the image.",
-      );
+    if (trimmedValue.length === 0) {
+      return "$0.00";
     }
+
+    return `$${trimmedValue}`;
+  }
+
+  function updateBudgetCardAmount(value: string) {
+    const cleanedValue = value
+      .replace(/[^0-9.]/g, "")
+      .replace(/(\..*)\./g, "$1");
+
+    editor.setStartingMoney(cleanedValue);
   }
 
   return (
@@ -289,11 +224,42 @@ export default function BudgetDashboardScreen() {
                 />
               </View>
 
-              <BudgetTitleCard
-                noteTitle={editor.noteTitle}
-                setNoteTitle={editor.setNoteTitle}
-                onShare={shareReceipt}
-              />
+              <View style={styles.budgetIdentityCard}>
+                <TextInput
+                  style={styles.budgetIdentityTitleInput}
+                  value={editor.noteTitle}
+                  onChangeText={editor.setNoteTitle}
+                  placeholder="Untitled Budget"
+                  placeholderTextColor="#9EADBD"
+                  textAlign="center"
+                  selectionColor="#2ECC71"
+                  underlineColorAndroid="transparent"
+                />
+
+                <TextInput
+                  style={styles.budgetIdentityAmountInput}
+                  value={
+                    isBudgetAmountFocused
+                      ? editor.startingMoney
+                      : formatBudgetCardAmount(editor.startingMoney)
+                  }
+                  onChangeText={updateBudgetCardAmount}
+                  onFocus={() => {
+                    setIsBudgetAmountFocused(true);
+
+                    if (tutorialStep === "budgetHighlight") {
+                      setTutorialStep("addItemPopup");
+                    }
+                  }}
+                  onBlur={() => setIsBudgetAmountFocused(false)}
+                  keyboardType="decimal-pad"
+                  placeholder="$0.00"
+                  placeholderTextColor="#2ECC71"
+                  textAlign="center"
+                  selectionColor="#2ECC71"
+                  underlineColorAndroid="transparent"
+                />
+              </View>
 
               <BudgetSummaryBox
                 items={receiptItems}
@@ -445,6 +411,42 @@ const styles = StyleSheet.create({
 
   taxOnlySection: {
     marginBottom: 8,
+  },
+
+  budgetIdentityCard: {
+    marginBottom: 8,
+    backgroundColor: "#17232F",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#2D3D4D",
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  budgetIdentityTitleInput: {
+    width: "100%",
+    color: "#9EADBD",
+    fontSize: 26,
+    fontWeight: "900",
+    textAlign: "center",
+    padding: 0,
+    borderWidth: 0,
+    outlineStyle: "none" as any,
+  },
+
+  budgetIdentityAmountInput: {
+    width: "100%",
+    marginTop: 8,
+    color: "#2ECC71",
+    fontSize: 21,
+    fontWeight: "900",
+    textAlign: "center",
+    padding: 0,
+    borderWidth: 0,
+    outlineStyle: "none" as any,
   },
 
   bottomButtonRow: {
