@@ -1,5 +1,6 @@
 // Save as: src/components/BudgetSummary.tsx
 
+import { useState } from "react";
 import {
   Dimensions,
   Platform,
@@ -66,6 +67,8 @@ export function BudgetSummaryBox({
   onPressItem,
   onDeleteItem,
 }: Props) {
+  const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
+
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
 
@@ -154,6 +157,8 @@ export function BudgetSummaryBox({
             const itemName = item.name.trim() || "Unnamed item";
             const lineTotal = amount * quantity;
 
+            const isHovered = hoveredDeleteId === item.id;
+
             if (isDesktopWeb) {
               return (
                 <View key={item.id} style={styles.webItemRow}>
@@ -162,10 +167,22 @@ export function BudgetSummaryBox({
                   </View>
 
                   <Pressable
-                    style={styles.webDeleteButton}
+                    style={[
+                      styles.webDeleteButton,
+                      isHovered && styles.webDeleteButtonHovered,
+                    ]}
+                    onHoverIn={() => setHoveredDeleteId(item.id)}
+                    onHoverOut={() => setHoveredDeleteId(null)}
                     onPress={() => handleDeleteItem(item.id)}
                   >
-                    <Text style={styles.webDeleteText}>Delete</Text>
+                    <Text
+                      style={[
+                        styles.webDeleteText,
+                        isHovered && styles.webDeleteTextHovered,
+                      ]}
+                    >
+                      Delete
+                    </Text>
                   </Pressable>
                 </View>
               );
@@ -277,17 +294,26 @@ const styles = StyleSheet.create({
 
   webDeleteButton: {
     marginLeft: 8,
-    backgroundColor: "#3A1C1C",
-    borderColor: "#FF6B6B",
+    backgroundColor: "#243342",
+    borderColor: "#3B4D5F",
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
 
+  webDeleteButtonHovered: {
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+  },
+
   webDeleteText: {
-    color: "#FF6B6B",
+    color: "#8A98A8",
     fontWeight: "900",
+  },
+
+  webDeleteTextHovered: {
+    color: "#FF6B6B",
   },
 
   itemRow: {

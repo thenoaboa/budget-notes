@@ -24,6 +24,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteHovered, setDeleteHovered] = useState(false);
   const [draftTitle, setDraftTitle] = useState(
     budget.budgetName || "Untitled Note",
   );
@@ -96,8 +97,23 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
           <CardContent />
         </View>
 
-        <Pressable style={styles.webDeleteButton} onPress={handleDelete}>
-          <Text style={styles.webDeleteText}>Delete</Text>
+        <Pressable
+          style={[
+            styles.webDeleteButton,
+            deleteHovered && styles.webDeleteButtonHovered,
+          ]}
+          onHoverIn={() => setDeleteHovered(true)}
+          onHoverOut={() => setDeleteHovered(false)}
+          onPress={handleDelete}
+        >
+          <Text
+            style={[
+              styles.webDeleteText,
+              deleteHovered && styles.webDeleteTextHovered,
+            ]}
+          >
+            Delete
+          </Text>
         </Pressable>
       </View>
     );
@@ -128,8 +144,8 @@ const styles = StyleSheet.create({
 
   webDeleteButton: {
     marginLeft: 8,
-    backgroundColor: "#3A1C1C",
-    borderColor: "#FF6B6B",
+    backgroundColor: "#243342",
+    borderColor: "#3B4D5F",
     borderWidth: 1,
     borderRadius: 18,
     paddingHorizontal: 12,
@@ -138,9 +154,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  webDeleteButtonHovered: {
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+  },
+
   webDeleteText: {
-    color: "#FF6B6B",
+    color: "#8A98A8",
     fontWeight: "900",
+  },
+
+  webDeleteTextHovered: {
+    color: "#FF6B6B",
   },
 
   card: {
