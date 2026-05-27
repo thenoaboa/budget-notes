@@ -286,6 +286,7 @@ const styles = StyleSheet.create({
   webItemRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 8,
   },
 
   webItemContent: {
