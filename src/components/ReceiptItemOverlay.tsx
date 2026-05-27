@@ -62,6 +62,12 @@ export function ReceiptItemOverlay({
 
     focusNextItemOrAddCurrent(...args);
   }
+
+  function handleDeleteFromOverlay(...args: any[]) {
+    onClose();
+    deleteItem(...args);
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -84,7 +90,7 @@ export function ReceiptItemOverlay({
             increaseQuantity={increaseQuantity}
             resetQuantity={resetQuantity}
             toggleIncluded={toggleIncluded}
-            deleteItem={deleteItem}
+            deleteItem={handleDeleteFromOverlay}
             focusNextItemOrAddCurrent={handleDesktopFinishOrNext}
             hideDeleteButton
           />
