@@ -123,7 +123,13 @@ export default function BudgetDashboardScreen() {
       salesTaxEnabled: editor.salesTaxEnabled,
     });
 
-    editor.deleteItem(id);
+    // Important for iPhone app:
+    // clear selected/editing state before deleting
+    editor.closeReceiptItemOverlay();
+
+    setTimeout(() => {
+      editor.deleteItem(id);
+    }, 0);
   }
 
   function openReceiptItemOverlayWithAnalytics(id: number) {
