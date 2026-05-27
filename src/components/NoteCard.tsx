@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import {
+  Dimensions,
   Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
@@ -27,7 +28,8 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     budget.budgetName || "Untitled Note",
   );
 
-  const isWeb = Platform.OS === "web";
+  const isDesktopWeb =
+    Platform.OS === "web" && Dimensions.get("window").width >= 768;
 
   function handleDelete() {
     swipeableRef.current?.close();
@@ -87,7 +89,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     );
   }
 
-  if (isWeb) {
+  if (isDesktopWeb) {
     return (
       <View style={styles.webContainer}>
         <View style={{ flex: 1 }}>

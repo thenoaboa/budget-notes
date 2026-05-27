@@ -1,6 +1,13 @@
 // Save as: src/components/BudgetSummary.tsx
 
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
@@ -59,7 +66,8 @@ export function BudgetSummaryBox({
   onPressItem,
   onDeleteItem,
 }: Props) {
-  const isWeb = Platform.OS === "web";
+  const isDesktopWeb =
+    Platform.OS === "web" && Dimensions.get("window").width >= 768;
 
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
@@ -142,7 +150,7 @@ export function BudgetSummaryBox({
             const itemName = item.name.trim() || "Unnamed item";
             const lineTotal = amount * quantity;
 
-            if (isWeb) {
+            if (isDesktopWeb) {
               return (
                 <View key={item.id} style={styles.webItemRow}>
                   <View style={styles.webItemContent}>
