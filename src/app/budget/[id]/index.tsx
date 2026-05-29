@@ -187,6 +187,7 @@ export default function BudgetDashboardScreen() {
                 subtotal={editor.subtotal}
                 taxAmount={editor.taxAmount}
                 totalSpent={editor.totalSpent}
+                startingMoney={editor.startingMoney}
                 salesTaxEnabled={editor.salesTaxEnabled}
                 affirmingMessage={editor.affirmingMessage}
                 currentStyle={editor.currentStyle}

@@ -26,6 +26,7 @@ type Props = {
   subtotal: number;
   taxAmount: number;
   totalSpent: number;
+  startingMoney: string;
   salesTaxEnabled: boolean;
   affirmingMessage: string;
   currentStyle: BudgetStatusStyle;
@@ -59,6 +60,7 @@ export function BudgetSummaryBox({
   subtotal,
   taxAmount,
   totalSpent,
+  startingMoney,
   salesTaxEnabled,
   affirmingMessage,
   currentStyle,
@@ -71,6 +73,8 @@ export function BudgetSummaryBox({
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
+
+  const availableAmount = parseMoney(startingMoney);
 
   const hasEnteredAnyItem = items.some((item) => {
     const name = item.name.trim();
@@ -125,7 +129,9 @@ export function BudgetSummaryBox({
         <>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Available</Text>
-            <Text style={styles.summaryText}>{formatMoney(subtotal)}</Text>
+            <Text style={styles.summaryText}>
+              {formatMoney(availableAmount)}
+            </Text>
           </View>
 
           <View style={styles.summaryRow}>
@@ -138,7 +144,7 @@ export function BudgetSummaryBox({
           <View style={styles.summaryRow}>
             <Text style={styles.summaryHeaderText}>Available:</Text>
             <Text style={styles.summaryHeaderText}>
-              {formatMoney(subtotal)}
+              {formatMoney(availableAmount)}
             </Text>
           </View>
 
