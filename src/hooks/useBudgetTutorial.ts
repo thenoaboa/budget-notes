@@ -1,7 +1,7 @@
 // Save as: src/hooks/useBudgetTutorial.ts
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   trackTutorialCompleted,
@@ -19,9 +19,7 @@ export type TutorialStep =
 
 const TUTORIAL_STORAGE_KEY = "budget-note-tutorial-complete-v2";
 
-type CaptureFn =
-  | ((eventName: string, properties?: Record<string, unknown>) => void)
-  | undefined;
+type CaptureFn = ((eventName: string, properties?: any) => void) | undefined;
 
 type Snapshot = {
   itemCount: number;
@@ -34,7 +32,13 @@ export function useBudgetTutorial(
 ) {
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
 
+  const hasCheckedTutorialRef = useRef(false);
+
   useEffect(() => {
+    if (hasCheckedTutorialRef.current) return;
+
+    hasCheckedTutorialRef.current = true;
+
     async function loadTutorial() {
       const completed = await AsyncStorage.getItem(TUTORIAL_STORAGE_KEY);
 
@@ -58,7 +62,9 @@ export function useBudgetTutorial(
   async function skipTutorial() {
     trackTutorialSkipped(capture, tutorialStep, getSnapshot());
 
-    await completeTutorial();
+    await AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, "true");
+
+    setTutorialStep("hidden");
   }
 
   return {
