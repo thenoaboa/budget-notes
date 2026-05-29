@@ -130,11 +130,11 @@ export default function HomeScreen() {
         alwaysBounceVertical
       >
         <View style={styles.simpleHeader}>
-          <Text style={styles.simpleTitle}>Budget Note</Text>
+          <Text style={styles.simpleTitle}>My Budgets</Text>
 
           <View style={styles.subtitleRow}>
             <Text style={styles.simpleSubtitle} numberOfLines={1}>
-              Plan today, spend confidently.
+              See your progress. Stay on track.
             </Text>
 
             <Pressable
@@ -154,7 +154,7 @@ export default function HomeScreen() {
           ]}
           onPress={createNewBudget}
         >
-          <Text style={styles.newButtonText}>+ New Note</Text>
+          <Text style={styles.newButtonText}>+ New Budget</Text>
         </Pressable>
 
         {homeTutorialStep === "highlightNewNote" && (
@@ -164,7 +164,7 @@ export default function HomeScreen() {
         {searchVisible && (
           <TextInput
             style={styles.searchInput}
-            placeholder="Search notes..."
+            placeholder="Search budgets..."
             placeholderTextColor="#8A98A8"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -174,13 +174,13 @@ export default function HomeScreen() {
         {visibleBudgets.length === 0 && (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>
-              {searchQuery.trim() ? "No matches found." : "Nothing here yet."}
+              {searchQuery.trim() ? "No matches found." : "No budgets yet."}
             </Text>
 
             <Text style={styles.emptyText}>
               {searchQuery.trim()
-                ? "Try searching by title, item, amount, or date."
-                : "Start a note when you want a clearer picture before spending."}
+                ? "Try searching by title, item, amount, or total."
+                : "Start a budget when you want a clearer picture before spending."}
             </Text>
           </View>
         )}
@@ -199,7 +199,7 @@ export default function HomeScreen() {
       {homeTutorialStep === "popup" && (
         <TutorialOverlay
           title="Hi, welcome to Budget Note."
-          body="Tap “+ New Note” to start your first budget."
+          body="Tap “+ New Budget” to start your first budget."
           buttonText="OK"
           onNext={() => setHomeTutorialStep("highlightNewNote")}
           onSkip={() => {

@@ -49,7 +49,7 @@ export function useBudgetNotes() {
       return;
     }
 
-    Alert.alert("Delete note?", "Are you sure you want to delete this?", [
+    Alert.alert("Delete budget?", "Are you sure you want to delete this?", [
       {
         text: "No",
         style: "cancel",

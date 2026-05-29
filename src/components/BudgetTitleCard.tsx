@@ -14,7 +14,7 @@ export function BudgetTitleCard({ noteTitle, setNoteTitle, onShare }: Props) {
       <View style={styles.row}>
         <TextInput
           style={styles.input}
-          placeholder="Untitled Budget"
+          placeholder="Add title"
           placeholderTextColor="#8A98A8"
           value={noteTitle}
           onChangeText={setNoteTitle}
@@ -37,16 +37,13 @@ export function BudgetTitleCard({ noteTitle, setNoteTitle, onShare }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#2A3948",
-    borderRadius: 18,
-
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-
+    backgroundColor: "#1B2633",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#344657",
-
-    marginBottom: 14,
+    borderColor: "#26394C",
+    marginBottom: 12,
   },
 
   row: {
@@ -58,32 +55,23 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minWidth: 0,
-
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 17,
     fontWeight: "900",
-
     padding: 0,
-
     textAlign: "left",
-
     marginRight: 12,
   },
 
   shareButton: {
     width: 32,
     height: 32,
-
     borderRadius: 10,
-
     backgroundColor: "#243342",
-
     borderWidth: 1,
     borderColor: "#3B4D5F",
-
     alignItems: "center",
     justifyContent: "center",
-
     flexShrink: 0,
   },
 

@@ -8,7 +8,11 @@ export type StoredBudgetItem = {
 
 export type Budget = {
   id: string;
-  budgetName: string;
+
+  // Optional on purpose: budget cards should be identified by money/status first.
+  // A title is just metadata for users who want one.
+  budgetName?: string;
+
   amount: string;
 
   receiptNote?: string;

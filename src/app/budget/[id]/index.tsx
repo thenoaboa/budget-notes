@@ -15,7 +15,6 @@ import {
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
 import { BudgetActionButtons } from "../../../components/BudgetActionButtons";
 import { BudgetHeaderCard } from "../../../components/BudgetHeaderCard";
-import { BudgetIdentityCard } from "../../../components/BudgetIdentityCard";
 import { BudgetNotesCard } from "../../../components/BudgetNotesCard";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
@@ -31,7 +30,6 @@ import {
   trackSalesTaxChanged,
   trackTutorialStepCompleted,
 } from "../../../utils/budgetAnalytics";
-import { cleanMoneyInput } from "../../../utils/moneyInput";
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
@@ -44,7 +42,6 @@ export default function BudgetDashboardScreen() {
   const exportRef = useRef<View>(null);
 
   const [isDeletingItem, setIsDeletingItem] = useState(false);
-  const [isBudgetAmountFocused, setIsBudgetAmountFocused] = useState(false);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -125,14 +122,6 @@ export default function BudgetDashboardScreen() {
     router.push(`/budget/${budgetId}/items` as any);
   }
 
-  function handleBudgetAmountFocus() {
-    setIsBudgetAmountFocused(true);
-
-    if (tutorialStep === "budgetHighlight") {
-      setTutorialStep("addItemPopup");
-    }
-  }
-
   function handleAddItemPress() {
     if (tutorialStep === "addItemHighlight") {
       trackTutorialStepCompleted(capture, "add_item_highlight");
@@ -192,16 +181,6 @@ export default function BudgetDashboardScreen() {
                   taxRateRef={editor.taxRateRef}
                 />
               </View>
-
-              <BudgetIdentityCard
-                noteTitle={editor.noteTitle}
-                setNoteTitle={editor.setNoteTitle}
-                startingMoney={editor.startingMoney}
-                setStartingMoney={editor.setStartingMoney}
-                onBudgetAmountFocus={handleBudgetAmountFocus}
-                onBudgetAmountBlur={() => setIsBudgetAmountFocused(false)}
-                cleanMoneyInput={cleanMoneyInput}
-              />
 
               <BudgetSummaryBox
                 items={receiptItems}

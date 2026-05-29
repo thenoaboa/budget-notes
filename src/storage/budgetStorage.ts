@@ -3,12 +3,27 @@ import type { Budget } from "../types/budget";
 
 const BUDGETS_STORAGE_KEY = "budgets";
 
+function normalizeBudget(budget: Budget): Budget {
+  const cleanedName = (budget.budgetName || "").trim();
+  const shouldClearOldPlaceholder = [
+    "Untitled",
+    "Untitled Note",
+    "Untitled Budget",
+  ].includes(cleanedName);
+
+  return {
+    ...budget,
+    budgetName: shouldClearOldPlaceholder ? "" : cleanedName,
+    spendingItems: budget.spendingItems || [],
+  };
+}
+
 export async function loadBudgets() {
   const savedBudgets = await AsyncStorage.getItem(BUDGETS_STORAGE_KEY);
 
   const parsedBudgets: Budget[] = savedBudgets ? JSON.parse(savedBudgets) : [];
 
-  return parsedBudgets;
+  return parsedBudgets.map(normalizeBudget);
 }
 
 export async function saveBudgets(budgets: Budget[]) {
@@ -28,11 +43,13 @@ export async function renameBudgetById(
   budgetId: string,
   newTitle: string,
 ) {
+  const cleanedTitle = newTitle.trim();
+
   const updatedBudgets = budgets.map((budget) =>
     budget.id === budgetId
       ? {
           ...budget,
-          budgetName: newTitle.trim() || "Untitled",
+          budgetName: cleanedTitle,
           updatedAt: new Date().toISOString(),
         }
       : budget,
