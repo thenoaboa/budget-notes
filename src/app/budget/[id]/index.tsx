@@ -1,8 +1,9 @@
 // Save as: src/app/budget/[id]/index.tsx
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -21,15 +22,21 @@ import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
-import { useBudgetTutorial } from "../../../hooks/useBudgetTutorial";
 import {
   trackItemAdded,
   trackItemDeleted,
   trackItemEdited,
   trackReceiptEdited,
-  trackSalesTaxChanged,
   trackTutorialStepCompleted,
 } from "../../../utils/budgetAnalytics";
+
+type TutorialStep =
+  | "hidden"
+  | "budgetPopup"
+  | "budgetHighlight"
+  | "addItemPopup"
+  | "addItemHighlight"
+  | "donePopup";
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
@@ -41,6 +48,7 @@ export default function BudgetDashboardScreen() {
 
   const exportRef = useRef<View>(null);
 
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [isDeletingItem, setIsDeletingItem] = useState(false);
 
   const receiptItems = useMemo(() => {
@@ -51,20 +59,46 @@ export default function BudgetDashboardScreen() {
     posthog?.capture(eventName, properties);
   }
 
-  const { tutorialStep, setTutorialStep, completeTutorial, skipTutorial } =
-    useBudgetTutorial(capture, () => ({
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-    }));
+  useEffect(() => {
+    async function loadTutorial() {
+      const completed = await AsyncStorage.getItem(
+        "budget-note-tutorial-complete-v2",
+      );
 
-  function toggleSalesTaxEnabled(value: boolean) {
-    trackSalesTaxChanged(capture, value, {
+      if (!completed) {
+        capture("tutorial_started", {
+          tutorialVersion: "budget_v2",
+          source: "budget_screen",
+        });
+
+        setTutorialStep("budgetPopup");
+      }
+    }
+
+    loadTutorial();
+  }, []);
+
+  async function completeTutorial() {
+    capture("tutorial_completed", {
+      tutorialVersion: "budget_v2",
       itemCount: editor.items.length,
       salesTaxEnabled: editor.salesTaxEnabled,
-      totalSpent: editor.totalSpent,
     });
 
-    editor.setSalesTaxEnabled(value);
+    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
+
+    setTutorialStep("hidden");
+  }
+
+  async function skipTutorial() {
+    capture("tutorial_skipped", {
+      tutorialVersion: "budget_v2",
+      step: tutorialStep,
+      itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
+    });
+
+    await completeTutorial();
   }
 
   function addItemFromDraftWithAnalytics() {
