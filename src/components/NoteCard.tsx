@@ -183,7 +183,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.7}
+              minimumFontScale={0.65}
             >
               {amountText}
             </Text>
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 8,
   },
 
   noTitleAmountRow: {
@@ -373,10 +373,10 @@ const styles = StyleSheet.create({
 
   remainingAmount: {
     color: "#2ECC71",
-    fontSize: 27,
+    fontSize: 25,
     fontWeight: "900",
     letterSpacing: -0.7,
-    lineHeight: 30,
+    lineHeight: 29,
   },
 
   negativeAmount: {
@@ -393,6 +393,7 @@ const styles = StyleSheet.create({
   totalColumn: {
     alignItems: "flex-end",
     flexShrink: 0,
+    maxWidth: 150,
   },
 
   totalText: {
