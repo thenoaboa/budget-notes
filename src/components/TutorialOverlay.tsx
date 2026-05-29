@@ -16,18 +16,18 @@ export function TutorialOverlay({
   onSkip,
 }: Props) {
   return (
-    <View style={styles.overlay}>
+    <View style={styles.overlay} pointerEvents="auto">
       <View style={styles.card}>
         <Text style={styles.title}>{title}</Text>
 
         <Text style={styles.body}>{body}</Text>
 
         <View style={styles.buttonRow}>
-          <Pressable onPress={onSkip}>
+          <Pressable style={styles.skipButton} onPress={onSkip} hitSlop={12}>
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
 
-          <Pressable style={styles.nextButton} onPress={onNext}>
+          <Pressable style={styles.nextButton} onPress={onNext} hitSlop={12}>
             <Text style={styles.nextButtonText}>{buttonText}</Text>
           </Pressable>
         </View>
@@ -42,7 +42,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.72)",
     justifyContent: "center",
     paddingHorizontal: 24,
-    zIndex: 9999,
+    zIndex: 99999,
+    elevation: 99999,
   },
 
   card: {
@@ -51,6 +52,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2ECC71",
     padding: 22,
+    zIndex: 100000,
+    elevation: 100000,
   },
 
   title: {
@@ -73,6 +76,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  skipButton: {
+    paddingVertical: 12,
+    paddingRight: 18,
+  },
+
   skipText: {
     color: "#93A4B4",
     fontSize: 16,
@@ -81,9 +89,12 @@ const styles = StyleSheet.create({
 
   nextButton: {
     backgroundColor: "#2ECC71",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
     borderRadius: 999,
+    minWidth: 92,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   nextButtonText: {
