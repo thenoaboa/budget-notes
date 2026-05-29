@@ -124,7 +124,7 @@ export function BudgetSummaryBox({
       {!hasEnteredAnyItem ? (
         <>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryText}>Items</Text>
+            <Text style={styles.summaryText}>Available</Text>
             <Text style={styles.summaryText}>{formatMoney(subtotal)}</Text>
           </View>
 
@@ -136,7 +136,7 @@ export function BudgetSummaryBox({
       ) : (
         <>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryHeaderText}>Items:</Text>
+            <Text style={styles.summaryHeaderText}>Available:</Text>
             <Text style={styles.summaryHeaderText}>
               {formatMoney(subtotal)}
             </Text>
