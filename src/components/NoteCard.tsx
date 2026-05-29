@@ -94,7 +94,7 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
     budgetAmount,
     spentAmount,
     remainingAmount,
-    usedPercent: roundedUsedPercent,
+    usedPercent: roundedUsedPercent > 100 ? 100 : roundedUsedPercent,
     barPercent: Math.min(Math.max(usedPercent, 0), 100),
     isOverBudget,
     isComplete,
@@ -140,9 +140,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   }
 
   function CardContent() {
-    const amountText = stats.isOverBudget
-      ? formatMoney(stats.remainingAmount)
-      : formatMoney(stats.remainingAmount);
+    const amountText = formatMoney(stats.remainingAmount);
     const amountLabel = stats.isOverBudget ? "over budget" : "remaining";
 
     return (
@@ -177,15 +175,18 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
         <View
           style={[styles.amountRow, !stats.hasTitle && styles.noTitleAmountRow]}
         >
-          <View style={styles.remainingRow}>
+          <View style={styles.remainingColumn}>
             <Text
               style={[
                 styles.remainingAmount,
                 stats.isOverBudget && styles.negativeAmount,
               ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {amountText}
             </Text>
+
             <Text style={styles.remainingLabel}>{amountLabel}</Text>
           </View>
 
@@ -354,7 +355,7 @@ const styles = StyleSheet.create({
   amountRow: {
     marginTop: 18,
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
   },
@@ -363,18 +364,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 
-  remainingRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
+  remainingColumn: {
     flex: 1,
     minWidth: 0,
+    justifyContent: "flex-start",
   },
 
   remainingAmount: {
     color: "#2ECC71",
-    fontSize: 25,
+    fontSize: 34,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -1,
+    lineHeight: 38,
   },
 
   negativeAmount: {
@@ -383,9 +384,9 @@ const styles = StyleSheet.create({
 
   remainingLabel: {
     color: "#CAD3DD",
-    fontSize: 14,
-    fontWeight: "700",
-    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: "800",
+    marginTop: 2,
   },
 
   totalColumn: {
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
 
   footerText: {
     color: "#CAD3DD",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
 
