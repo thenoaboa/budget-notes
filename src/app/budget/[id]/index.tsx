@@ -1,36 +1,37 @@
 // Save as: src/app/budget/[id]/index.tsx
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
 
-import { BudgetHeaderCard } from "@/components/BudgetHeaderCard";
 import { AddItemOverlay } from "../../../components/AddItemOverlay";
+import { BudgetActionButtons } from "../../../components/BudgetActionButtons";
+import { BudgetHeaderCard } from "../../../components/BudgetHeaderCard";
+import { BudgetIdentityCard } from "../../../components/BudgetIdentityCard";
+import { BudgetNotesCard } from "../../../components/BudgetNotesCard";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
-
-type TutorialStep =
-  | "hidden"
-  | "budgetPopup"
-  | "budgetHighlight"
-  | "addItemPopup"
-  | "addItemHighlight"
-  | "donePopup";
+import { useBudgetTutorial } from "../../../hooks/useBudgetTutorial";
+import {
+  trackItemAdded,
+  trackItemDeleted,
+  trackItemEdited,
+  trackReceiptEdited,
+  trackSalesTaxChanged,
+  trackTutorialStepCompleted,
+} from "../../../utils/budgetAnalytics";
+import { cleanMoneyInput } from "../../../utils/moneyInput";
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
@@ -38,12 +39,10 @@ export default function BudgetDashboardScreen() {
   const { id } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
-
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
 
-  const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [isBudgetAmountFocused, setIsBudgetAmountFocused] = useState(false);
 
@@ -51,51 +50,20 @@ export default function BudgetDashboardScreen() {
     return [...editor.items].reverse();
   }, [editor.items]);
 
-  useEffect(() => {
-    async function loadTutorial() {
-      const completed = await AsyncStorage.getItem(
-        "budget-note-tutorial-complete-v2",
-      );
-
-      if (!completed) {
-        posthog?.capture("tutorial_started", {
-          tutorialVersion: "budget_v2",
-          source: "budget_screen",
-        });
-
-        setTutorialStep("budgetPopup");
-      }
-    }
-
-    loadTutorial();
-  }, [posthog]);
-
-  async function completeTutorial() {
-    posthog?.capture("tutorial_completed", {
-      tutorialVersion: "budget_v2",
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-    });
-
-    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
-
-    setTutorialStep("hidden");
+  function capture(eventName: string, properties?: any) {
+    posthog?.capture(eventName, properties);
   }
 
-  async function skipTutorial() {
-    posthog?.capture("tutorial_skipped", {
-      tutorialVersion: "budget_v2",
-      step: tutorialStep,
+  const { tutorialStep, setTutorialStep, completeTutorial, skipTutorial } =
+    useBudgetTutorial(capture, () => ({
       itemCount: editor.items.length,
       salesTaxEnabled: editor.salesTaxEnabled,
-    });
-
-    await completeTutorial();
-  }
+    }));
 
   function toggleSalesTaxEnabled(value: boolean) {
-    posthog?.capture(value ? "sales_tax_enabled" : "sales_tax_disabled", {
+    trackSalesTaxChanged(capture, value, {
       itemCount: editor.items.length,
+      salesTaxEnabled: editor.salesTaxEnabled,
       totalSpent: editor.totalSpent,
     });
 
@@ -103,7 +71,7 @@ export default function BudgetDashboardScreen() {
   }
 
   function addItemFromDraftWithAnalytics() {
-    posthog?.capture("item_added", {
+    trackItemAdded(capture, {
       existingItems: editor.items.length,
       salesTaxEnabled: editor.salesTaxEnabled,
       hasName: editor.draftItem.name.trim().length > 0,
@@ -114,19 +82,19 @@ export default function BudgetDashboardScreen() {
     editor.addItemFromDraft();
   }
 
-  function deleteItemWithAnalytics(id: number) {
+  function deleteItemWithAnalytics(itemId: number) {
     setIsDeletingItem(true);
 
     editor.closeReceiptItemOverlay();
 
-    posthog?.capture("item_deleted", {
+    trackItemDeleted(capture, {
       itemCountBeforeDelete: editor.items.length,
       itemCountAfterDelete: Math.max(editor.items.length - 1, 0),
       salesTaxEnabled: editor.salesTaxEnabled,
     });
 
     setTimeout(() => {
-      editor.deleteItem(id);
+      editor.deleteItem(itemId);
 
       setTimeout(() => {
         setIsDeletingItem(false);
@@ -134,21 +102,21 @@ export default function BudgetDashboardScreen() {
     }, 0);
   }
 
-  function openReceiptItemOverlayWithAnalytics(id: number) {
+  function openReceiptItemOverlayWithAnalytics(itemId: number) {
     if (isDeletingItem) {
       return;
     }
 
-    posthog?.capture("item_edited", {
+    trackItemEdited(capture, {
       itemCount: editor.items.length,
       source: "receipt_card",
     });
 
-    editor.openReceiptItemOverlay(id);
+    editor.openReceiptItemOverlay(itemId);
   }
 
   function openReceiptPage() {
-    posthog?.capture("receipt_edited", {
+    trackReceiptEdited(capture, {
       itemCount: editor.items.length,
       salesTaxEnabled: editor.salesTaxEnabled,
       totalSpent: editor.totalSpent,
@@ -157,22 +125,23 @@ export default function BudgetDashboardScreen() {
     router.push(`/budget/${budgetId}/items` as any);
   }
 
-  function formatBudgetCardAmount(value: string) {
-    const trimmedValue = value.trim();
+  function handleBudgetAmountFocus() {
+    setIsBudgetAmountFocused(true);
 
-    if (trimmedValue.length === 0) {
-      return "$0.00";
+    if (tutorialStep === "budgetHighlight") {
+      setTutorialStep("addItemPopup");
     }
-
-    return `$${trimmedValue}`;
   }
 
-  function updateBudgetCardAmount(value: string) {
-    const cleanedValue = value
-      .replace(/[^0-9.]/g, "")
-      .replace(/(\..*)\./g, "$1");
+  function handleAddItemPress() {
+    if (tutorialStep === "addItemHighlight") {
+      trackTutorialStepCompleted(capture, "add_item_highlight");
 
-    editor.setStartingMoney(cleanedValue);
+      setTutorialStep("donePopup");
+      return;
+    }
+
+    editor.openAddItemOverlay();
   }
 
   return (
@@ -224,48 +193,15 @@ export default function BudgetDashboardScreen() {
                 />
               </View>
 
-              <View style={styles.budgetIdentityCard}>
-                <TextInput
-                  style={styles.budgetIdentityTitleInput}
-                  value={editor.noteTitle}
-                  onChangeText={editor.setNoteTitle}
-                  placeholder="Untitled Budget"
-                  placeholderTextColor="#9EADBD"
-                  textAlign="center"
-                  selectionColor="#2ECC71"
-                  underlineColorAndroid="transparent"
-                />
-
-                <TextInput
-                  style={styles.budgetIdentityAmountInput}
-                  value={
-                    editor.startingMoney.trim().length === 0
-                      ? "$"
-                      : `$${editor.startingMoney}`
-                  }
-                  onChangeText={(value) => {
-                    const cleanedValue = value
-                      .replace(/[^0-9.]/g, "")
-                      .replace(/(\..*)\./g, "$1");
-
-                    editor.setStartingMoney(cleanedValue);
-                  }}
-                  onFocus={() => {
-                    setIsBudgetAmountFocused(true);
-
-                    if (tutorialStep === "budgetHighlight") {
-                      setTutorialStep("addItemPopup");
-                    }
-                  }}
-                  onBlur={() => setIsBudgetAmountFocused(false)}
-                  keyboardType="decimal-pad"
-                  placeholder="$0.00"
-                  placeholderTextColor="#2ECC71"
-                  textAlign="center"
-                  selectionColor="#2ECC71"
-                  underlineColorAndroid="transparent"
-                />
-              </View>
+              <BudgetIdentityCard
+                noteTitle={editor.noteTitle}
+                setNoteTitle={editor.setNoteTitle}
+                startingMoney={editor.startingMoney}
+                setStartingMoney={editor.setStartingMoney}
+                onBudgetAmountFocus={handleBudgetAmountFocus}
+                onBudgetAmountBlur={() => setIsBudgetAmountFocused(false)}
+                cleanMoneyInput={cleanMoneyInput}
+              />
 
               <BudgetSummaryBox
                 items={receiptItems}
@@ -276,60 +212,21 @@ export default function BudgetDashboardScreen() {
                 affirmingMessage={editor.affirmingMessage}
                 currentStyle={editor.currentStyle}
                 highlightAddButton={tutorialStep === "addItemHighlight"}
-                onAddItem={() => {
-                  if (tutorialStep === "addItemHighlight") {
-                    posthog?.capture("tutorial_step_completed", {
-                      tutorialVersion: "budget_v2",
-                      step: "add_item_highlight",
-                    });
-
-                    setTutorialStep("donePopup");
-                    return;
-                  }
-
-                  editor.openAddItemOverlay();
-                }}
+                onAddItem={handleAddItemPress}
                 onPressItem={openReceiptItemOverlayWithAnalytics}
                 onDeleteItem={deleteItemWithAnalytics}
               />
             </View>
 
-            <View style={styles.bottomButtonRow}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => router.push("/" as any)}
-              >
-                <Text style={styles.backButtonText}>← Menu</Text>
-              </TouchableOpacity>
+            <BudgetActionButtons
+              onBackToMenu={() => router.push("/" as any)}
+              onOpenReceipt={openReceiptPage}
+            />
 
-              <TouchableOpacity
-                style={styles.editReceiptButton}
-                onPress={openReceiptPage}
-              >
-                <Text style={styles.editReceiptButtonText}>Receipt →</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.notesCard}>
-              <Text style={styles.notesMirror}>
-                {editor.receiptNote.length > 0
-                  ? `${editor.receiptNote}\n`
-                  : "Notes..."}
-              </Text>
-
-              <TextInput
-                style={styles.notesInput}
-                value={editor.receiptNote}
-                onChangeText={editor.setReceiptNote}
-                placeholder="Note..."
-                placeholderTextColor="#6F7F8F"
-                multiline
-                textAlignVertical="top"
-                selectionColor="#2ECC71"
-                underlineColorAndroid="transparent"
-                scrollEnabled={false}
-              />
-            </View>
+            <BudgetNotesCard
+              receiptNote={editor.receiptNote}
+              setReceiptNote={editor.setReceiptNote}
+            />
           </ScrollView>
 
           {tutorialStep === "budgetPopup" && (
@@ -417,119 +314,5 @@ const styles = StyleSheet.create({
 
   taxOnlySection: {
     marginBottom: 8,
-  },
-
-  budgetIdentityCard: {
-    marginBottom: 8,
-    backgroundColor: "#17232F",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "#2D3D4D",
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  budgetIdentityTitleInput: {
-    width: "100%",
-    color: "#9EADBD",
-    fontSize: 26,
-    fontWeight: "900",
-    textAlign: "center",
-    padding: 0,
-    borderWidth: 0,
-    outlineStyle: "none" as any,
-  },
-
-  budgetIdentityAmountInput: {
-    width: "100%",
-    marginTop: 8,
-    color: "#2ECC71",
-    fontSize: 21,
-    fontWeight: "900",
-    textAlign: "center",
-    padding: 0,
-    borderWidth: 0,
-    outlineStyle: "none" as any,
-  },
-
-  bottomButtonRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 0,
-  },
-
-  backButton: {
-    flex: 1,
-    backgroundColor: "#123527",
-    borderRadius: 14,
-    paddingVertical: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(46, 204, 113, 0.35)",
-  },
-
-  backButtonText: {
-    color: "#2ECC71",
-    fontSize: 15,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-
-  editReceiptButton: {
-    flex: 1,
-    backgroundColor: "#243342",
-    borderRadius: 14,
-    paddingVertical: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#3B4D5F",
-  },
-
-  editReceiptButtonText: {
-    color: "#CAD3DD",
-    fontSize: 15,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-
-  notesCard: {
-    marginTop: 19,
-    backgroundColor: "#17232F",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#2D3D4D",
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 14,
-    minHeight: 116,
-  },
-
-  notesMirror: {
-    minHeight: 88,
-    color: "transparent",
-    fontSize: 15,
-    fontWeight: "600",
-    lineHeight: 21,
-  },
-
-  notesInput: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    right: 14,
-    bottom: 14,
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-    lineHeight: 21,
-    padding: 0,
-    borderWidth: 0,
-    outlineStyle: "none" as any,
-    overflow: "hidden",
   },
 });
