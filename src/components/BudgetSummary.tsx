@@ -204,7 +204,7 @@ export function BudgetSummaryBox({
               <View style={styles.divider} />
 
               <View style={styles.itemRow}>
-                <Text style={styles.itemText}>Estimated tax:</Text>
+                <Text style={styles.itemText}>Sales tax:</Text>
                 <Text style={styles.itemAmount}>{formatMoney(taxAmount)}</Text>
               </View>
             </>
