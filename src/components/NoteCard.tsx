@@ -183,6 +183,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
+              minimumFontScale={0.7}
             >
               {amountText}
             </Text>
@@ -372,10 +373,10 @@ const styles = StyleSheet.create({
 
   remainingAmount: {
     color: "#2ECC71",
-    fontSize: 29,
+    fontSize: 27,
     fontWeight: "900",
-    letterSpacing: -0.8,
-    lineHeight: 32,
+    letterSpacing: -0.7,
+    lineHeight: 30,
   },
 
   negativeAmount: {
