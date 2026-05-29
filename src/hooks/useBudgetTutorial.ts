@@ -4,9 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 
 import {
-    trackTutorialCompleted,
-    trackTutorialSkipped,
-    trackTutorialStarted,
+  trackTutorialCompleted,
+  trackTutorialSkipped,
+  trackTutorialStarted,
 } from "../utils/budgetAnalytics";
 
 export type TutorialStep =
@@ -45,7 +45,7 @@ export function useBudgetTutorial(
     }
 
     loadTutorial();
-  }, [capture]);
+  }, []);
 
   async function completeTutorial() {
     trackTutorialCompleted(capture, getSnapshot());
