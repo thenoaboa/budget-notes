@@ -372,10 +372,10 @@ const styles = StyleSheet.create({
 
   remainingAmount: {
     color: "#2ECC71",
-    fontSize: 34,
+    fontSize: 29,
     fontWeight: "900",
-    letterSpacing: -1,
-    lineHeight: 38,
+    letterSpacing: -0.8,
+    lineHeight: 32,
   },
 
   negativeAmount: {
