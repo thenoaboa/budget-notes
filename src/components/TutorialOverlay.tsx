@@ -27,7 +27,7 @@ export function TutorialOverlay({
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
 
-          <Pressable style={styles.nextButton} onPressIn={onNext} hitSlop={12}>
+          <Pressable style={styles.nextButton} onPress={onNext} hitSlop={12}>
             <Text style={styles.nextButtonText}>{buttonText}</Text>
           </Pressable>
         </View>

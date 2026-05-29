@@ -59,6 +59,12 @@ export default function BudgetDashboardScreen() {
     posthog?.capture(eventName, properties);
   }
 
+  function advanceTutorialAfterTap(nextStep: TutorialStep) {
+    setTimeout(() => {
+      setTutorialStep(nextStep);
+    }, 150);
+  }
+
   useEffect(() => {
     async function loadTutorial() {
       const completed = await AsyncStorage.getItem(
@@ -248,7 +254,7 @@ export default function BudgetDashboardScreen() {
               title="Set your budget"
               body="Start with the amount you want to spend before adding purchases."
               buttonText="OK"
-              onNext={() => setTutorialStep("budgetHighlight")}
+              onNext={() => advanceTutorialAfterTap("budgetHighlight")}
               onSkip={skipTutorial}
             />
           )}
@@ -258,7 +264,7 @@ export default function BudgetDashboardScreen() {
               title="Add purchases"
               body="Use the Add Item button to quickly enter purchases while shopping or planning."
               buttonText="OK"
-              onNext={() => setTutorialStep("addItemHighlight")}
+              onNext={() => advanceTutorialAfterTap("addItemHighlight")}
               onSkip={skipTutorial}
             />
           )}
