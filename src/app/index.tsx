@@ -134,7 +134,7 @@ export default function HomeScreen() {
 
           <View style={styles.subtitleRow}>
             <Text style={styles.simpleSubtitle} numberOfLines={1}>
-              See your progress. Stay on track.
+              Plan today, spend confidently.
             </Text>
 
             <Pressable
