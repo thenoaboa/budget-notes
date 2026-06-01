@@ -128,7 +128,7 @@ export function BudgetSummaryBox({
   ) {
     return (
       <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
-        <Text style={styles.itemText} numberOfLines={1}>
+        <Text style={styles.itemText}>
           {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
         </Text>
 
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
 
   itemAmount: {
-    width: 120,
+    width: 100,
     color: "#CAD3DD",
     fontSize: 15,
     fontWeight: "800",
