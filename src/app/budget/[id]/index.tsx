@@ -18,7 +18,6 @@ import { BudgetActionButtons } from "../../../components/BudgetActionButtons";
 import { BudgetHeaderCard } from "../../../components/BudgetHeaderCard";
 import { BudgetNotesCard } from "../../../components/BudgetNotesCard";
 import { BudgetSummaryBox } from "../../../components/BudgetSummary";
-import { MoneyAvailableSection } from "../../../components/MoneyAvailable";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
@@ -209,19 +208,6 @@ export default function BudgetDashboardScreen() {
             bounces
           >
             <View id="receipt-export" ref={exportRef}>
-              <View style={styles.taxOnlySection}>
-                <MoneyAvailableSection
-                  startingMoney=""
-                  setStartingMoney={() => {}}
-                  salesTaxEnabled={editor.salesTaxEnabled}
-                  setSalesTaxEnabled={editor.setSalesTaxEnabled}
-                  taxRate={editor.taxRate}
-                  setTaxRate={editor.setTaxRate}
-                  startingMoneyRef={editor.startingMoneyRef}
-                  taxRateRef={editor.taxRateRef}
-                />
-              </View>
-
               <BudgetSummaryBox
                 items={receiptItems}
                 subtotal={editor.subtotal}
@@ -229,6 +215,11 @@ export default function BudgetDashboardScreen() {
                 totalSpent={editor.totalSpent}
                 startingMoney={editor.startingMoney}
                 salesTaxEnabled={editor.salesTaxEnabled}
+                setSalesTaxEnabled={editor.setSalesTaxEnabled}
+                taxRate={editor.taxRate}
+                setTaxRate={editor.setTaxRate}
+                startingMoneyRef={editor.startingMoneyRef}
+                taxRateRef={editor.taxRateRef}
                 affirmingMessage={editor.affirmingMessage}
                 currentStyle={editor.currentStyle}
                 highlightAddButton={tutorialStep === "addItemHighlight"}
@@ -330,9 +321,5 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80,
     backgroundColor: "#101820",
-  },
-
-  taxOnlySection: {
-    marginBottom: 8,
   },
 });

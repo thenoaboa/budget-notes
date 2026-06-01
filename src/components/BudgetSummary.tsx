@@ -1,17 +1,19 @@
 // Save as: src/components/BudgetSummary.tsx
 
-import { useState } from "react";
+import { RefObject, useState } from "react";
 import {
   Dimensions,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
+import { MoneyAvailableSection } from "./MoneyAvailable";
 
 type SummaryItem = {
   id: number;
@@ -28,6 +30,13 @@ type Props = {
   totalSpent: number;
   startingMoney: string;
   salesTaxEnabled: boolean;
+  setSalesTaxEnabled: (
+    value: boolean | ((previous: boolean) => boolean),
+  ) => void;
+  taxRate: string;
+  setTaxRate: (value: string) => void;
+  startingMoneyRef: RefObject<TextInput | null>;
+  taxRateRef: RefObject<TextInput | null>;
   affirmingMessage: string;
   currentStyle: BudgetStatusStyle;
   highlightAddButton?: boolean;
@@ -62,6 +71,11 @@ export function BudgetSummaryBox({
   totalSpent,
   startingMoney,
   salesTaxEnabled,
+  setSalesTaxEnabled,
+  taxRate,
+  setTaxRate,
+  startingMoneyRef,
+  taxRateRef,
   affirmingMessage,
   currentStyle,
   highlightAddButton,
@@ -114,7 +128,7 @@ export function BudgetSummaryBox({
   ) {
     return (
       <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
-        <Text style={styles.itemText}>
+        <Text style={styles.itemText} numberOfLines={1}>
           {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
         </Text>
 
@@ -256,6 +270,19 @@ export function BudgetSummaryBox({
       {highlightAddButton && (
         <Text style={styles.highlightText}>Tap here to add an item</Text>
       )}
+
+      <View style={styles.inlineTaxSection}>
+        <MoneyAvailableSection
+          startingMoney=""
+          setStartingMoney={() => {}}
+          salesTaxEnabled={salesTaxEnabled}
+          setSalesTaxEnabled={setSalesTaxEnabled}
+          taxRate={taxRate}
+          setTaxRate={setTaxRate}
+          startingMoneyRef={startingMoneyRef}
+          taxRateRef={taxRateRef}
+        />
+      </View>
     </View>
   );
 }
@@ -341,7 +368,7 @@ const styles = StyleSheet.create({
   },
 
   itemAmount: {
-    width: 100,
+    width: 120,
     color: "#CAD3DD",
     fontSize: 15,
     fontWeight: "800",
@@ -418,6 +445,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
     marginTop: 8,
+  },
+
+  inlineTaxSection: {
+    marginTop: 10,
   },
 
   inlineAddButtonText: {
