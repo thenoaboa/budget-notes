@@ -55,7 +55,7 @@ export function getAffirmingMessage(
 
   const yellowMessages = [
     "Things are tightening up.",
-    "Keep an eye on the next few purchases.",
+    "Keep an eye on spending.",
     "Might be smart to slow down.",
     "You still have options.",
     "Small choices help here.",
