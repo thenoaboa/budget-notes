@@ -33,6 +33,7 @@ import {
   trackReceiptEdited,
   trackTutorialStepCompleted,
 } from "../../../utils/budgetAnalytics";
+import { compareBudgets } from "../../../utils/compareBudgets";
 
 type TutorialStep =
   | "hidden"
@@ -62,6 +63,10 @@ export default function BudgetDashboardScreen() {
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
   }, [editor.items]);
+
+  const comparisonResults = comparedBudget
+    ? compareBudgets(editor.items, comparedBudget)
+    : [];
 
   function capture(eventName: string, properties?: any) {
     posthog?.capture(eventName, properties);
@@ -226,6 +231,18 @@ export default function BudgetDashboardScreen() {
               <Text style={styles.compareTitle}>
                 Compared to: {comparedBudget.budgetName || "Untitled Budget"}
               </Text>
+
+              {comparisonResults.map((change, index) => (
+                <Text
+                  key={index}
+                  style={{
+                    color: "#FFFFFF",
+                    marginTop: 6,
+                  }}
+                >
+                  {change}
+                </Text>
+              ))}
             </View>
           )}
 
