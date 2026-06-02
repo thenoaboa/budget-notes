@@ -1,5 +1,13 @@
 import type { Budget } from "../types/budget";
 
+function cleanName(name?: string) {
+  return (name || "").trim();
+}
+
+function getAmount(amount?: string) {
+  return parseFloat(amount || "0") || 0;
+}
+
 export function compareBudgets(
   currentBudgetItems: any[],
   comparedBudget: Budget,
@@ -9,47 +17,51 @@ export function compareBudgets(
   const increased: string[] = [];
   const decreased: string[] = [];
 
+  const currentItems = currentBudgetItems.filter(
+    (item) => cleanName(item.name) !== "",
+  );
+
+  const comparedItems = comparedBudget.spendingItems.filter(
+    (item) => cleanName(item.name) !== "",
+  );
+
   const currentMap = new Map(
-    currentBudgetItems.map((item) => [item.name.trim().toLowerCase(), item]),
+    currentItems.map((item) => [cleanName(item.name).toLowerCase(), item]),
   );
 
   const comparedMap = new Map(
-    comparedBudget.spendingItems.map((item) => [
-      item.name.trim().toLowerCase(),
-      item,
-    ]),
+    comparedItems.map((item) => [cleanName(item.name).toLowerCase(), item]),
   );
 
   currentMap.forEach((currentItem, name) => {
     const oldItem = comparedMap.get(name);
+    const currentAmount = getAmount(currentItem.amount);
 
     if (!oldItem) {
-      const amount = parseFloat(currentItem.amount || "0");
-
-      added.push(`+ ${currentItem.name} +$${amount.toFixed(2)}`);
-
+      added.push(
+        `+ ${cleanName(currentItem.name)} +$${currentAmount.toFixed(2)}`,
+      );
       return;
     }
 
-    const currentAmount = parseFloat(currentItem.amount || "0");
-    const oldAmount = parseFloat(oldItem.amount || "0");
-
+    const oldAmount = getAmount(oldItem.amount);
     const difference = currentAmount - oldAmount;
 
     if (difference > 0) {
-      increased.push(`▲ ${currentItem.name} +$${difference.toFixed(2)}`);
+      increased.push(
+        `▲ ${cleanName(currentItem.name)} +$${difference.toFixed(2)}`,
+      );
     } else if (difference < 0) {
       decreased.push(
-        `▼ ${currentItem.name} -$${Math.abs(difference).toFixed(2)}`,
+        `▼ ${cleanName(currentItem.name)} -$${Math.abs(difference).toFixed(2)}`,
       );
     }
   });
 
   comparedMap.forEach((oldItem, name) => {
     if (!currentMap.has(name)) {
-      const amount = parseFloat(oldItem.amount || "0");
-
-      removed.push(`- ${oldItem.name} -$${amount.toFixed(2)}`);
+      const amount = getAmount(oldItem.amount);
+      removed.push(`- ${cleanName(oldItem.name)} -$${amount.toFixed(2)}`);
     }
   });
 
