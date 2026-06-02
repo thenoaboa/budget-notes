@@ -6,10 +6,13 @@ import { usePostHog } from "posthog-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
 
@@ -21,6 +24,8 @@ import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
+import { loadBudgets } from "../../../storage/budgetStorage";
+import type { Budget } from "../../../types/budget";
 import {
   trackItemAdded,
   trackItemDeleted,
@@ -50,6 +55,9 @@ export default function BudgetDashboardScreen() {
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
+  const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -203,11 +211,23 @@ export default function BudgetDashboardScreen() {
             onMenuPress={() => {
               setShowMenu((previous) => !previous);
             }}
-            onCompareBudgets={() => {
+            onCompareBudgets={async () => {
               setShowMenu(false);
-              console.log("Compare Budgets");
+
+              const budgets = await loadBudgets();
+
+              setAllBudgets(budgets.filter((budget) => budget.id !== budgetId));
+
+              setShowCompareModal(true);
             }}
           />
+          {comparedBudget && (
+            <View style={styles.compareCard}>
+              <Text style={styles.compareTitle}>
+                Compared to: {comparedBudget.budgetName || "Untitled Budget"}
+              </Text>
+            </View>
+          )}
 
           <ScrollView
             style={styles.scroll}
@@ -278,7 +298,40 @@ export default function BudgetDashboardScreen() {
               onSkip={skipTutorial}
             />
           )}
+          <Modal
+            visible={showCompareModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowCompareModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>Compare Budget</Text>
 
+                {allBudgets.map((budget) => (
+                  <Pressable
+                    key={budget.id}
+                    style={styles.budgetOption}
+                    onPress={() => {
+                      setComparedBudget(budget);
+                      setShowCompareModal(false);
+                    }}
+                  >
+                    <Text style={styles.budgetOptionText}>
+                      {budget.budgetName || "Untitled Budget"}
+                    </Text>
+                  </Pressable>
+                ))}
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => setShowCompareModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
           <AddItemOverlay
             visible={editor.showAddItemOverlay}
             draftItem={editor.draftItem}
@@ -330,5 +383,68 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80,
     backgroundColor: "#101820",
+  },
+
+  compareCard: {
+    backgroundColor: "#182638",
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  compareTitle: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+
+  compareModal: {
+    backgroundColor: "#101820",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 14,
+  },
+
+  budgetOption: {
+    backgroundColor: "#182638",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 10,
+  },
+
+  budgetOptionText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  cancelButton: {
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+
+  cancelButtonText: {
+    color: "#AAB7C4",
+    fontSize: 15,
+    fontWeight: "700",
   },
 });
