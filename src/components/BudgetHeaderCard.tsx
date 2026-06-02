@@ -169,8 +169,11 @@ const styles = StyleSheet.create({
   dropdownButton: {
     backgroundColor: "#182638",
     borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    width: 170,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: "#2D4562",
   },
@@ -179,6 +182,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+    textAlign: "center",
   },
 
   highlightedHeaderCard: {
