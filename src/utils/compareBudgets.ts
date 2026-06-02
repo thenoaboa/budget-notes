@@ -4,7 +4,10 @@ export function compareBudgets(
   currentBudgetItems: any[],
   comparedBudget: Budget,
 ) {
-  const changes: string[] = [];
+  const added: string[] = [];
+  const removed: string[] = [];
+  const increased: string[] = [];
+  const decreased: string[] = [];
 
   const currentMap = new Map(
     currentBudgetItems.map((item) => [item.name.trim().toLowerCase(), item]),
@@ -23,7 +26,8 @@ export function compareBudgets(
     if (!oldItem) {
       const amount = parseFloat(currentItem.amount || "0");
 
-      changes.push(`+ ${currentItem.name} +$${amount.toFixed(2)}`);
+      added.push(`+ ${currentItem.name} +$${amount.toFixed(2)}`);
+
       return;
     }
 
@@ -33,9 +37,9 @@ export function compareBudgets(
     const difference = currentAmount - oldAmount;
 
     if (difference > 0) {
-      changes.push(`▲ ${currentItem.name} +$${difference.toFixed(2)}`);
+      increased.push(`▲ ${currentItem.name} +$${difference.toFixed(2)}`);
     } else if (difference < 0) {
-      changes.push(
+      decreased.push(
         `▼ ${currentItem.name} -$${Math.abs(difference).toFixed(2)}`,
       );
     }
@@ -45,9 +49,14 @@ export function compareBudgets(
     if (!currentMap.has(name)) {
       const amount = parseFloat(oldItem.amount || "0");
 
-      changes.push(`- ${oldItem.name} -$${amount.toFixed(2)}`);
+      removed.push(`- ${oldItem.name} -$${amount.toFixed(2)}`);
     }
   });
 
-  return changes;
+  return {
+    added,
+    removed,
+    increased,
+    decreased,
+  };
 }
