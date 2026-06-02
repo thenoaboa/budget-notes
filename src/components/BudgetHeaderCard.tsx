@@ -80,6 +80,8 @@ export function BudgetHeaderCard({
 
       {showMenu && (
         <View style={styles.dropdownMenu}>
+          <View style={styles.dropdownArrow} />
+
           <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
             <Text style={styles.dropdownText}>Compare Budgets</Text>
           </Pressable>
@@ -146,16 +148,31 @@ const styles = StyleSheet.create({
 
   dropdownMenu: {
     position: "absolute",
-    top: 52,
-    right: 12,
+    top: 40,
+    right: -4,
     zIndex: 25,
+  },
+
+  dropdownArrow: {
+    alignSelf: "flex-end",
+    marginRight: 34,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 10,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#182638",
   },
 
   dropdownButton: {
     backgroundColor: "#182638",
     borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    width: 220,
+    height: 58,
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: "#2D4562",
   },
