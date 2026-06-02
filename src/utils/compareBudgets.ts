@@ -39,7 +39,7 @@ export function compareBudgets(
 
     if (!oldItem) {
       added.push(
-        `+ ${cleanName(currentItem.name)} +$${currentAmount.toFixed(2)}`,
+        `+ ${cleanName(currentItem.name)}: $${currentAmount.toFixed(2)}`,
       );
       return;
     }
@@ -49,11 +49,11 @@ export function compareBudgets(
 
     if (difference > 0) {
       increased.push(
-        `▲ ${cleanName(currentItem.name)} +$${difference.toFixed(2)}`,
+        `▲ ${cleanName(currentItem.name)}: +$${difference.toFixed(2)}`,
       );
     } else if (difference < 0) {
       decreased.push(
-        `▼ ${cleanName(currentItem.name)} -$${Math.abs(difference).toFixed(2)}`,
+        `▼ ${cleanName(currentItem.name)}: -$${Math.abs(difference).toFixed(2)}`,
       );
     }
   });
@@ -61,7 +61,8 @@ export function compareBudgets(
   comparedMap.forEach((oldItem, name) => {
     if (!currentMap.has(name)) {
       const amount = getAmount(oldItem.amount);
-      removed.push(`- ${cleanName(oldItem.name)} -$${amount.toFixed(2)}`);
+
+      removed.push(`- ${cleanName(oldItem.name)}: $${amount.toFixed(2)}`);
     }
   });
 
