@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   dropdownMenu: {
     position: "absolute",
     top: 40,
-    right: -4,
+    right: -60,
     zIndex: 25,
   },
 
@@ -169,10 +169,8 @@ const styles = StyleSheet.create({
   dropdownButton: {
     backgroundColor: "#182638",
     borderRadius: 18,
-    width: 220,
-    height: 58,
-    justifyContent: "center",
-    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: "#2D4562",
   },
