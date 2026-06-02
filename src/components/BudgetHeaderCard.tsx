@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
 
   dropdownArrow: {
     alignSelf: "flex-end",
-    marginRight: 16,
+    marginRight: 12,
     width: 0,
     height: 0,
     borderLeftWidth: 9,
