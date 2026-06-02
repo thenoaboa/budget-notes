@@ -83,7 +83,7 @@ export function BudgetHeaderCard({
           <View style={styles.dropdownArrow} />
 
           <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
-            <Text style={styles.dropdownText}>Compare Budgets</Text>
+            <Text style={styles.dropdownText}>Compare</Text>
           </Pressable>
         </View>
       )}
