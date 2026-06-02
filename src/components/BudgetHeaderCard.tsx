@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   dropdownMenu: {
     position: "absolute",
     top: 40,
-    right: 12,
+    right: -4,
     zIndex: 25,
   },
 
