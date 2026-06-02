@@ -67,7 +67,12 @@ export default function BudgetDashboardScreen() {
 
   const comparisonResults = comparedBudget
     ? compareBudgets(editor.items, comparedBudget)
-    : [];
+    : {
+        added: [],
+        removed: [],
+        increased: [],
+        decreased: [],
+      };
 
   function capture(eventName: string, properties?: any) {
     posthog?.capture(eventName, properties);
@@ -227,6 +232,7 @@ export default function BudgetDashboardScreen() {
               setShowCompareModal(true);
             }}
           />
+
           {comparedBudget && (
             <View style={styles.compareCard}>
               <Pressable
@@ -254,8 +260,32 @@ export default function BudgetDashboardScreen() {
                 Compared to: {comparedBudget.budgetName || "Untitled Budget"}
               </Text>
 
-              {comparisonResults.map((change, index) => (
-                <Text key={index} style={styles.compareChangeText}>
+              {comparisonResults.increased.map((change, index) => (
+                <Text
+                  key={`increased-${index}`}
+                  style={styles.compareChangeText}
+                >
+                  {change}
+                </Text>
+              ))}
+
+              {comparisonResults.decreased.map((change, index) => (
+                <Text
+                  key={`decreased-${index}`}
+                  style={styles.compareChangeText}
+                >
+                  {change}
+                </Text>
+              ))}
+
+              {comparisonResults.added.map((change, index) => (
+                <Text key={`added-${index}`} style={styles.compareChangeText}>
+                  {change}
+                </Text>
+              ))}
+
+              {comparisonResults.removed.map((change, index) => (
+                <Text key={`removed-${index}`} style={styles.compareChangeText}>
                   {change}
                 </Text>
               ))}
@@ -331,6 +361,7 @@ export default function BudgetDashboardScreen() {
               onSkip={skipTutorial}
             />
           )}
+
           <Modal
             visible={showCompareModal}
             transparent
@@ -347,6 +378,7 @@ export default function BudgetDashboardScreen() {
                     style={styles.budgetOption}
                     onPress={() => {
                       setComparedBudget(budget);
+                      setShowCompareCardMenu(false);
                       setShowCompareModal(false);
                     }}
                   >
@@ -365,6 +397,7 @@ export default function BudgetDashboardScreen() {
               </View>
             </View>
           </Modal>
+
           <AddItemOverlay
             visible={editor.showAddItemOverlay}
             draftItem={editor.draftItem}
@@ -432,6 +465,49 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "800",
+    paddingRight: 32,
+  },
+
+  compareChangeText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 6,
+  },
+
+  compareCardMenuButton: {
+    position: "absolute",
+    top: 12,
+    right: 14,
+    zIndex: 20,
+  },
+
+  compareCardMenuDots: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "900",
+  },
+
+  compareCardDropdown: {
+    position: "absolute",
+    top: 42,
+    right: 12,
+    zIndex: 25,
+  },
+
+  compareCardDropdownButton: {
+    backgroundColor: "#182638",
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  compareCardDropdownText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
 
   modalBackdrop: {
@@ -479,47 +555,5 @@ const styles = StyleSheet.create({
     color: "#AAB7C4",
     fontSize: 15,
     fontWeight: "700",
-  },
-
-  compareCardMenuButton: {
-    position: "absolute",
-    top: 12,
-    right: 14,
-    zIndex: 20,
-  },
-
-  compareCardMenuDots: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "900",
-  },
-
-  compareCardDropdown: {
-    position: "absolute",
-    top: 42,
-    right: 12,
-    zIndex: 25,
-  },
-
-  compareCardDropdownButton: {
-    backgroundColor: "#182638",
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  compareCardDropdownText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  compareChangeText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
-    marginTop: 6,
   },
 });
