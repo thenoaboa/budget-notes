@@ -21,7 +21,9 @@ export function compareBudgets(
     const oldItem = comparedMap.get(name);
 
     if (!oldItem) {
-      changes.push(`+ ${currentItem.name}`);
+      const amount = parseFloat(currentItem.amount || "0");
+
+      changes.push(`+ ${currentItem.name} +$${amount.toFixed(2)}`);
       return;
     }
 
@@ -41,7 +43,9 @@ export function compareBudgets(
 
   comparedMap.forEach((oldItem, name) => {
     if (!currentMap.has(name)) {
-      changes.push(`- ${oldItem.name}`);
+      const amount = parseFloat(oldItem.amount || "0");
+
+      changes.push(`- ${oldItem.name} -$${amount.toFixed(2)}`);
     }
   });
 
