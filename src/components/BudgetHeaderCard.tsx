@@ -2,7 +2,7 @@
 
 import { RefObject, useState } from "react";
 
-import { Pressable, StyleSheet, Text, TextInput } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 
@@ -18,6 +18,9 @@ type Props = {
   hasEnteredItems: boolean;
   highlightBudgetAmount?: boolean;
   onBudgetAmountTutorialFocus?: () => void;
+  showMenu?: boolean;
+  onMenuPress?: () => void;
+  onCompareBudgets?: () => void;
 };
 
 export function BudgetHeaderCard({
@@ -28,9 +31,13 @@ export function BudgetHeaderCard({
   startingMoneyRef,
   headerSubtext,
   currentStyle,
+  headerTextColor,
   hasEnteredItems,
   highlightBudgetAmount,
   onBudgetAmountTutorialFocus,
+  showMenu,
+  onMenuPress,
+  onCompareBudgets,
 }: Props) {
   const [isEditingAmount, setIsEditingAmount] = useState(false);
 
@@ -44,7 +51,6 @@ export function BudgetHeaderCard({
 
   function handleAmountChange(value: string) {
     const cleanedValue = value.replace(/[^0-9.]/g, "");
-
     setStartingMoney(cleanedValue);
   }
 
@@ -68,6 +74,18 @@ export function BudgetHeaderCard({
         highlightBudgetAmount && styles.highlightedHeaderCard,
       ]}
     >
+      <Pressable style={styles.menuButton} onPress={onMenuPress}>
+        <Text style={styles.menuDots}>•••</Text>
+      </Pressable>
+
+      {showMenu && (
+        <View style={styles.dropdownMenu}>
+          <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
+            <Text style={styles.dropdownText}>Compare Budgets</Text>
+          </Pressable>
+        </View>
+      )}
+
       <Text style={styles.headerMessage}>{affirmingMessage}</Text>
 
       <TextInput
@@ -113,16 +131,48 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
+  menuButton: {
+    position: "absolute",
+    top: 12,
+    right: 14,
+    zIndex: 20,
+  },
+
+  menuDots: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  dropdownMenu: {
+    position: "absolute",
+    top: 52,
+    right: 12,
+    zIndex: 25,
+  },
+
+  dropdownButton: {
+    backgroundColor: "#182638",
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  dropdownText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
   highlightedHeaderCard: {
     borderWidth: 3,
     borderColor: "#FFFFFF",
     shadowColor: "#2ECC71",
     shadowOpacity: 0.95,
     shadowRadius: 18,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
+    shadowOffset: { width: 0, height: 0 },
     elevation: 14,
   },
 
@@ -142,10 +192,7 @@ const styles = StyleSheet.create({
 
   highlightedAmountInput: {
     textShadowColor: "#2ECC71",
-    textShadowOffset: {
-      width: 0,
-      height: 0,
-    },
+    textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
 

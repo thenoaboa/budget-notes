@@ -49,6 +49,7 @@ export default function BudgetDashboardScreen() {
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [isDeletingItem, setIsDeletingItem] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -197,6 +198,14 @@ export default function BudgetDashboardScreen() {
               if (tutorialStep === "budgetHighlight") {
                 setTutorialStep("addItemPopup");
               }
+            }}
+            showMenu={showMenu}
+            onMenuPress={() => {
+              setShowMenu((previous) => !previous);
+            }}
+            onCompareBudgets={() => {
+              setShowMenu(false);
+              console.log("Compare Budgets");
             }}
           />
 
