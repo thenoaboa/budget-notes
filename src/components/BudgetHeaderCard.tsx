@@ -80,14 +80,11 @@ export function BudgetHeaderCard({
 
       {showMenu && (
         <View style={styles.dropdownMenu}>
-          <View style={styles.dropdownArrow} />
-
           <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
             <Text style={styles.dropdownText}>Compare</Text>
           </Pressable>
         </View>
       )}
-
       <Text style={styles.headerMessage}>{affirmingMessage}</Text>
 
       <TextInput
@@ -149,7 +146,7 @@ const styles = StyleSheet.create({
 
   dropdownMenu: {
     position: "absolute",
-    top: 40,
+    top: 30,
     right: 12,
     zIndex: 25,
   },
