@@ -75,7 +75,7 @@ export function BudgetHeaderCard({
       ]}
     >
       <Pressable style={styles.menuButton} onPress={onMenuPress}>
-        <Text style={styles.menuDots}>•••</Text>
+        <Text style={styles.menuDots}>⋮</Text>
       </Pressable>
 
       {showMenu && (
@@ -142,8 +142,9 @@ const styles = StyleSheet.create({
 
   menuDots: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "900",
+    lineHeight: 28,
   },
 
   dropdownMenu: {
