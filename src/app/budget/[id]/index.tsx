@@ -233,96 +233,6 @@ export default function BudgetDashboardScreen() {
             }}
           />
 
-          {comparedBudget && (
-            <View style={styles.compareCard}>
-              <Pressable
-                style={styles.compareCardMenuButton}
-                onPress={() => setShowCompareCardMenu((previous) => !previous)}
-              >
-                <Text style={styles.compareCardMenuDots}>⋮</Text>
-              </Pressable>
-
-              {showCompareCardMenu && (
-                <View style={styles.compareCardDropdown}>
-                  <Pressable
-                    style={styles.compareCardDropdownButton}
-                    onPress={() => {
-                      setComparedBudget(null);
-                      setShowCompareCardMenu(false);
-                    }}
-                  >
-                    <Text style={styles.compareCardDropdownText}>Close</Text>
-                  </Pressable>
-                </View>
-              )}
-              <Text style={styles.compareLabel}>Compared to:</Text>
-
-              <Text style={styles.compareTitle}>
-                {comparedBudget.budgetName || "Untitled Budget"}
-              </Text>
-
-              {comparisonResults.increased.length > 0 && (
-                <>
-                  <Text style={styles.compareSectionTitle}>Increased:</Text>
-
-                  {comparisonResults.increased.map((change, index) => (
-                    <Text
-                      key={`increased-${index}`}
-                      style={styles.compareChangeText}
-                    >
-                      {change}
-                    </Text>
-                  ))}
-                </>
-              )}
-
-              {comparisonResults.decreased.length > 0 && (
-                <>
-                  <Text style={styles.compareSectionTitle}>Decreased:</Text>
-
-                  {comparisonResults.decreased.map((change, index) => (
-                    <Text
-                      key={`decreased-${index}`}
-                      style={styles.compareChangeText}
-                    >
-                      {change}
-                    </Text>
-                  ))}
-                </>
-              )}
-
-              {comparisonResults.added.length > 0 && (
-                <>
-                  <Text style={styles.compareSectionTitle}>Added:</Text>
-
-                  {comparisonResults.added.map((change, index) => (
-                    <Text
-                      key={`added-${index}`}
-                      style={styles.compareChangeText}
-                    >
-                      {change}
-                    </Text>
-                  ))}
-                </>
-              )}
-
-              {comparisonResults.removed.length > 0 && (
-                <>
-                  <Text style={styles.compareSectionTitle}>Removed:</Text>
-
-                  {comparisonResults.removed.map((change, index) => (
-                    <Text
-                      key={`removed-${index}`}
-                      style={styles.compareChangeText}
-                    >
-                      {change}
-                    </Text>
-                  ))}
-                </>
-              )}
-            </View>
-          )}
-
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -330,6 +240,98 @@ export default function BudgetDashboardScreen() {
             alwaysBounceVertical
             bounces
           >
+            {comparedBudget && (
+              <View style={styles.compareCard}>
+                <Pressable
+                  style={styles.compareCardMenuButton}
+                  onPress={() =>
+                    setShowCompareCardMenu((previous) => !previous)
+                  }
+                >
+                  <Text style={styles.compareCardMenuDots}>⋮</Text>
+                </Pressable>
+
+                {showCompareCardMenu && (
+                  <View style={styles.compareCardDropdown}>
+                    <Pressable
+                      style={styles.compareCardDropdownButton}
+                      onPress={() => {
+                        setComparedBudget(null);
+                        setShowCompareCardMenu(false);
+                      }}
+                    >
+                      <Text style={styles.compareCardDropdownText}>Close</Text>
+                    </Pressable>
+                  </View>
+                )}
+                <Text style={styles.compareLabel}>Compared to:</Text>
+
+                <Text style={styles.compareTitle}>
+                  {comparedBudget.budgetName || "Untitled Budget"}
+                </Text>
+
+                {comparisonResults.increased.length > 0 && (
+                  <>
+                    <Text style={styles.compareSectionTitle}>Increased:</Text>
+
+                    {comparisonResults.increased.map((change, index) => (
+                      <Text
+                        key={`increased-${index}`}
+                        style={styles.compareChangeText}
+                      >
+                        {change}
+                      </Text>
+                    ))}
+                  </>
+                )}
+
+                {comparisonResults.decreased.length > 0 && (
+                  <>
+                    <Text style={styles.compareSectionTitle}>Decreased:</Text>
+
+                    {comparisonResults.decreased.map((change, index) => (
+                      <Text
+                        key={`decreased-${index}`}
+                        style={styles.compareChangeText}
+                      >
+                        {change}
+                      </Text>
+                    ))}
+                  </>
+                )}
+
+                {comparisonResults.added.length > 0 && (
+                  <>
+                    <Text style={styles.compareSectionTitle}>Added:</Text>
+
+                    {comparisonResults.added.map((change, index) => (
+                      <Text
+                        key={`added-${index}`}
+                        style={styles.compareChangeText}
+                      >
+                        {change}
+                      </Text>
+                    ))}
+                  </>
+                )}
+
+                {comparisonResults.removed.length > 0 && (
+                  <>
+                    <Text style={styles.compareSectionTitle}>Removed:</Text>
+
+                    {comparisonResults.removed.map((change, index) => (
+                      <Text
+                        key={`removed-${index}`}
+                        style={styles.compareChangeText}
+                      >
+                        {change}
+                      </Text>
+                    ))}
+                  </>
+                )}
+              </View>
+            )}
+
             <View id="receipt-export" ref={exportRef}>
               <BudgetSummaryBox
                 items={receiptItems}
