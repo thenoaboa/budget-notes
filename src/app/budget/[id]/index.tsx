@@ -1,629 +1,376 @@
-// Save as: src/app/budget/[id]/index.tsx
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { usePostHog } from "posthog-react-native";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Modal,
+  Alert,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 
-import { AddItemOverlay } from "../../../components/AddItemOverlay";
-import { BudgetActionButtons } from "../../../components/BudgetActionButtons";
-import { BudgetHeaderCard } from "../../../components/BudgetHeaderCard";
-import { BudgetNotesCard } from "../../../components/BudgetNotesCard";
-import { BudgetSummaryBox } from "../../../components/BudgetSummary";
-import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
-import { TutorialOverlay } from "../../../components/TutorialOverlay";
-import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
-import { loadBudgets } from "../../../storage/budgetStorage";
-import type { Budget } from "../../../types/budget";
-import {
-  trackItemAdded,
-  trackItemDeleted,
-  trackItemEdited,
-  trackReceiptEdited,
-  trackTutorialStepCompleted,
-} from "../../../utils/budgetAnalytics";
-import { compareBudgets } from "../../../utils/compareBudgets";
+type SpendingItem = {
+  id: string;
+  amount: string;
+  name: string;
+  quantity: string;
+  included: boolean;
+};
 
-type TutorialStep =
-  | "hidden"
-  | "budgetPopup"
-  | "budgetHighlight"
-  | "addItemPopup"
-  | "addItemHighlight"
-  | "donePopup";
+type Budget = {
+  id: string;
+  budgetName: string;
+  amount: string;
+  spendingItems: SpendingItem[];
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
-export default function BudgetDashboardScreen() {
+export default function HomeScreen() {
   const router = useRouter();
-  const posthog = usePostHog();
-  const { id } = useLocalSearchParams();
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const budgetId = Array.isArray(id) ? id[0] : id;
-  const editor = useBudgetEditor(budgetId);
+  useFocusEffect(
+    useCallback(() => {
+      async function loadBudgets() {
+        const savedBudgets = await AsyncStorage.getItem("budgets");
+        const parsedBudgets: Budget[] = savedBudgets
+          ? JSON.parse(savedBudgets)
+          : [];
 
-  const exportRef = useRef<View>(null);
+        setBudgets(parsedBudgets);
+      }
 
-  const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
-  const [isDeletingItem, setIsDeletingItem] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showCompareModal, setShowCompareModal] = useState(false);
-  const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
-  const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
-  const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
+      loadBudgets();
+    }, []),
+  );
 
-  const receiptItems = useMemo(() => {
-    return [...editor.items].reverse();
-  }, [editor.items]);
-
-  const comparisonResults = comparedBudget
-    ? compareBudgets(editor.items, comparedBudget)
-    : {
-        added: [],
-        removed: [],
-        increased: [],
-        decreased: [],
-      };
-
-  function capture(eventName: string, properties?: any) {
-    posthog?.capture(eventName, properties);
+  function createNewBudget() {
+    const id = Date.now().toString();
+    router.push(`/budget/${id}` as any);
   }
 
-  function advanceTutorialAfterTap(nextStep: TutorialStep) {
-    setTimeout(() => {
-      setTutorialStep(nextStep);
-    }, 150);
+  async function deleteBudget(budgetId: string) {
+    const updatedBudgets = budgets.filter((budget) => budget.id !== budgetId);
+
+    setBudgets(updatedBudgets);
+    await AsyncStorage.setItem("budgets", JSON.stringify(updatedBudgets));
   }
 
-  function handleReorderReceiptItems(updatedVisibleReceiptItems: any[]) {
-    const visibleIds = new Set(
-      updatedVisibleReceiptItems.map((item) => item.id),
+  function confirmDeleteBudget(budgetId: string) {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Are you sure you want to delete this?");
+
+      if (confirmed) {
+        deleteBudget(budgetId);
+      }
+
+      return;
+    }
+
+    Alert.alert("Delete note?", "Are you sure you want to delete this?", [
+      { text: "No", style: "cancel" },
+      {
+        text: "Yes",
+        style: "destructive",
+        onPress: () => deleteBudget(budgetId),
+      },
+    ]);
+  }
+
+  function renderRightActions(budgetId: string) {
+    return (
+      <Pressable
+        style={styles.deleteAction}
+        onPress={() => confirmDeleteBudget(budgetId)}
+      >
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
     );
-    let nextVisibleIndex = 0;
-
-    const updatedReceiptItems = receiptItems.map((item) => {
-      if (!visibleIds.has(item.id)) {
-        return item;
-      }
-
-      const nextVisibleItem = updatedVisibleReceiptItems[nextVisibleIndex];
-      nextVisibleIndex += 1;
-
-      return nextVisibleItem;
-    });
-
-    editor.reorderItems([...updatedReceiptItems].reverse());
   }
 
-  useEffect(() => {
-    async function loadTutorial() {
-      const completed = await AsyncStorage.getItem(
-        "budget-note-tutorial-complete-v2",
-      );
+  function getFallbackDateFromId(id: string) {
+    const timestamp = Number(id);
 
-      if (!completed) {
-        capture("tutorial_started", {
-          tutorialVersion: "budget_v2",
-          source: "budget_screen",
-        });
-
-        setTutorialStep("budgetPopup");
-      }
+    if (!Number.isNaN(timestamp)) {
+      return new Date(timestamp).toISOString();
     }
 
-    loadTutorial();
-  }, []);
-
-  async function completeTutorial() {
-    capture("tutorial_completed", {
-      tutorialVersion: "budget_v2",
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-    });
-
-    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
-
-    setTutorialStep("hidden");
+    return "";
   }
 
-  async function skipTutorial() {
-    capture("tutorial_skipped", {
-      tutorialVersion: "budget_v2",
-      step: tutorialStep,
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-    });
-
-    await completeTutorial();
+  function getSortDate(budget: Budget) {
+    return (
+      budget.updatedAt || budget.createdAt || getFallbackDateFromId(budget.id)
+    );
   }
 
-  function addItemFromDraftWithAnalytics() {
-    trackItemAdded(capture, {
-      existingItems: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-      hasName: editor.draftItem.name.trim().length > 0,
-      hasAmount: editor.draftItem.amount.trim().length > 0,
-      quantity: editor.draftItem.quantity,
+  function formatNoteDate(budget: Budget) {
+    const editedDate = budget.updatedAt;
+    const createdDate = budget.createdAt || getFallbackDateFromId(budget.id);
+    const dateToUse = editedDate || createdDate;
+
+    if (!dateToUse) return "No date yet";
+
+    const date = new Date(dateToUse);
+
+    const formattedDate = date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
     });
 
-    editor.addItemFromDraft();
-  }
-
-  function deleteItemWithAnalytics(itemId: number) {
-    setIsDeletingItem(true);
-
-    editor.closeReceiptItemOverlay();
-
-    trackItemDeleted(capture, {
-      itemCountBeforeDelete: editor.items.length,
-      itemCountAfterDelete: Math.max(editor.items.length - 1, 0),
-      salesTaxEnabled: editor.salesTaxEnabled,
+    const formattedTime = date.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
     });
 
-    setTimeout(() => {
-      editor.deleteItem(itemId);
-
-      setTimeout(() => {
-        setIsDeletingItem(false);
-      }, 250);
-    }, 0);
-  }
-
-  function openReceiptItemOverlayWithAnalytics(itemId: number) {
-    if (isDeletingItem) {
-      return;
+    if (editedDate) {
+      return `Edited ${formattedDate} • ${formattedTime}`;
     }
 
-    trackItemEdited(capture, {
-      itemCount: editor.items.length,
-      source: "receipt_card",
-    });
-
-    editor.openReceiptItemOverlay(itemId);
+    return `Created ${formattedDate} • ${formattedTime}`;
   }
 
-  function openReceiptPage() {
-    trackReceiptEdited(capture, {
-      itemCount: editor.items.length,
-      salesTaxEnabled: editor.salesTaxEnabled,
-      totalSpent: editor.totalSpent,
-    });
+  function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    const yOffset = event.nativeEvent.contentOffset.y;
 
-    router.push(`/budget/${budgetId}/items` as any);
-  }
-
-  function handleAddItemPress() {
-    if (tutorialStep === "addItemHighlight") {
-      trackTutorialStepCompleted(capture, "add_item_highlight");
-
-      setTutorialStep("donePopup");
-      return;
+    if (yOffset < -24) {
+      setSearchVisible(true);
     }
-
-    editor.openAddItemOverlay();
   }
+
+  const visibleBudgets = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    const sortedBudgets = [...budgets].sort((a, b) => {
+      const aTime = new Date(getSortDate(a)).getTime() || 0;
+      const bTime = new Date(getSortDate(b)).getTime() || 0;
+
+      return bTime - aTime;
+    });
+
+    if (!normalizedSearch) return sortedBudgets;
+
+    return sortedBudgets.filter((budget) => {
+      const createdDateText = budget.createdAt
+        ? new Date(budget.createdAt).toLocaleString()
+        : "";
+
+      const updatedDateText = budget.updatedAt
+        ? new Date(budget.updatedAt).toLocaleString()
+        : "";
+
+      const itemText = budget.spendingItems
+        .map((item) => `${item.name} ${item.amount} x${item.quantity}`)
+        .join(" ");
+
+      const searchableText = [
+        budget.budgetName,
+        budget.amount,
+        budget.notes,
+        itemText,
+        createdDateText,
+        updatedDateText,
+        formatNoteDate(budget),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(normalizedSearch);
+    });
+  }, [budgets, searchQuery]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={20}
-      >
-        <View style={styles.page}>
-          <BudgetHeaderCard
-            affirmingMessage={editor.affirmingMessage}
-            safeToSpend={editor.safeToSpend}
-            startingMoney={editor.startingMoney}
-            setStartingMoney={editor.setStartingMoney}
-            startingMoneyRef={editor.startingMoneyRef}
-            headerSubtext={editor.headerSubtext}
-            currentStyle={editor.currentStyle}
-            headerTextColor={editor.headerTextColor}
-            hasEnteredItems={editor.items.some(
-              (item) => item.amount.trim() !== "",
-            )}
-            highlightBudgetAmount={tutorialStep === "budgetHighlight"}
-            onBudgetAmountTutorialFocus={() => {
-              if (tutorialStep === "budgetHighlight") {
-                setTutorialStep("addItemPopup");
-              }
-            }}
-            showMenu={showMenu}
-            onMenuPress={() => {
-              setShowMenu((previous) => !previous);
-            }}
-            onCompareBudgets={async () => {
-              setShowMenu(false);
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
+      alwaysBounceVertical
+    >
+      <View style={styles.simpleHeader}>
+        <Text style={styles.simpleTitle}>Budget Note</Text>
 
-              const budgets = await loadBudgets();
+        <Text style={styles.simpleSubtitle}>
+          Plan today, spend confidently.
+        </Text>
+      </View>
 
-              setAllBudgets(budgets.filter((budget) => budget.id !== budgetId));
+      <Pressable style={styles.newButton} onPress={createNewBudget}>
+        <Text style={styles.newButtonText}>+ New Note</Text>
+      </Pressable>
 
-              setShowCompareModal(true);
-            }}
-          />
+      {searchVisible && (
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search notes..."
+          placeholderTextColor="#8A98A8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      )}
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            alwaysBounceVertical
-            bounces
-          >
-            {comparedBudget && (
-              <View style={styles.compareCard}>
-                <Pressable
-                  style={styles.compareCardMenuButton}
-                  onPress={() =>
-                    setShowCompareCardMenu((previous) => !previous)
-                  }
-                >
-                  <Text style={styles.compareCardMenuDots}>⋮</Text>
-                </Pressable>
+      {visibleBudgets.length === 0 && (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>
+            {searchQuery.trim() ? "No matches found." : "Nothing here yet."}
+          </Text>
 
-                {showCompareCardMenu && (
-                  <View style={styles.compareCardDropdown}>
-                    <Pressable
-                      style={styles.compareCardDropdownButton}
-                      onPress={() => {
-                        setComparedBudget(null);
-                        setShowCompareCardMenu(false);
-                      }}
-                    >
-                      <Text style={styles.compareCardDropdownText}>Close</Text>
-                    </Pressable>
-                  </View>
-                )}
-                <Text style={styles.compareLabel}>Compared to:</Text>
-
-                <Text style={styles.compareTitle}>
-                  {comparedBudget.budgetName || "Untitled Budget"}
-                </Text>
-
-                {comparisonResults.increased.length > 0 && (
-                  <>
-                    <Text style={styles.compareSectionTitle}>Increased:</Text>
-
-                    {comparisonResults.increased.map((change, index) => (
-                      <Text
-                        key={`increased-${index}`}
-                        style={styles.compareChangeText}
-                      >
-                        {change}
-                      </Text>
-                    ))}
-                  </>
-                )}
-
-                {comparisonResults.decreased.length > 0 && (
-                  <>
-                    <Text style={styles.compareSectionTitle}>Decreased:</Text>
-
-                    {comparisonResults.decreased.map((change, index) => (
-                      <Text
-                        key={`decreased-${index}`}
-                        style={styles.compareChangeText}
-                      >
-                        {change}
-                      </Text>
-                    ))}
-                  </>
-                )}
-
-                {comparisonResults.added.length > 0 && (
-                  <>
-                    <Text style={styles.compareSectionTitle}>Added:</Text>
-
-                    {comparisonResults.added.map((change, index) => (
-                      <Text
-                        key={`added-${index}`}
-                        style={styles.compareChangeText}
-                      >
-                        {change}
-                      </Text>
-                    ))}
-                  </>
-                )}
-
-                {comparisonResults.removed.length > 0 && (
-                  <>
-                    <Text style={styles.compareSectionTitle}>Removed:</Text>
-
-                    {comparisonResults.removed.map((change, index) => (
-                      <Text
-                        key={`removed-${index}`}
-                        style={styles.compareChangeText}
-                      >
-                        {change}
-                      </Text>
-                    ))}
-                  </>
-                )}
-              </View>
-            )}
-
-            <View id="receipt-export" ref={exportRef}>
-              <BudgetSummaryBox
-                items={receiptItems}
-                subtotal={editor.subtotal}
-                taxAmount={editor.taxAmount}
-                totalSpent={editor.totalSpent}
-                startingMoney={editor.startingMoney}
-                salesTaxEnabled={editor.salesTaxEnabled}
-                setSalesTaxEnabled={editor.setSalesTaxEnabled}
-                taxRate={editor.taxRate}
-                setTaxRate={editor.setTaxRate}
-                startingMoneyRef={editor.startingMoneyRef}
-                taxRateRef={editor.taxRateRef}
-                affirmingMessage={editor.affirmingMessage}
-                currentStyle={editor.currentStyle}
-                highlightAddButton={tutorialStep === "addItemHighlight"}
-                onAddItem={handleAddItemPress}
-                onPressItem={openReceiptItemOverlayWithAnalytics}
-                onDeleteItem={deleteItemWithAnalytics}
-                onReorderVisibleItems={handleReorderReceiptItems}
-              />
-            </View>
-
-            <BudgetActionButtons
-              onBackToMenu={() => router.push("/" as any)}
-              onOpenReceipt={openReceiptPage}
-            />
-
-            <BudgetNotesCard
-              receiptNote={editor.receiptNote}
-              setReceiptNote={editor.setReceiptNote}
-            />
-          </ScrollView>
-
-          {tutorialStep === "budgetPopup" && (
-            <TutorialOverlay
-              title="Set your budget"
-              body="Start with the amount you want to spend before adding purchases."
-              buttonText="OK"
-              onNext={() => advanceTutorialAfterTap("budgetHighlight")}
-              onSkip={skipTutorial}
-            />
-          )}
-
-          {tutorialStep === "addItemPopup" && (
-            <TutorialOverlay
-              title="Add purchases"
-              body="Use the Add Item button to quickly enter purchases while shopping or planning."
-              buttonText="OK"
-              onNext={() => advanceTutorialAfterTap("addItemHighlight")}
-              onSkip={skipTutorial}
-            />
-          )}
-
-          {tutorialStep === "donePopup" && (
-            <TutorialOverlay
-              title="Track what’s left"
-              body="Your remaining balance updates automatically with every purchase you add."
-              buttonText="Start"
-              onNext={completeTutorial}
-              onSkip={skipTutorial}
-            />
-          )}
-
-          <Modal
-            visible={showCompareModal}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowCompareModal(false)}
-          >
-            <View style={styles.modalBackdrop}>
-              <View style={styles.compareModal}>
-                <Text style={styles.modalTitle}>Compare Budget</Text>
-
-                {allBudgets.map((budget) => (
-                  <Pressable
-                    key={budget.id}
-                    style={styles.budgetOption}
-                    onPress={() => {
-                      setComparedBudget(budget);
-                      setShowCompareCardMenu(false);
-                      setShowCompareModal(false);
-                    }}
-                  >
-                    <Text style={styles.budgetOptionText}>
-                      {budget.budgetName || "Untitled Budget"}
-                    </Text>
-                  </Pressable>
-                ))}
-
-                <Pressable
-                  style={styles.cancelButton}
-                  onPress={() => setShowCompareModal(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-
-          <AddItemOverlay
-            visible={editor.showAddItemOverlay}
-            draftItem={editor.draftItem}
-            setDraftItem={editor.setDraftItem}
-            onClose={editor.closeAddItemOverlay}
-            onAdd={addItemFromDraftWithAnalytics}
-          />
-
-          <ReceiptItemOverlay
-            visible={editor.selectedReceiptItemId !== null && !isDeletingItem}
-            item={editor.selectedReceiptItem}
-            itemNameRefs={editor.itemNameRefs}
-            itemAmountRefs={editor.itemAmountRefs}
-            updateItem={editor.updateItem}
-            increaseQuantity={editor.increaseQuantity}
-            resetQuantity={editor.resetQuantity}
-            toggleIncluded={editor.toggleIncluded}
-            deleteItem={deleteItemWithAnalytics}
-            focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
-            onClose={editor.closeReceiptItemOverlay}
-          />
+          <Text style={styles.emptyText}>
+            {searchQuery.trim()
+              ? "Try searching by title, item, amount, or date."
+              : "Start a note when you want a clearer picture before spending."}
+          </Text>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      )}
+
+      {visibleBudgets.map((budget) => (
+        <Swipeable
+          key={budget.id}
+          renderRightActions={() => renderRightActions(budget.id)}
+        >
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push(`/budget/${budget.id}` as any)}
+          >
+            <Text style={styles.cardTitle}>
+              {budget.budgetName || "Untitled Note"}
+            </Text>
+
+            <Text style={styles.cardSubtitle}>{formatNoteDate(budget)}</Text>
+          </Pressable>
+        </Swipeable>
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: "#101820",
   },
 
-  keyboardView: {
-    flex: 1,
-  },
-
-  page: {
-    flex: 1,
-    backgroundColor: "#101820",
+  content: {
     paddingHorizontal: 16,
-  },
-
-  scroll: {
-    flex: 1,
+    paddingTop: 58,
+    paddingBottom: 120,
     backgroundColor: "#101820",
   },
 
-  scrollContent: {
-    paddingBottom: 80,
-    backgroundColor: "#101820",
+  simpleHeader: {
+    marginBottom: 22,
   },
 
-  compareCard: {
-    backgroundColor: "#182638",
-    borderRadius: 18,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  compareTitle: {
+  simpleTitle: {
     color: "#FFFFFF",
-    fontSize: 18,
+    fontSize: 42,
     fontWeight: "900",
-    paddingRight: 32,
-    marginBottom: 8,
-  },
-  compareLabel: {
-    color: "#AAB7C4",
-    fontSize: 13,
-    fontWeight: "800",
-    marginBottom: 2,
+    letterSpacing: -1,
   },
 
-  compareSectionTitle: {
-    color: "#AAB7C4",
-    fontSize: 13,
-    fontWeight: "900",
-    marginTop: 12,
-    marginBottom: 2,
-    textTransform: "uppercase",
-  },
-
-  compareChangeText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "600",
+  simpleSubtitle: {
+    color: "#8A98A8",
+    fontSize: 16,
+    fontWeight: "700",
     marginTop: 6,
+    lineHeight: 22,
   },
 
-  compareCardMenuButton: {
-    position: "absolute",
-    top: 12,
-    right: 14,
-    zIndex: 20,
+  newButton: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 16,
+    paddingVertical: 15,
+    alignItems: "center",
+    marginBottom: 14,
   },
 
-  compareCardMenuDots: {
+  newButtonText: {
+    color: "#101820",
+    fontSize: 17,
+    fontWeight: "900",
+  },
+
+  searchInput: {
+    backgroundColor: "#243342",
+    color: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontWeight: "800",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    marginBottom: 18,
+  },
+
+  emptyCard: {
+    backgroundColor: "#1B2633",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+    marginBottom: 14,
+  },
+
+  emptyTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+
+  emptyText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 21,
+  },
+
+  card: {
+    backgroundColor: "#1B2633",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+    marginBottom: 14,
+  },
+
+  cardTitle: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "900",
   },
 
-  compareCardDropdown: {
-    position: "absolute",
-    top: 42,
-    right: 12,
-    zIndex: 25,
-  },
-
-  compareCardDropdownButton: {
-    backgroundColor: "#182638",
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  compareCardDropdownText: {
-    color: "#FFFFFF",
+  cardSubtitle: {
+    color: "#CAD3DD",
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "700",
+    marginTop: 6,
   },
 
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.55)",
+  deleteAction: {
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
     justifyContent: "center",
-    paddingHorizontal: 20,
-  },
-
-  compareModal: {
-    backgroundColor: "#101820",
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  modalTitle: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "900",
-    marginBottom: 14,
-  },
-
-  budgetOption: {
-    backgroundColor: "#182638",
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 10,
-  },
-
-  budgetOptionText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-
-  cancelButton: {
-    paddingVertical: 12,
     alignItems: "center",
+    width: 90,
+    marginBottom: 14,
+    borderRadius: 18,
   },
 
-  cancelButtonText: {
-    color: "#AAB7C4",
-    fontSize: 15,
-    fontWeight: "700",
+  deleteActionText: {
+    color: "#FF6B6B",
+    fontWeight: "900",
   },
 });
