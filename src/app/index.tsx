@@ -130,7 +130,7 @@ export default function HomeScreen() {
         alwaysBounceVertical
       >
         <View style={styles.simpleHeader}>
-          <Text style={styles.simpleTitle}>My Budgets</Text>
+          <Text style={styles.simpleTitle}>Budget Note</Text>
 
           <View style={styles.subtitleRow}>
             <Text style={styles.simpleSubtitle} numberOfLines={1}>
