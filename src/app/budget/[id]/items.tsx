@@ -5,15 +5,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import DraggableFlatList, {
+  RenderItemParams,
+} from "react-native-draggable-flatlist";
 
 import { SpendingItemRow } from "../../../components/SpendingItemCard";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
+import type { BudgetItem } from "../../../types/budgetEditor";
 
 export default function BudgetItemsScreen() {
   const router = useRouter();
@@ -23,6 +26,24 @@ export default function BudgetItemsScreen() {
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
+
+  function renderItem({ item, drag, isActive }: RenderItemParams<BudgetItem>) {
+    return (
+      <SpendingItemRow
+        item={item}
+        itemNameRefs={editor.itemNameRefs}
+        itemAmountRefs={editor.itemAmountRefs}
+        updateItem={editor.updateItem}
+        increaseQuantity={editor.increaseQuantity}
+        resetQuantity={editor.resetQuantity}
+        toggleIncluded={editor.toggleIncluded}
+        deleteItem={editor.deleteItem}
+        focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
+        onDragItem={drag}
+        isDragging={isActive}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -43,28 +64,16 @@ export default function BudgetItemsScreen() {
             <Text style={styles.addButtonText}>+ Add Item</Text>
           </TouchableOpacity>
 
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={styles.scrollContent}
+          <DraggableFlatList
+            data={editor.items}
+            keyExtractor={(item) => String(item.id)}
+            renderItem={renderItem}
+            onDragEnd={({ data }) => editor.reorderItems(data)}
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
-            alwaysBounceVertical
-            bounces
-          >
-            {editor.items.map((item) => (
-              <SpendingItemRow
-                key={item.id}
-                item={item}
-                itemNameRefs={editor.itemNameRefs}
-                itemAmountRefs={editor.itemAmountRefs}
-                updateItem={editor.updateItem}
-                increaseQuantity={editor.increaseQuantity}
-                resetQuantity={editor.resetQuantity}
-                toggleIncluded={editor.toggleIncluded}
-                deleteItem={editor.deleteItem}
-                focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
-              />
-            ))}
-          </ScrollView>
+            activationDistance={8}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -88,11 +97,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
 
-  scroll: {
+  list: {
     flex: 1,
   },
 
-  scrollContent: {
+  listContent: {
     paddingBottom: 120,
   },
 

@@ -16,7 +16,8 @@
           "project": "react-native",
           "organization": "budgetnote"
         }
-      ]
+      ],
+      "@sentry/react-native"
     ]
   }
 }

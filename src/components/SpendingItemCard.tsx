@@ -22,6 +22,8 @@ type Props = {
   deleteItem: (id: number) => void;
   focusNextItemOrAddCurrent: (id: number) => void;
   hideDeleteButton?: boolean;
+  onDragItem?: () => void;
+  isDragging?: boolean;
 };
 
 function cleanAmountInput(text: string) {
@@ -46,12 +48,20 @@ export function SpendingItemRow({
   deleteItem,
   focusNextItemOrAddCurrent,
   hideDeleteButton = false,
+  onDragItem,
+  isDragging = false,
 }: Props) {
   const amountValue = item.amount ?? "";
   const showDollarSign = amountValue.length > 0;
 
   return (
-    <View style={[styles.itemCard, !item.included && styles.itemExcluded]}>
+    <View
+      style={[
+        styles.itemCard,
+        !item.included && styles.itemExcluded,
+        isDragging && styles.itemCardDragging,
+      ]}
+    >
       <View style={styles.itemControlsRow}>
         <View style={styles.itemAmountInputWrapper}>
           {showDollarSign && (
@@ -108,8 +118,13 @@ export function SpendingItemRow({
 
         {!hideDeleteButton && (
           <TouchableOpacity
-            style={styles.deleteButton}
+            style={[
+              styles.deleteButton,
+              isDragging && styles.deleteButtonDragging,
+            ]}
             onPress={() => deleteItem(item.id)}
+            onLongPress={onDragItem}
+            delayLongPress={250}
           >
             <Text style={styles.deleteButtonText}>×</Text>
           </TouchableOpacity>
@@ -142,6 +157,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#344657",
     gap: 8,
+  },
+
+  itemCardDragging: {
+    borderColor: "#2ECC71",
+    shadowColor: "#2ECC71",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 8,
+    transform: [{ scale: 1.01 }],
   },
 
   itemExcluded: {
@@ -240,6 +268,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A3948",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  deleteButtonDragging: {
+    backgroundColor: "#123527",
   },
 
   deleteButtonText: {

@@ -253,6 +253,10 @@ export function useBudgetEditor(budgetId: string | undefined) {
     );
   }
 
+  function reorderItems(updatedItems: BudgetItem[]) {
+    setItems(updatedItems);
+  }
+
   function deleteItem(id: number) {
     const removeItem = () => {
       setItems((prev) => prev.filter((item) => item.id !== id));
@@ -404,6 +408,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     increaseQuantity,
     resetQuantity,
     toggleIncluded,
+    reorderItems,
     deleteItem,
     focusNextItemOrAddCurrent,
 
