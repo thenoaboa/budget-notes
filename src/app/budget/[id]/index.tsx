@@ -255,9 +255,10 @@ export default function BudgetDashboardScreen() {
                   </Pressable>
                 </View>
               )}
+              <Text style={styles.compareLabel}>Compared to:</Text>
 
               <Text style={styles.compareTitle}>
-                Compared to: {comparedBudget.budgetName || "Untitled Budget"}
+                {comparedBudget.budgetName || "Untitled Budget"}
               </Text>
 
               {comparisonResults.increased.length > 0 && (
@@ -493,9 +494,16 @@ const styles = StyleSheet.create({
 
   compareTitle: {
     color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "900",
     paddingRight: 32,
+    marginBottom: 8,
+  },
+  compareLabel: {
+    color: "#AAB7C4",
+    fontSize: 13,
+    fontWeight: "800",
+    marginBottom: 2,
   },
 
   compareSectionTitle: {
