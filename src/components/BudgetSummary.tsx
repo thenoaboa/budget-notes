@@ -159,7 +159,7 @@ export function BudgetSummaryBox({
         <Pressable
           style={styles.itemNamePressable}
           onLongPress={onLongPressName}
-          delayLongPress={250}
+          delayLongPress={450}
           onPress={() => onPressItem?.(itemId)}
         >
           <Text style={styles.itemText}>
@@ -257,7 +257,13 @@ export function BudgetSummaryBox({
               renderItem={renderDraggableItem}
               onDragEnd={({ data }) => onReorderVisibleItems?.(data)}
               scrollEnabled={false}
-              activationDistance={8}
+              activationDistance={24}
+              dragHitSlop={{
+                top: -8,
+                bottom: -8,
+                left: 0,
+                right: 0,
+              }}
             />
           )}
 
