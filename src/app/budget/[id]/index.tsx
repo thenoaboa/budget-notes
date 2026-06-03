@@ -260,35 +260,65 @@ export default function BudgetDashboardScreen() {
                 Compared to: {comparedBudget.budgetName || "Untitled Budget"}
               </Text>
 
-              {comparisonResults.increased.map((change, index) => (
-                <Text
-                  key={`increased-${index}`}
-                  style={styles.compareChangeText}
-                >
-                  {change}
-                </Text>
-              ))}
+              {comparisonResults.increased.length > 0 && (
+                <>
+                  <Text style={styles.compareSectionTitle}>Increased:</Text>
 
-              {comparisonResults.decreased.map((change, index) => (
-                <Text
-                  key={`decreased-${index}`}
-                  style={styles.compareChangeText}
-                >
-                  {change}
-                </Text>
-              ))}
+                  {comparisonResults.increased.map((change, index) => (
+                    <Text
+                      key={`increased-${index}`}
+                      style={styles.compareChangeText}
+                    >
+                      {change}
+                    </Text>
+                  ))}
+                </>
+              )}
 
-              {comparisonResults.added.map((change, index) => (
-                <Text key={`added-${index}`} style={styles.compareChangeText}>
-                  {change}
-                </Text>
-              ))}
+              {comparisonResults.decreased.length > 0 && (
+                <>
+                  <Text style={styles.compareSectionTitle}>Decreased:</Text>
 
-              {comparisonResults.removed.map((change, index) => (
-                <Text key={`removed-${index}`} style={styles.compareChangeText}>
-                  {change}
-                </Text>
-              ))}
+                  {comparisonResults.decreased.map((change, index) => (
+                    <Text
+                      key={`decreased-${index}`}
+                      style={styles.compareChangeText}
+                    >
+                      {change}
+                    </Text>
+                  ))}
+                </>
+              )}
+
+              {comparisonResults.added.length > 0 && (
+                <>
+                  <Text style={styles.compareSectionTitle}>Added:</Text>
+
+                  {comparisonResults.added.map((change, index) => (
+                    <Text
+                      key={`added-${index}`}
+                      style={styles.compareChangeText}
+                    >
+                      {change}
+                    </Text>
+                  ))}
+                </>
+              )}
+
+              {comparisonResults.removed.length > 0 && (
+                <>
+                  <Text style={styles.compareSectionTitle}>Removed:</Text>
+
+                  {comparisonResults.removed.map((change, index) => (
+                    <Text
+                      key={`removed-${index}`}
+                      style={styles.compareChangeText}
+                    >
+                      {change}
+                    </Text>
+                  ))}
+                </>
+              )}
             </View>
           )}
 
@@ -466,6 +496,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     paddingRight: 32,
+  },
+
+  compareSectionTitle: {
+    color: "#AAB7C4",
+    fontSize: 13,
+    fontWeight: "900",
+    marginTop: 12,
+    marginBottom: 2,
+    textTransform: "uppercase",
   },
 
   compareChangeText: {
