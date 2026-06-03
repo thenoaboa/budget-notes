@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
 
   itemNamePressable: {
-    flex: 1,
+    width: 150,
     paddingRight: 12,
   },
 
