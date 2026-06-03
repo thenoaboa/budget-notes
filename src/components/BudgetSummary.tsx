@@ -10,6 +10,9 @@ import {
   TextInput,
   View,
 } from "react-native";
+import DraggableFlatList, {
+  RenderItemParams,
+} from "react-native-draggable-flatlist";
 import { Swipeable } from "react-native-gesture-handler";
 
 import type { BudgetStatusStyle } from "../types/budgetEditor";
@@ -43,6 +46,7 @@ type Props = {
   onAddItem?: () => void;
   onPressItem?: (itemId: number) => void;
   onDeleteItem?: (itemId: number) => void;
+  onReorderVisibleItems?: (items: SummaryItem[]) => void;
 };
 
 function parseMoney(value: unknown) {
@@ -82,6 +86,7 @@ export function BudgetSummaryBox({
   onAddItem,
   onPressItem,
   onDeleteItem,
+  onReorderVisibleItems,
 }: Props) {
   const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
 
@@ -120,20 +125,68 @@ export function BudgetSummaryBox({
     );
   }
 
+  function getItemDisplay(item: SummaryItem) {
+    const amount = parseMoney(item.amount);
+
+    const quantity =
+      Number.isFinite(item.quantity) && item.quantity && item.quantity > 0
+        ? item.quantity
+        : 1;
+
+    const itemName = item.name.trim() || "Unnamed item";
+    const lineTotal = amount * quantity;
+
+    return {
+      quantity,
+      itemName,
+      lineTotal,
+    };
+  }
+
   function renderItemRow(
     itemId: number,
     itemName: string,
     quantity: number,
     lineTotal: number,
+    onLongPressName?: () => void,
+    isDragging = false,
   ) {
     return (
-      <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
-        <Text style={styles.itemText}>
-          {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
-        </Text>
+      <Pressable
+        style={[styles.itemRow, isDragging && styles.itemRowDragging]}
+        onPress={() => onPressItem?.(itemId)}
+      >
+        <Pressable
+          style={styles.itemNamePressable}
+          onLongPress={onLongPressName}
+          delayLongPress={250}
+          onPress={() => onPressItem?.(itemId)}
+        >
+          <Text style={styles.itemText}>
+            {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
+          </Text>
+        </Pressable>
 
         <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
       </Pressable>
+    );
+  }
+
+  function renderDraggableItem({
+    item,
+    drag,
+    isActive,
+  }: RenderItemParams<SummaryItem>) {
+    const { quantity, itemName, lineTotal } = getItemDisplay(item);
+
+    return (
+      <Swipeable
+        renderRightActions={() => renderRightActions(item.id)}
+        overshootRight={false}
+        enabled={!isActive}
+      >
+        {renderItemRow(item.id, itemName, quantity, lineTotal, drag, isActive)}
+      </Swipeable>
     );
   }
 
@@ -164,22 +217,12 @@ export function BudgetSummaryBox({
 
           <View style={styles.divider} />
 
-          {visibleItems.map((item) => {
-            const amount = parseMoney(item.amount);
+          {isDesktopWeb ? (
+            visibleItems.map((item) => {
+              const { quantity, itemName, lineTotal } = getItemDisplay(item);
 
-            const quantity =
-              Number.isFinite(item.quantity) &&
-              item.quantity &&
-              item.quantity > 0
-                ? item.quantity
-                : 1;
+              const isHovered = hoveredDeleteId === item.id;
 
-            const itemName = item.name.trim() || "Unnamed item";
-            const lineTotal = amount * quantity;
-
-            const isHovered = hoveredDeleteId === item.id;
-
-            if (isDesktopWeb) {
               return (
                 <View key={item.id} style={styles.webItemRow}>
                   <View style={styles.webItemContent}>
@@ -206,18 +249,17 @@ export function BudgetSummaryBox({
                   </Pressable>
                 </View>
               );
-            }
-
-            return (
-              <Swipeable
-                key={item.id}
-                renderRightActions={() => renderRightActions(item.id)}
-                overshootRight={false}
-              >
-                {renderItemRow(item.id, itemName, quantity, lineTotal)}
-              </Swipeable>
-            );
-          })}
+            })
+          ) : (
+            <DraggableFlatList
+              data={visibleItems}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={renderDraggableItem}
+              onDragEnd={({ data }) => onReorderVisibleItems?.(data)}
+              scrollEnabled={false}
+              activationDistance={8}
+            />
+          )}
 
           {salesTaxEnabled && (
             <>
@@ -359,12 +401,28 @@ const styles = StyleSheet.create({
     backgroundColor: "#1B2633",
   },
 
-  itemText: {
+  itemRowDragging: {
+    borderRadius: 10,
+    backgroundColor: "#223244",
+    shadowColor: "#2ECC71",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    elevation: 6,
+  },
+
+  itemNamePressable: {
     flex: 1,
+    paddingRight: 12,
+  },
+
+  itemText: {
     color: "#CAD3DD",
     fontSize: 15,
     fontWeight: "700",
-    paddingRight: 12,
   },
 
   itemAmount: {

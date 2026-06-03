@@ -84,6 +84,26 @@ export default function BudgetDashboardScreen() {
     }, 150);
   }
 
+  function handleReorderReceiptItems(updatedVisibleReceiptItems: any[]) {
+    const visibleIds = new Set(
+      updatedVisibleReceiptItems.map((item) => item.id),
+    );
+    let nextVisibleIndex = 0;
+
+    const updatedReceiptItems = receiptItems.map((item) => {
+      if (!visibleIds.has(item.id)) {
+        return item;
+      }
+
+      const nextVisibleItem = updatedVisibleReceiptItems[nextVisibleIndex];
+      nextVisibleIndex += 1;
+
+      return nextVisibleItem;
+    });
+
+    editor.reorderItems([...updatedReceiptItems].reverse());
+  }
+
   useEffect(() => {
     async function loadTutorial() {
       const completed = await AsyncStorage.getItem(
@@ -351,6 +371,7 @@ export default function BudgetDashboardScreen() {
                 onAddItem={handleAddItemPress}
                 onPressItem={openReceiptItemOverlayWithAnalytics}
                 onDeleteItem={deleteItemWithAnalytics}
+                onReorderVisibleItems={handleReorderReceiptItems}
               />
             </View>
 
