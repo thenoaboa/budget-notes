@@ -157,9 +157,15 @@ export function BudgetSummaryBox({
         onPress={() => onPressItem?.(itemId)}
       >
         <Pressable
-          style={styles.itemNamePressable}
+          style={styles.dragHandle}
           onLongPress={onLongPressName}
-          delayLongPress={450}
+          delayLongPress={250}
+        >
+          <Text style={styles.dragHandleText}>≡</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.itemNamePressable}
           onPress={() => onPressItem?.(itemId)}
         >
           <Text style={styles.itemText}>
@@ -420,8 +426,21 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
 
+  dragHandle: {
+    width: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6,
+  },
+
+  dragHandleText: {
+    color: "#7A8A99",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
   itemNamePressable: {
-    width: 150,
+    flex: 1,
     paddingRight: 12,
   },
 
