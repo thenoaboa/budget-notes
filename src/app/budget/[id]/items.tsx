@@ -72,7 +72,7 @@ export default function BudgetItemsScreen() {
             style={styles.list}
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
-            activationDistance={8}
+            activationDistance={1}
           />
         </View>
       </KeyboardAvoidingView>

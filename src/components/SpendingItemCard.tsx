@@ -92,9 +92,19 @@ export function SpendingItemRow({
         </View>
 
         <TouchableOpacity
-          style={styles.quantityButton}
-          onPress={() => increaseQuantity(item.id)}
-          onLongPress={() => resetQuantity(item.id)}
+          style={[
+            styles.deleteButton,
+            isDragging && styles.deleteButtonDragging,
+          ]}
+          onPress={() => deleteItem(item.id)}
+          onLongPress={onDragItem}
+          delayLongPress={120}
+          pressRetentionOffset={{
+            top: 40,
+            bottom: 40,
+            left: 40,
+            right: 40,
+          }}
         >
           <Text style={styles.quantityButtonText}>x{item.quantity}</Text>
         </TouchableOpacity>
