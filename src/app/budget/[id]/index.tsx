@@ -60,6 +60,7 @@ export default function BudgetDashboardScreen() {
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [showCopiedMessage, setShowCopiedMessage] = useState(false);
   const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
   const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
@@ -235,11 +236,7 @@ export default function BudgetDashboardScreen() {
               setShowCompareModal(true);
             }}
             onDuplicateBudget={async () => {
-              console.log("Duplicate tapped");
-              console.log("budgetId:", budgetId);
-
               if (!budgetId) {
-                console.log("No budgetId found");
                 return;
               }
 
@@ -247,14 +244,16 @@ export default function BudgetDashboardScreen() {
 
               const duplicatedBudget = await duplicateBudgetById(budgetId);
 
-              console.log("duplicatedBudget:", duplicatedBudget);
-
               if (!duplicatedBudget) {
-                console.log("Duplicate failed");
                 return;
               }
 
-              router.replace(`/budget/${duplicatedBudget.id}` as any);
+              setShowCopiedMessage(true);
+
+              setTimeout(() => {
+                setShowCopiedMessage(false);
+                router.replace(`/budget/${duplicatedBudget.id}` as any);
+              }, 900);
             }}
           />
 
@@ -389,7 +388,11 @@ export default function BudgetDashboardScreen() {
               setReceiptNote={editor.setReceiptNote}
             />
           </ScrollView>
-
+          {showCopiedMessage && (
+            <View style={styles.copiedToast}>
+              <Text style={styles.copiedToastText}>Copied</Text>
+            </View>
+          )}
           {tutorialStep === "budgetPopup" && (
             <TutorialOverlay
               title="Set your budget"
@@ -629,5 +632,21 @@ const styles = StyleSheet.create({
     color: "#AAB7C4",
     fontSize: 15,
     fontWeight: "700",
+  },
+  copiedToast: {
+    position: "absolute",
+    top: "45%",
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    paddingHorizontal: 26,
+    paddingVertical: 14,
+    borderRadius: 18,
+    zIndex: 999,
+  },
+
+  copiedToastText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
   },
 });
