@@ -346,6 +346,10 @@ export function useBudgetEditor(budgetId: string | undefined) {
       return "red";
     }
 
+    if (safeToSpend === 0) {
+      return "green";
+    }
+
     if (remainingPercent <= 20) {
       return "yellow";
     }
