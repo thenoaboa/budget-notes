@@ -108,7 +108,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [deleteHovered, setDeleteHovered] = useState(false);
-  const [draftTitle, setDraftTitle] = useState(stats.title);
+  const [draftTitle, setDraftTitle] = useState("");
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -139,7 +139,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     onRename(cleanedTitle);
   }
 
-  function CardContent() {
+  function renderCardContent() {
     const amountText = formatMoney(stats.remainingAmount);
     const amountLabel = stats.isOverBudget ? "over budget" : "remaining";
 
@@ -228,9 +228,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   if (isDesktopWeb) {
     return (
       <View style={styles.webContainer}>
-        <View style={{ flex: 1 }}>
-          <CardContent />
-        </View>
+        <View style={{ flex: 1 }}>{renderCardContent()}</View>
 
         <Pressable
           style={[
@@ -266,7 +264,7 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
       )}
       overshootRight={false}
     >
-      <CardContent />
+      {renderCardContent()}
     </Swipeable>
   );
 }
