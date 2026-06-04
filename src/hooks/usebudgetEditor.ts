@@ -1,6 +1,7 @@
 // Save as: src/hooks/useBudgetEditor.ts
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform, TextInput } from "react-native";
 
 import {
@@ -63,47 +64,53 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   const moneyAvailableIsEmpty = startingMoney.trim() === "";
 
-  useEffect(() => {
-    async function loadBudget() {
-      if (!budgetId) return;
+  const loadBudget = useCallback(async () => {
+    if (!budgetId) return;
 
-      try {
-        const existingBudget = await loadBudgetById(budgetId);
+    try {
+      const existingBudget = await loadBudgetById(budgetId);
 
-        if (existingBudget) {
-          setNoteTitle(
-            existingBudget.budgetName === "Untitled"
-              ? ""
-              : existingBudget.budgetName || "",
-          );
+      if (existingBudget) {
+        setNoteTitle(
+          existingBudget.budgetName === "Untitled"
+            ? ""
+            : existingBudget.budgetName || "",
+        );
 
-          setReceiptNote(existingBudget.receiptNote || "");
+        setReceiptNote(existingBudget.receiptNote || "");
 
-          setCreatedAt(
-            existingBudget.createdAt || getCreatedDateFromId(budgetId),
-          );
+        setCreatedAt(
+          existingBudget.createdAt || getCreatedDateFromId(budgetId),
+        );
 
-          setLastEditedAt(existingBudget.updatedAt || "");
-          setStartingMoney(existingBudget.amount || "");
-          setSalesTaxEnabled(existingBudget.salesTaxEnabled ?? false);
-          setTaxRate(existingBudget.taxRate || "8.25");
+        setLastEditedAt(existingBudget.updatedAt || "");
+        setStartingMoney(existingBudget.amount || "");
+        setSalesTaxEnabled(existingBudget.salesTaxEnabled ?? false);
+        setTaxRate(existingBudget.taxRate || "8.25");
 
-          setItems(
-            mapStoredItemsToEditorItems(existingBudget.spendingItems || []),
-          );
-        } else {
-          setCreatedAt(getCreatedDateFromId(budgetId));
-        }
-      } catch (error) {
-        console.log("Load budget failed:", error);
+        setItems(
+          mapStoredItemsToEditorItems(existingBudget.spendingItems || []),
+        );
+      } else {
         setCreatedAt(getCreatedDateFromId(budgetId));
-      } finally {
-        setHasLoaded(true);
       }
+    } catch (error) {
+      console.log("Load budget failed:", error);
+      setCreatedAt(getCreatedDateFromId(budgetId));
+    } finally {
+      setHasLoaded(true);
     }
-
-    loadBudget();
   }, [budgetId]);
+
+  useEffect(() => {
+    loadBudget();
+  }, [loadBudget]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadBudget();
+    }, [loadBudget]),
+  );
 
   useEffect(() => {
     async function autoSaveBudget() {
