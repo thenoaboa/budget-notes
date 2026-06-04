@@ -84,7 +84,13 @@ export default function BudgetDashboardScreen() {
 
   function advanceTutorialAfterTap(nextStep: TutorialStep) {
     setTimeout(() => {
-      setTutorialStep(nextStep);
+      setTutorialStep((currentStep) => {
+        if (currentStep === "hidden") {
+          return "hidden";
+        }
+
+        return nextStep;
+      });
     }, 150);
   }
 
@@ -93,6 +99,8 @@ export default function BudgetDashboardScreen() {
       const completed = await AsyncStorage.getItem(
         "budget-note-tutorial-complete-v2",
       );
+
+      console.log("Tutorial completed value:", completed);
 
       if (!completed) {
         capture("tutorial_started", {
@@ -127,7 +135,9 @@ export default function BudgetDashboardScreen() {
       salesTaxEnabled: editor.salesTaxEnabled,
     });
 
-    await completeTutorial();
+    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
+
+    setTutorialStep("hidden");
   }
 
   function addItemFromDraftWithAnalytics() {
