@@ -77,9 +77,7 @@ export default function DeletedBudgetsScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
 
-        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
-          Recently Deleted
-        </Text>
+        <Text style={styles.title}>Recently Deleted</Text>
 
         {deletedBudgets.length === 0 && (
           <View style={styles.emptyCard}>
@@ -153,7 +151,7 @@ const styles = StyleSheet.create({
 
   title: {
     color: "#FFFFFF",
-    fontSize: 30,
+    fontSize: 34,
     fontWeight: "900",
     marginBottom: 18,
   },
