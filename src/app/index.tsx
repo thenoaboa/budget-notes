@@ -27,7 +27,7 @@ export default function HomeScreen() {
   const [homeTutorialStep, setHomeTutorialStep] =
     useState<HomeTutorialStep>("hidden");
 
-    const [deletedCount, setDeletedCount] = useState(0);
+  const [deletedCount, setDeletedCount] = useState(0);
 
   const {
     visibleBudgets,
@@ -54,16 +54,16 @@ export default function HomeScreen() {
   }, []);
 
   useFocusEffect(
-  useCallback(() => {
-    async function refreshDeletedCount() {
-      const deletedBudgets = await loadDeletedBudgets();
+    useCallback(() => {
+      async function refreshDeletedCount() {
+        const deletedBudgets = await loadDeletedBudgets();
 
-      setDeletedCount(deletedBudgets.length);
-    }
+        setDeletedCount(deletedBudgets.length);
+      }
 
-    refreshDeletedCount();
-  }, []),
-);
+      refreshDeletedCount();
+    }, []),
+  );
 
   async function completeWelcomeTutorial() {
     posthog?.capture("tutorial_completed", {
@@ -211,13 +211,14 @@ export default function HomeScreen() {
         ))}
         <Pressable
           style={styles.deletedButton}
-          onPress={() => router.push("/deleted-budgets")}
+          onPress={() => router.push("/deleted-budgets" as any)}
         >
-<Text style={styles.deletedButtonText}>
-  {deletedCount > 0
-    ? `Recently Deleted (${deletedCount})`
-    : "Recently Deleted"}
-</Text>
+          <Text style={styles.deletedButtonText}>
+            {deletedCount > 0
+              ? `Recently Deleted (${deletedCount})`
+              : "Recently Deleted"}
+          </Text>
+        </Pressable>
       </ScrollView>
 
       {homeTutorialStep === "popup" && (
