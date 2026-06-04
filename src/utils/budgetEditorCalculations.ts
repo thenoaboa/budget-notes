@@ -62,7 +62,6 @@ export function getAffirmingMessage(
   ];
 
   const redMessages = [
-    "Over budget.",
     "Spending exceeds available funds.",
     "This budget needs adjustment.",
     "More is planned than available.",
