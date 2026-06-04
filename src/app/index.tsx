@@ -191,7 +191,6 @@ export default function HomeScreen() {
                 style={styles.clearSearchButton}
                 onPress={() => {
                   setSearchQuery("");
-                  setSearchVisible(false);
                 }}
               >
                 <Text style={styles.clearSearchText}>✕</Text>
