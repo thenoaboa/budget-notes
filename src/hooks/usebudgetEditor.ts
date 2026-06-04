@@ -391,7 +391,9 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
   const headerSubtext = moneyAvailableIsEmpty
     ? "Add money available below"
-    : "safe to spend";
+    : safeToSpend < 0
+      ? "over budget"
+      : "safe to spend";
 
   const currentStyle = budgetStatusStyles[status];
 

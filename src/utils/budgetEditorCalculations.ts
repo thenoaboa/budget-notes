@@ -62,11 +62,11 @@ export function getAffirmingMessage(
   ];
 
   const redMessages = [
-    "Let’s protect what’s left.",
-    "Focus on essentials for now.",
-    "This week needs extra care.",
-    "Take a second before spending more.",
-    "You can still adjust.",
+    "Over budget.",
+    "Spending exceeds available funds.",
+    "This budget needs adjustment.",
+    "More is planned than available.",
+    "Reduce spending or increase available funds.",
   ];
 
   const pool =
