@@ -335,14 +335,23 @@ export function useBudgetEditor(budgetId: string | undefined) {
   const starting = parseFloat(startingMoney) || 0;
 
   const safeToSpend = starting - totalSpent;
+  const remainingPercent = starting > 0 ? (safeToSpend / starting) * 100 : 100;
 
   const status = useMemo(() => {
     if (moneyAvailableIsEmpty) {
       return "green";
     }
 
-    return safeToSpend >= 0 ? "green" : "red";
-  }, [safeToSpend, moneyAvailableIsEmpty]);
+    if (safeToSpend < 0) {
+      return "red";
+    }
+
+    if (remainingPercent <= 20) {
+      return "yellow";
+    }
+
+    return "green";
+  }, [safeToSpend, remainingPercent, moneyAvailableIsEmpty]);
 
   const messageStatus = useMemo(() => {
     if (moneyAvailableIsEmpty) {
@@ -353,12 +362,12 @@ export function useBudgetEditor(budgetId: string | undefined) {
       return "red";
     }
 
-    if (safeToSpend <= 50) {
+    if (remainingPercent <= 20) {
       return "yellow";
     }
 
     return "green";
-  }, [safeToSpend, moneyAvailableIsEmpty]);
+  }, [safeToSpend, remainingPercent, moneyAvailableIsEmpty]);
 
   const affirmingMessage = useMemo(() => {
     const hasEnteredItems = items.some(
