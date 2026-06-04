@@ -195,6 +195,12 @@ export default function HomeScreen() {
           />
         ))}
       </ScrollView>
+      <Pressable
+        style={styles.deletedButton}
+        onPress={() => router.push("/deleted-budgets")}
+      >
+        <Text style={styles.deletedButtonText}>Recently Deleted</Text>
+      </Pressable>
 
       {homeTutorialStep === "popup" && (
         <TutorialOverlay
@@ -349,5 +355,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 21,
+  },
+
+  deletedButton: {
+    marginTop: 10,
+    backgroundColor: "#1B2633",
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#344657",
+  },
+
+  deletedButtonText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
   },
 });
