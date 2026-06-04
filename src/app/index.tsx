@@ -177,26 +177,13 @@ export default function HomeScreen() {
         )}
 
         {searchVisible && (
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search budgets..."
-              placeholderTextColor="#8A98A8"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-
-            {searchQuery.length > 0 && (
-              <Pressable
-                style={styles.clearSearchButton}
-                onPress={() => {
-                  setSearchQuery("");
-                }}
-              >
-                <Text style={styles.clearSearchText}>✕</Text>
-              </Pressable>
-            )}
-          </View>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search budgets..."
+            placeholderTextColor="#8A98A8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         )}
 
         {visibleBudgets.length === 0 && (
@@ -363,25 +350,9 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     borderWidth: 1,
     borderColor: "#3B4D5F",
-    marginBottom: 44,
-  },
-  searchContainer: {
-    position: "relative",
     marginBottom: 18,
   },
 
-  clearSearchButton: {
-    position: "absolute",
-    right: 14,
-    top: 14,
-    zIndex: 10,
-  },
-
-  clearSearchText: {
-    color: "#8A98A8",
-    fontSize: 18,
-    fontWeight: "900",
-  },
   emptyCard: {
     backgroundColor: "#1B2633",
     borderRadius: 18,
