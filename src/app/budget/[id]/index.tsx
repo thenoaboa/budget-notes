@@ -231,6 +231,9 @@ export default function BudgetDashboardScreen() {
 
               setShowCompareModal(true);
             }}
+            onDuplicateBudget={() => {
+              console.log("Duplicate pressed");
+            }}
           />
 
           <ScrollView

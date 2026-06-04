@@ -21,6 +21,7 @@ type Props = {
   showMenu?: boolean;
   onMenuPress?: () => void;
   onCompareBudgets?: () => void;
+  onDuplicateBudget?: () => void;
 };
 
 export function BudgetHeaderCard({
@@ -38,6 +39,7 @@ export function BudgetHeaderCard({
   showMenu,
   onMenuPress,
   onCompareBudgets,
+  onDuplicateBudget,
 }: Props) {
   const [isEditingAmount, setIsEditingAmount] = useState(false);
 
@@ -82,6 +84,13 @@ export function BudgetHeaderCard({
         <View style={styles.dropdownMenu}>
           <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
             <Text style={styles.dropdownText}>Compare</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.dropdownButton, { marginTop: 6 }]}
+            onPress={onDuplicateBudget}
+          >
+            <Text style={styles.dropdownText}>Duplicate</Text>
           </Pressable>
         </View>
       )}
