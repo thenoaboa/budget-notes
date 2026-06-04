@@ -122,7 +122,7 @@ export function SpendingItemRow({
               !item.included && styles.includeButtonTextOff,
             ]}
           >
-            {item.included ? "In" : "Out"}
+            {item.included ? "On" : "Off"}
           </Text>
         </TouchableOpacity>
 
