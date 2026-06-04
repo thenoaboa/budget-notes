@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -16,6 +16,7 @@ import {
 import { NoteCard } from "../components/NoteCard";
 import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
+import { loadDeletedBudgets } from "../storage/budgetStorage";
 
 type HomeTutorialStep = "hidden" | "popup" | "highlightNewNote";
 
@@ -25,6 +26,8 @@ export default function HomeScreen() {
 
   const [homeTutorialStep, setHomeTutorialStep] =
     useState<HomeTutorialStep>("hidden");
+
+    const [deletedCount, setDeletedCount] = useState(0);
 
   const {
     visibleBudgets,
@@ -49,6 +52,18 @@ export default function HomeScreen() {
 
     loadWelcomeTutorial();
   }, []);
+
+  useFocusEffect(
+  useCallback(() => {
+    async function refreshDeletedCount() {
+      const deletedBudgets = await loadDeletedBudgets();
+
+      setDeletedCount(deletedBudgets.length);
+    }
+
+    refreshDeletedCount();
+  }, []),
+);
 
   async function completeWelcomeTutorial() {
     posthog?.capture("tutorial_completed", {
@@ -194,13 +209,16 @@ export default function HomeScreen() {
             onRename={(newTitle) => renameBudget(budget.id, newTitle)}
           />
         ))}
+        <Pressable
+          style={styles.deletedButton}
+          onPress={() => router.push("/deleted-budgets")}
+        >
+<Text style={styles.deletedButtonText}>
+  {deletedCount > 0
+    ? `Recently Deleted (${deletedCount})`
+    : "Recently Deleted"}
+</Text>
       </ScrollView>
-      <Pressable
-        style={styles.deletedButton}
-        onPress={() => router.push("/deleted-budgets")}
-      >
-        <Text style={styles.deletedButtonText}>Recently Deleted</Text>
-      </Pressable>
 
       {homeTutorialStep === "popup" && (
         <TutorialOverlay
