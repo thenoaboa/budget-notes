@@ -210,7 +210,7 @@ export function BudgetSummaryBox({
 
             return (
               <Swipeable
-                key={item.id}
+                key={`${item.id}-${item.included}`}
                 renderRightActions={() => renderRightActions(item.id)}
                 overshootRight={false}
               >
