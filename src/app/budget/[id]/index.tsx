@@ -24,7 +24,10 @@ import { BudgetSummaryBox } from "../../../components/BudgetSummary";
 import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
-import { loadBudgets } from "../../../storage/budgetStorage";
+import {
+  duplicateBudgetById,
+  loadBudgets,
+} from "../../../storage/budgetStorage";
 import type { Budget } from "../../../types/budget";
 import {
   trackItemAdded,
@@ -231,8 +234,27 @@ export default function BudgetDashboardScreen() {
 
               setShowCompareModal(true);
             }}
-            onDuplicateBudget={() => {
-              console.log("Duplicate pressed");
+            onDuplicateBudget={async () => {
+              console.log("Duplicate tapped");
+              console.log("budgetId:", budgetId);
+
+              if (!budgetId) {
+                console.log("No budgetId found");
+                return;
+              }
+
+              setShowMenu(false);
+
+              const duplicatedBudget = await duplicateBudgetById(budgetId);
+
+              console.log("duplicatedBudget:", duplicatedBudget);
+
+              if (!duplicatedBudget) {
+                console.log("Duplicate failed");
+                return;
+              }
+
+              router.replace(`/budget/${duplicatedBudget.id}` as any);
             }}
           />
 

@@ -144,3 +144,38 @@ export async function renameBudgetById(
 
   return updatedBudgets;
 }
+export async function duplicateBudgetById(budgetId: string) {
+  const budgets = await loadBudgets();
+
+  const originalBudget = budgets.find((budget) => budget.id === budgetId);
+
+  if (!originalBudget) {
+    return null;
+  }
+
+  const originalName = (originalBudget.budgetName || "").trim();
+
+  const baseName = originalName.length > 0 ? `${originalName} Copy` : "Copy";
+
+  let duplicateName = baseName;
+  let copyNumber = 1;
+
+  while (budgets.some((budget) => budget.budgetName === duplicateName)) {
+    duplicateName = `${baseName} ${copyNumber}`;
+    copyNumber++;
+  }
+
+  const duplicatedBudget = {
+    ...originalBudget,
+    id: Date.now().toString(),
+    budgetName: duplicateName,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const updatedBudgets = [duplicatedBudget, ...budgets];
+
+  await saveBudgets(updatedBudgets);
+
+  return duplicatedBudget;
+}
