@@ -1,19 +1,19 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    Alert,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import {
-    loadDeletedBudgets,
-    permanentlyDeleteBudgetById,
-    restoreDeletedBudgetById,
+  loadDeletedBudgets,
+  permanentlyDeleteBudgetById,
+  restoreDeletedBudgetById,
 } from "../storage/budgetStorage";
 import type { Budget } from "../types/budget";
 
@@ -77,7 +77,9 @@ export default function DeletedBudgetsScreen() {
           <Text style={styles.backButtonText}>← Back</Text>
         </Pressable>
 
-        <Text style={styles.title}>Recently Deleted</Text>
+        <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
+          Recently Deleted
+        </Text>
 
         {deletedBudgets.length === 0 && (
           <View style={styles.emptyCard}>
