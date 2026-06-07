@@ -424,6 +424,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     setTaxRate,
 
     items,
+    setItems,
 
     addItem,
     updateItem,

@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -30,6 +31,7 @@ import {
   loadBudgets,
 } from "../../../storage/budgetStorage";
 import type { Budget } from "../../../types/budget";
+import type { BudgetItem } from "../../../types/budgetEditor";
 import {
   trackItemAdded,
   trackItemDeleted,
@@ -69,6 +71,8 @@ export default function BudgetDashboardScreen() {
   const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
   const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState("");
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -218,7 +222,32 @@ export default function BudgetDashboardScreen() {
 
     editor.openAddItemOverlay();
   }
+  function importItemsFromText() {
+    const importedItems = importText
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const match = line.match(/^(.+?)[\s:-]+\$?(\d+(?:\.\d{1,2})?)$/);
 
+        if (!match) return null;
+
+        return {
+          id: Date.now() + Math.random(),
+          name: match[1].trim(),
+          amount: match[2].trim(),
+          quantity: 1,
+          included: true,
+        };
+      })
+      .filter((item): item is BudgetItem => item !== null);
+
+    if (importedItems.length === 0) return;
+
+    editor.setItems((currentItems) => [...importedItems, ...currentItems]);
+    setImportText("");
+    setShowImportModal(false);
+  }
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -318,6 +347,10 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               setTimeout(() => {
                 setShowCopiedMessage(false);
               }, 900);
+            }}
+            onImportList={() => {
+              setShowMenu(false);
+              setShowImportModal(true);
             }}
           />
 
@@ -522,7 +555,39 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               </View>
             </View>
           </Modal>
+          <Modal visible={showImportModal} transparent animationType="fade">
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>Import List</Text>
 
+                <TextInput
+                  style={styles.importInput}
+                  value={importText}
+                  onChangeText={setImportText}
+                  multiline
+                  placeholder={"Milk - 4.99\nEggs - 3.49"}
+                  placeholderTextColor="#AAB7C4"
+                />
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={importItemsFromText}
+                >
+                  <Text style={styles.budgetOptionText}>Import</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setImportText("");
+                    setShowImportModal(false);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
           <AddItemOverlay
             visible={editor.showAddItemOverlay}
             draftItem={editor.draftItem}
@@ -712,5 +777,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "900",
+  },
+  importInput: {
+    minHeight: 160,
+    color: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    textAlignVertical: "top",
   },
 });
