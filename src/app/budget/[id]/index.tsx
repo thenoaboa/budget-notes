@@ -232,20 +232,80 @@ export default function BudgetDashboardScreen() {
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean)
-      .map((line) => {
-        const match = line.match(/^(.+?)[\s:-]+\$?(\d+(?:\.\d{1,2})?)$/);
+      .filter((line) => {
+        const lowerLine = line.toLowerCase();
 
-        if (!match) return null;
+        if (lowerLine === "budget note") return false;
+        if (lowerLine === "items:") return false;
+        if (lowerLine.startsWith("money available:")) return false;
+        if (lowerLine.startsWith("estimated tax:")) return false;
+        if (lowerLine.startsWith("planned total:")) return false;
+        if (lowerLine.startsWith("left after spending:")) return false;
+
+        return true;
+      })
+      .map((line) => {
+        const cleanedLine = line.replace(/^[-•*]\s*/, "").trim();
+
+        const quantityAtEndMatch = cleanedLine.match(
+          /^(.*?)\s*(?:[:,-]\s*)?\$?(\d+(?:\.\d{1,2})?)\s+x(\d+)$/i,
+        );
+
+        if (quantityAtEndMatch) {
+          const totalAmount = parseFloat(quantityAtEndMatch[2]);
+          const quantity = Number(quantityAtEndMatch[3]);
+          const singleAmount = totalAmount / quantity;
+
+          return {
+            id: Date.now() + Math.random(),
+            name: quantityAtEndMatch[1].trim(),
+            amount: singleAmount.toFixed(2),
+            quantity,
+            included: true,
+          };
+        }
+
+        const quantityBeforeAmountMatch = cleanedLine.match(
+          /^(.*?)\s+x(\d+)\s*[:,-]\s*\$?(\d+(?:\.\d{1,2})?)$/i,
+        );
+
+        if (quantityBeforeAmountMatch) {
+          const totalAmount = parseFloat(quantityBeforeAmountMatch[3]);
+          const quantity = Number(quantityBeforeAmountMatch[2]);
+          const singleAmount = totalAmount / quantity;
+
+          return {
+            id: Date.now() + Math.random(),
+            name: quantityBeforeAmountMatch[1].trim(),
+            amount: singleAmount.toFixed(2),
+            quantity,
+            included: true,
+          };
+        }
+
+        const amountMatch = cleanedLine.match(
+          /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
+        );
+
+        if (amountMatch) {
+          return {
+            id: Date.now() + Math.random(),
+            name: amountMatch[1].trim(),
+            amount: amountMatch[2].trim(),
+            quantity: 1,
+            included: true,
+          };
+        }
 
         return {
           id: Date.now() + Math.random(),
-          name: match[1].trim(),
-          amount: match[2].trim(),
+          name: cleanedLine,
+          amount: "",
           quantity: 1,
           included: true,
         };
       })
-      .filter((item): item is BudgetItem => item !== null);
+      .filter((item): item is BudgetItem => item.name.trim().length > 0);
 
     if (importedItems.length === 0) return;
 
@@ -325,7 +385,7 @@ export default function BudgetDashboardScreen() {
                         const quantityText =
                           item.quantity > 1 ? ` x${item.quantity}` : "";
 
-                        return `- ${item.name || "Unnamed item"}${quantityText}: $${amount.toFixed(2)}`;
+                        return `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`;
                       })
                       .join("\n")
                   : "- No items added";
@@ -534,7 +594,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                   value={importText}
                   onChangeText={setImportText}
                   multiline
-                  placeholder={"Milk - 4.99\nEggs - 3.49"}
+                  placeholder={"Milk - 4.99\nEggs x2: $7.00\nBread"}
                   placeholderTextColor="#AAB7C4"
                 />
 
