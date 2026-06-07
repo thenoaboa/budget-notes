@@ -102,7 +102,7 @@ export default function BudgetDashboardScreen() {
 
       console.log("Tutorial completed value:", completed);
 
-      if (!completed) {
+      if (completed !== "true" && completed !== "skipped") {
         capture("tutorial_started", {
           tutorialVersion: "budget_v2",
           source: "budget_screen",
@@ -135,7 +135,7 @@ export default function BudgetDashboardScreen() {
       salesTaxEnabled: editor.salesTaxEnabled,
     });
 
-    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "true");
+    await AsyncStorage.setItem("budget-note-tutorial-complete-v2", "skipped");
 
     setTutorialStep("hidden");
   }
