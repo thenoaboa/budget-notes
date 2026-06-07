@@ -98,7 +98,13 @@ export default function HomeScreen() {
           : "main_menu",
     });
 
+    const shouldStartBudgetTutorial = homeTutorialStep === "highlightNewNote";
+
     await completeWelcomeTutorial();
+
+    if (shouldStartBudgetTutorial) {
+      await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+    }
 
     const id = Date.now().toString();
 
