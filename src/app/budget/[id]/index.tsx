@@ -271,7 +271,7 @@ export default function BudgetDashboardScreen() {
                 return;
               }
 
-              setToastMessage("Budget Duplicated");
+              setToastMessage("Budget Copied");
               setShowCopiedMessage(true);
 
               setTimeout(() => {
