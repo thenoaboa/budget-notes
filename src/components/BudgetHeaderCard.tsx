@@ -84,22 +84,24 @@ export function BudgetHeaderCard({
 
       {showMenu && (
         <View style={styles.dropdownMenu}>
-          <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
-            <Text style={styles.dropdownText}>Compare</Text>
-          </Pressable>
+          <View style={styles.dropdownRow}>
+            <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
+              <Text style={styles.dropdownText}>Compare</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.dropdownButton, { marginLeft: 6 }]}
+              onPress={onShareBudget}
+            >
+              <Text style={styles.dropdownText}>Share</Text>
+            </Pressable>
+          </View>
 
           <Pressable
             style={[styles.dropdownButton, { marginTop: 6 }]}
             onPress={onDuplicateBudget}
           >
             <Text style={styles.dropdownText}>Duplicate</Text>
-          </Pressable>
-
-          <Pressable
-            style={[styles.dropdownButton, { marginTop: 6 }]}
-            onPress={onShareBudget}
-          >
-            <Text style={styles.dropdownText}>Share</Text>
           </Pressable>
         </View>
       )}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   dropdownButton: {
     backgroundColor: "#182638",
     borderRadius: 18,
-    width: 120,
+    width: 104,
     paddingHorizontal: 5,
     paddingVertical: 12,
     alignItems: "center",
@@ -242,5 +244,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
     marginTop: 8,
+  },
+  dropdownRow: {
+    flexDirection: "row",
   },
 });

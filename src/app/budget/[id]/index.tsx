@@ -301,8 +301,12 @@ Money available: $${(parseFloat(editor.startingMoney) || 0).toFixed(2)}
 Items:
 ${itemsText}
 
-Estimated tax: $${editor.taxAmount.toFixed(2)}
-Planned total: $${editor.totalSpent.toFixed(2)}
+${
+  editor.salesTaxEnabled
+    ? `Estimated tax: $${editor.taxAmount.toFixed(2)}
+`
+    : ""
+}Planned total: $${editor.totalSpent.toFixed(2)}
 Left after spending: $${editor.safeToSpend.toFixed(2)}`;
 
               await Clipboard.setStringAsync(summaryText);
