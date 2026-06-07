@@ -57,6 +57,7 @@ export default function BudgetDashboardScreen() {
   const exportRef = useRef<View>(null);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
+  const [tutorialDismissed, setTutorialDismissed] = useState(false);
   const tutorialStoppedRef = useRef(false);
   const tutorialTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDeletingItem, setIsDeletingItem] = useState(false);
@@ -135,13 +136,9 @@ export default function BudgetDashboardScreen() {
 
     setTutorialStep("hidden");
   }
-
   async function skipTutorial() {
-    tutorialStoppedRef.current = true;
+    setTutorialDismissed(true);
 
-    if (tutorialTimeoutRef.current) {
-      clearTimeout(tutorialTimeoutRef.current);
-    }
     capture("tutorial_skipped", {
       tutorialVersion: "budget_v2",
       step: tutorialStep,
@@ -417,7 +414,7 @@ export default function BudgetDashboardScreen() {
               <Text style={styles.copiedToastText}>BUdgetCopied</Text>
             </View>
           )}
-          {tutorialStep === "budgetPopup" && (
+          {!tutorialDismissed && tutorialStep === "budgetPopup" && (
             <TutorialOverlay
               title="Set your budget"
               body="Start with the amount you want to spend before adding purchases."
@@ -427,7 +424,7 @@ export default function BudgetDashboardScreen() {
             />
           )}
 
-          {tutorialStep === "addItemPopup" && (
+          {!tutorialDismissed && tutorialStep === "addItemPopup" && (
             <TutorialOverlay
               title="Add purchases"
               body="Use the Add Item button to quickly enter purchases while shopping or planning."
@@ -437,7 +434,7 @@ export default function BudgetDashboardScreen() {
             />
           )}
 
-          {tutorialStep === "donePopup" && (
+          {!tutorialDismissed && tutorialStep === "donePopup" && (
             <TutorialOverlay
               title="Track what’s left"
               body="Your remaining balance updates automatically with every purchase you add."
