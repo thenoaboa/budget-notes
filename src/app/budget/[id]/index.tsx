@@ -57,6 +57,8 @@ export default function BudgetDashboardScreen() {
   const exportRef = useRef<View>(null);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
+  const tutorialStoppedRef = useRef(false);
+  const tutorialTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
@@ -83,14 +85,16 @@ export default function BudgetDashboardScreen() {
   }
 
   function advanceTutorialAfterTap(nextStep: TutorialStep) {
-    setTimeout(() => {
-      setTutorialStep((currentStep) => {
-        if (currentStep === "hidden") {
-          return "hidden";
-        }
+    if (tutorialTimeoutRef.current) {
+      clearTimeout(tutorialTimeoutRef.current);
+    }
 
-        return nextStep;
-      });
+    tutorialTimeoutRef.current = setTimeout(() => {
+      if (tutorialStoppedRef.current) {
+        return;
+      }
+
+      setTutorialStep(nextStep);
     }, 150);
   }
 
@@ -116,6 +120,11 @@ export default function BudgetDashboardScreen() {
   }, []);
 
   async function completeTutorial() {
+    tutorialStoppedRef.current = true;
+
+    if (tutorialTimeoutRef.current) {
+      clearTimeout(tutorialTimeoutRef.current);
+    }
     capture("tutorial_completed", {
       tutorialVersion: "budget_v2",
       itemCount: editor.items.length,
@@ -128,6 +137,11 @@ export default function BudgetDashboardScreen() {
   }
 
   async function skipTutorial() {
+    tutorialStoppedRef.current = true;
+
+    if (tutorialTimeoutRef.current) {
+      clearTimeout(tutorialTimeoutRef.current);
+    }
     capture("tutorial_skipped", {
       tutorialVersion: "budget_v2",
       step: tutorialStep,
@@ -400,7 +414,7 @@ export default function BudgetDashboardScreen() {
           </ScrollView>
           {showCopiedMessage && (
             <View style={styles.copiedToast}>
-              <Text style={styles.copiedToastText}>Copied</Text>
+              <Text style={styles.copiedToastText}>BUdgetCopied</Text>
             </View>
           )}
           {tutorialStep === "budgetPopup" && (
