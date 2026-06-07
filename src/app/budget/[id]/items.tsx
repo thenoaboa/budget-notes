@@ -1,12 +1,14 @@
 // Save as: src/app/budget/[id]/items.tsx
 
 import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -26,6 +28,7 @@ export default function BudgetItemsScreen() {
   const budgetId = Array.isArray(id) ? id[0] : id;
 
   const editor = useBudgetEditor(budgetId);
+  const [searchQuery, setSearchQuery] = useState("");
 
   function renderItem({ item, drag, isActive }: RenderItemParams<BudgetItem>) {
     return (
@@ -53,19 +56,27 @@ export default function BudgetItemsScreen() {
         keyboardVerticalOffset={20}
       >
         <View style={styles.page}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>← Back To Budget</Text>
-          </TouchableOpacity>
+          <View style={styles.topBar}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.backLink}>← Back</Text>
+            </TouchableOpacity>
 
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search items"
+              placeholderTextColor="#8FA0B3"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
           <TouchableOpacity style={styles.addButton} onPress={editor.addItem}>
             <Text style={styles.addButtonText}>+ Add Item</Text>
           </TouchableOpacity>
 
           <DraggableFlatList
-            data={editor.items}
+            data={editor.items.filter((item) =>
+              item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+            )}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}
             onDragEnd={({ data }) => editor.reorderItems(data)}
@@ -105,20 +116,29 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
 
-  backButton: {
-    backgroundColor: "#123527",
-    borderRadius: 14,
-    paddingVertical: 13,
+  topBar: {
+    flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#2ECC71",
+    gap: 12,
     marginBottom: 14,
   },
 
-  backButtonText: {
-    color: "#2ECC71",
-    fontSize: 15,
-    fontWeight: "900",
+  backLink: {
+    color: "#9BA8B8",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  searchInput: {
+    flex: 1,
+    backgroundColor: "#182638",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: "#FFFFFF",
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#2D4562",
   },
 
   addButton: {
