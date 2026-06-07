@@ -182,9 +182,19 @@ export async function duplicateBudgetById(budgetId: string) {
 export async function createBudgetFromImportedItems(importedItems: any[]) {
   const budgets = await loadBudgets();
 
+  const baseName = importedItems.length > 0 ? "Imported Budget" : "New Budget";
+
+  let budgetName = baseName;
+  let budgetNumber = 1;
+
+  while (budgets.some((budget) => budget.budgetName === budgetName)) {
+    budgetName = `${baseName} ${budgetNumber}`;
+    budgetNumber++;
+  }
+
   const newBudget = {
     id: Date.now().toString(),
-    budgetName: "Imported Budget",
+    budgetName,
     amount: "",
     receiptNote: "",
     spendingItems: importedItems,
