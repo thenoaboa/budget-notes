@@ -104,8 +104,8 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: "#101820",
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
   },
 
   list: {
@@ -119,24 +119,26 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
     marginBottom: 14,
+    gap: 10,
   },
 
   backLink: {
     color: "#9BA8B8",
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "900",
   },
 
   searchInput: {
     flex: 1,
+    minWidth: 0,
+    height: 52,
     backgroundColor: "#182638",
-    borderRadius: 16,
+    borderRadius: 18,
     paddingHorizontal: 16,
-    paddingVertical: 12,
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "800",
     borderWidth: 1,
     borderColor: "#2D4562",
   },
