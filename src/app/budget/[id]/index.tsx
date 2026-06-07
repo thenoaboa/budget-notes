@@ -105,7 +105,7 @@ export default function BudgetDashboardScreen() {
         "budget-note-tutorial-complete-v2",
       );
 
-      console.log("Tutorial completed value:", completed);
+      console.log("budget tutorial value:", completed, "budget id:", budgetId);
 
       if (completed !== "true" && completed !== "skipped") {
         capture("tutorial_started", {
