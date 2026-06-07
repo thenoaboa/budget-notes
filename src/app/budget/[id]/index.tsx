@@ -577,6 +577,13 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                       ...currentItems,
                     ]);
 
+                    setToastMessage("Items added to list");
+                    setShowCopiedMessage(true);
+
+                    setTimeout(() => {
+                      setShowCopiedMessage(false);
+                    }, 900);
+
                     setPendingImportedItems([]);
                     setImportText("");
                     setShowImportChoiceModal(false);
@@ -595,7 +602,13 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                     setImportText("");
                     setShowImportChoiceModal(false);
 
-                    router.replace(`/budget/${newBudget.id}` as any);
+                    setToastMessage("New list imported");
+                    setShowCopiedMessage(true);
+
+                    setTimeout(() => {
+                      setShowCopiedMessage(false);
+                      router.replace(`/budget/${newBudget.id}` as any);
+                    }, 900);
                   }}
                 >
                   <Text style={styles.budgetOptionText}>New Budget</Text>

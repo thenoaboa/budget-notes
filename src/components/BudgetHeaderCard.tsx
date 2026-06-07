@@ -100,15 +100,18 @@ export function BudgetHeaderCard({
           </View>
 
           <View style={[styles.dropdownRow, { marginTop: 6 }]}>
-            <Pressable style={styles.dropdownButton} onPress={onImportList}>
-              <Text style={styles.dropdownText}>Import List</Text>
+            <Pressable
+              style={styles.dropdownButton}
+              onPress={onDuplicateBudget}
+            >
+              <Text style={styles.dropdownText}>Duplicate</Text>
             </Pressable>
 
             <Pressable
               style={[styles.dropdownButton, { marginLeft: 6 }]}
-              onPress={onDuplicateBudget}
+              onPress={onImportList}
             >
-              <Text style={styles.dropdownText}>Duplicate</Text>
+              <Text style={styles.dropdownText}>Import</Text>
             </Pressable>
           </View>
         </View>
