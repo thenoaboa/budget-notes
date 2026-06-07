@@ -111,7 +111,7 @@ export function BudgetHeaderCard({
               style={[styles.dropdownButton, { marginLeft: 6 }]}
               onPress={onImportList}
             >
-              <Text style={styles.dropdownText}>Import</Text>
+              <Text style={styles.dropdownText}>New</Text>
             </Pressable>
           </View>
         </View>

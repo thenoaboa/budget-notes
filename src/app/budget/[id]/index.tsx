@@ -75,10 +75,6 @@ export default function BudgetDashboardScreen() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddItemsChoiceModal, setShowAddItemsChoiceModal] = useState(false);
   const [importText, setImportText] = useState("");
-  const [showImportChoiceModal, setShowImportChoiceModal] = useState(false);
-  const [pendingImportedItems, setPendingImportedItems] = useState<
-    BudgetItem[]
-  >([]);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -422,9 +418,12 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                 setShowCopiedMessage(false);
               }, 900);
             }}
-            onImportList={() => {
+            onImportList={async () => {
               setShowMenu(false);
-              setShowImportModal(true);
+
+              const newBudget = await createBudgetFromImportedItems([]);
+
+              router.replace(`/budget/${newBudget.id}` as any);
             }}
           />
 
@@ -694,73 +693,6 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                 <Pressable
                   style={styles.cancelButton}
                   onPress={() => setShowCompareModal(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
-          </Modal>
-
-          <Modal
-            visible={showImportChoiceModal}
-            transparent
-            animationType="fade"
-          >
-            <View style={styles.modalBackdrop}>
-              <View style={styles.compareModal}>
-                <Text style={styles.modalTitle}>Import Where?</Text>
-
-                <Pressable
-                  style={styles.budgetOption}
-                  onPress={() => {
-                    editor.setItems((currentItems) => [
-                      ...pendingImportedItems,
-                      ...currentItems,
-                    ]);
-
-                    setToastMessage("Items added to list");
-                    setShowCopiedMessage(true);
-
-                    setTimeout(() => {
-                      setShowCopiedMessage(false);
-                    }, 900);
-
-                    setPendingImportedItems([]);
-                    setImportText("");
-                    setShowImportChoiceModal(false);
-                  }}
-                >
-                  <Text style={styles.budgetOptionText}>Current Budget</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.budgetOption}
-                  onPress={async () => {
-                    const newBudget =
-                      await createBudgetFromImportedItems(pendingImportedItems);
-
-                    setPendingImportedItems([]);
-                    setImportText("");
-                    setShowImportChoiceModal(false);
-
-                    setToastMessage("New list imported");
-                    setShowCopiedMessage(true);
-
-                    setTimeout(() => {
-                      setShowCopiedMessage(false);
-                      router.replace(`/budget/${newBudget.id}` as any);
-                    }, 900);
-                  }}
-                >
-                  <Text style={styles.budgetOptionText}>New Budget</Text>
-                </Pressable>
-
-                <Pressable
-                  style={styles.cancelButton}
-                  onPress={() => {
-                    setPendingImportedItems([]);
-                    setShowImportChoiceModal(false);
-                  }}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </Pressable>
