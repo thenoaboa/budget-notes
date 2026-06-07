@@ -179,3 +179,24 @@ export async function duplicateBudgetById(budgetId: string) {
 
   return duplicatedBudget;
 }
+export async function createBudgetFromImportedItems(importedItems: any[]) {
+  const budgets = await loadBudgets();
+
+  const newBudget = {
+    id: Date.now().toString(),
+    budgetName: "Imported Budget",
+    amount: "",
+    receiptNote: "",
+    spendingItems: importedItems,
+    salesTaxEnabled: false,
+    taxRate: "8.25",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const updatedBudgets = [newBudget, ...budgets];
+
+  await saveBudgets(updatedBudgets);
+
+  return newBudget;
+}

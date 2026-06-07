@@ -14,7 +14,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
@@ -27,6 +26,7 @@ import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 import {
+  createBudgetFromImportedItems,
   duplicateBudgetById,
   loadBudgets,
 } from "../../../storage/budgetStorage";
@@ -73,6 +73,10 @@ export default function BudgetDashboardScreen() {
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState("");
+  const [showImportChoiceModal, setShowImportChoiceModal] = useState(false);
+  const [pendingImportedItems, setPendingImportedItems] = useState<
+    BudgetItem[]
+  >([]);
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -244,9 +248,9 @@ export default function BudgetDashboardScreen() {
 
     if (importedItems.length === 0) return;
 
-    editor.setItems((currentItems) => [...importedItems, ...currentItems]);
-    setImportText("");
+    setPendingImportedItems(importedItems);
     setShowImportModal(false);
+    setShowImportChoiceModal(true);
   }
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -555,32 +559,53 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               </View>
             </View>
           </Modal>
-          <Modal visible={showImportModal} transparent animationType="fade">
+
+          <Modal
+            visible={showImportChoiceModal}
+            transparent
+            animationType="fade"
+          >
             <View style={styles.modalBackdrop}>
               <View style={styles.compareModal}>
-                <Text style={styles.modalTitle}>Import List</Text>
-
-                <TextInput
-                  style={styles.importInput}
-                  value={importText}
-                  onChangeText={setImportText}
-                  multiline
-                  placeholder={"Milk - 4.99\nEggs - 3.49"}
-                  placeholderTextColor="#AAB7C4"
-                />
+                <Text style={styles.modalTitle}>Import Where?</Text>
 
                 <Pressable
                   style={styles.budgetOption}
-                  onPress={importItemsFromText}
+                  onPress={() => {
+                    editor.setItems((currentItems) => [
+                      ...pendingImportedItems,
+                      ...currentItems,
+                    ]);
+
+                    setPendingImportedItems([]);
+                    setImportText("");
+                    setShowImportChoiceModal(false);
+                  }}
                 >
-                  <Text style={styles.budgetOptionText}>Import</Text>
+                  <Text style={styles.budgetOptionText}>Current Budget</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={async () => {
+                    const newBudget =
+                      await createBudgetFromImportedItems(pendingImportedItems);
+
+                    setPendingImportedItems([]);
+                    setImportText("");
+                    setShowImportChoiceModal(false);
+
+                    router.replace(`/budget/${newBudget.id}` as any);
+                  }}
+                >
+                  <Text style={styles.budgetOptionText}>New Budget</Text>
                 </Pressable>
 
                 <Pressable
                   style={styles.cancelButton}
                   onPress={() => {
-                    setImportText("");
-                    setShowImportModal(false);
+                    setPendingImportedItems([]);
+                    setShowImportChoiceModal(false);
                   }}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -588,6 +613,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               </View>
             </View>
           </Modal>
+
           <AddItemOverlay
             visible={editor.showAddItemOverlay}
             draftItem={editor.draftItem}
