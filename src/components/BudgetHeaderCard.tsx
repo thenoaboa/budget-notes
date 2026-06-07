@@ -98,19 +98,19 @@ export function BudgetHeaderCard({
               <Text style={styles.dropdownText}>Share</Text>
             </Pressable>
           </View>
-          <Pressable
-            style={[styles.dropdownButton, { marginTop: 6 }]}
-            onPress={onDuplicateBudget}
-          >
-            <Text style={styles.dropdownText}>Duplicate</Text>
-          </Pressable>
 
-          <Pressable
-            style={[styles.dropdownButton, { marginTop: 6 }]}
-            onPress={onImportList}
-          >
-            <Text style={styles.dropdownText}>Import List</Text>
-          </Pressable>
+          <View style={[styles.dropdownRow, { marginTop: 6 }]}>
+            <Pressable style={styles.dropdownButton} onPress={onImportList}>
+              <Text style={styles.dropdownText}>Import List</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.dropdownButton, { marginLeft: 6 }]}
+              onPress={onDuplicateBudget}
+            >
+              <Text style={styles.dropdownText}>Duplicate</Text>
+            </Pressable>
+          </View>
         </View>
       )}
       <Text style={styles.headerMessage}>{affirmingMessage}</Text>
