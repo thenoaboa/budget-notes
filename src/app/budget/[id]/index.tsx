@@ -65,6 +65,7 @@ export default function BudgetDashboardScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
   const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
@@ -270,6 +271,7 @@ export default function BudgetDashboardScreen() {
                 return;
               }
 
+              setToastMessage("Budget Duplicated");
               setShowCopiedMessage(true);
 
               setTimeout(() => {
@@ -311,8 +313,8 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
 
               await Clipboard.setStringAsync(summaryText);
 
+              setToastMessage("Copied to Clipboard");
               setShowCopiedMessage(true);
-
               setTimeout(() => {
                 setShowCopiedMessage(false);
               }, 900);
@@ -452,7 +454,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
           </ScrollView>
           {showCopiedMessage && (
             <View style={styles.copiedToast}>
-              <Text style={styles.copiedToastText}>Copied</Text>
+              <Text style={styles.copiedToastText}>{toastMessage}</Text>
             </View>
           )}
           {!tutorialDismissed && tutorialStep === "budgetPopup" && (
