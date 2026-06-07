@@ -310,9 +310,17 @@ export default function BudgetDashboardScreen() {
 
     if (importedItems.length === 0) return;
 
-    setPendingImportedItems(importedItems);
+    editor.setItems((currentItems) => [...importedItems, ...currentItems]);
+
+    setImportText("");
     setShowImportModal(false);
-    setShowImportChoiceModal(true);
+
+    setToastMessage("Items added");
+    setShowCopiedMessage(true);
+
+    setTimeout(() => {
+      setShowCopiedMessage(false);
+    }, 900);
   }
   return (
     <SafeAreaView style={styles.safeArea}>
