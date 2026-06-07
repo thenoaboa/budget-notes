@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -523,7 +524,39 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               onSkip={skipTutorial}
             />
           )}
+          <Modal visible={showImportModal} transparent animationType="fade">
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>Import</Text>
 
+                <TextInput
+                  style={styles.importInput}
+                  value={importText}
+                  onChangeText={setImportText}
+                  multiline
+                  placeholder={"Milk - 4.99\nEggs - 3.49"}
+                  placeholderTextColor="#AAB7C4"
+                />
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={importItemsFromText}
+                >
+                  <Text style={styles.budgetOptionText}>Import</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setImportText("");
+                    setShowImportModal(false);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
           <Modal
             visible={showCompareModal}
             transparent
