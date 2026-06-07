@@ -73,6 +73,7 @@ export default function BudgetDashboardScreen() {
   const [comparedBudget, setComparedBudget] = useState<Budget | null>(null);
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAddItemsChoiceModal, setShowAddItemsChoiceModal] = useState(false);
   const [importText, setImportText] = useState("");
   const [showImportChoiceModal, setShowImportChoiceModal] = useState(false);
   const [pendingImportedItems, setPendingImportedItems] = useState<
@@ -225,7 +226,7 @@ export default function BudgetDashboardScreen() {
       return;
     }
 
-    editor.openAddItemOverlay();
+    setShowAddItemsChoiceModal(true);
   }
   function importItemsFromText() {
     const importedItems = importText
@@ -584,10 +585,49 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               onSkip={skipTutorial}
             />
           )}
+          <Modal
+            visible={showAddItemsChoiceModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowAddItemsChoiceModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>Add Items</Text>
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={() => {
+                    setShowAddItemsChoiceModal(false);
+                    editor.openAddItemOverlay();
+                  }}
+                >
+                  <Text style={styles.budgetOptionText}>One Item</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={() => {
+                    setShowAddItemsChoiceModal(false);
+                    setShowImportModal(true);
+                  }}
+                >
+                  <Text style={styles.budgetOptionText}>Quick Add</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => setShowAddItemsChoiceModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
           <Modal visible={showImportModal} transparent animationType="fade">
             <View style={styles.modalBackdrop}>
               <View style={styles.compareModal}>
-                <Text style={styles.modalTitle}>Import</Text>
+                <Text style={styles.modalTitle}>Quick Add</Text>
 
                 <TextInput
                   style={styles.importInput}
@@ -602,7 +642,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                   style={styles.budgetOption}
                   onPress={importItemsFromText}
                 >
-                  <Text style={styles.budgetOptionText}>Import</Text>
+                  <Text style={styles.budgetOptionText}>Add Items</Text>
                 </Pressable>
 
                 <Pressable
