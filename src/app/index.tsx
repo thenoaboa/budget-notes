@@ -221,13 +221,18 @@ export default function HomeScreen() {
           body="Tap “+ New Budget” to start your first budget."
           buttonText="OK"
           onNext={() => setHomeTutorialStep("highlightNewNote")}
-          onSkip={() => {
+          onSkip={async () => {
             posthog?.capture("tutorial_skipped", {
               tutorialVersion: "welcome_v1",
               source: "welcome_overlay",
             });
 
-            completeWelcomeTutorial();
+            await AsyncStorage.setItem(
+              "budget-note-tutorial-complete-v2",
+              "skipped",
+            );
+
+            await completeWelcomeTutorial();
           }}
         />
       )}
