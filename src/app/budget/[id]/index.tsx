@@ -1,6 +1,7 @@
 // Save as: src/app/budget/[id]/index.tsx
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -276,6 +277,42 @@ export default function BudgetDashboardScreen() {
                 router.replace(`/budget/${duplicatedBudget.id}` as any);
               }, 900);
             }}
+            onShareBudget={async () => {
+              setShowMenu(false);
+
+              const itemsText =
+                receiptItems.length > 0
+                  ? receiptItems
+                      .map((item) => {
+                        const amount =
+                          (parseFloat(item.amount) || 0) * item.quantity;
+                        const quantityText =
+                          item.quantity > 1 ? ` x${item.quantity}` : "";
+
+                        return `- ${item.name || "Unnamed item"}${quantityText}: $${amount.toFixed(2)}`;
+                      })
+                      .join("\n")
+                  : "- No items added";
+
+              const summaryText = `Budget Note
+
+Money available: $${(parseFloat(editor.startingMoney) || 0).toFixed(2)}
+
+Items:
+${itemsText}
+
+Estimated tax: $${editor.taxAmount.toFixed(2)}
+Planned total: $${editor.totalSpent.toFixed(2)}
+Left after spending: $${editor.safeToSpend.toFixed(2)}`;
+
+              await Clipboard.setStringAsync(summaryText);
+
+              setShowCopiedMessage(true);
+
+              setTimeout(() => {
+                setShowCopiedMessage(false);
+              }, 900);
+            }}
           />
 
           <ScrollView
@@ -411,7 +448,7 @@ export default function BudgetDashboardScreen() {
           </ScrollView>
           {showCopiedMessage && (
             <View style={styles.copiedToast}>
-              <Text style={styles.copiedToastText}>BUdgetCopied</Text>
+              <Text style={styles.copiedToastText}>Copied</Text>
             </View>
           )}
           {!tutorialDismissed && tutorialStep === "budgetPopup" && (
