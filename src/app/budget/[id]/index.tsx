@@ -588,7 +588,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
             <TutorialOverlay
               title="Track what’s left"
               body="Your remaining balance updates automatically with every purchase you add."
-              buttonText="Start"
+              buttonText="Next"
               onNext={() => setTutorialStep("menuPopup")}
               onSkip={skipTutorial}
             />
@@ -596,7 +596,7 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
           {!tutorialDismissed && tutorialStep === "menuPopup" && (
             <TutorialOverlay
               title="Budget Saved"
-              body="Your budget saves automatically. Tap Menu to return to your budget list and rename it."
+              body="Your budget saves automatically. After adding items or an available amount, tap Menu to return to your budget list and rename it."
               buttonText="Got it"
               onNext={completeTutorial}
               onSkip={skipTutorial}
