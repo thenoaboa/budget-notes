@@ -48,7 +48,8 @@ type TutorialStep =
   | "budgetHighlight"
   | "addItemPopup"
   | "addItemHighlight"
-  | "donePopup";
+  | "donePopup"
+  | "menuPopup";
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
@@ -588,6 +589,15 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               title="Track what’s left"
               body="Your remaining balance updates automatically with every purchase you add."
               buttonText="Start"
+              onNext={() => setTutorialStep("menuPopup")}
+              onSkip={skipTutorial}
+            />
+          )}
+          {!tutorialDismissed && tutorialStep === "menuPopup" && (
+            <TutorialOverlay
+              title="Budget Saved"
+              body="Your budget saves automatically. Tap Menu to return to your budget list and rename it."
+              buttonText="Got it"
               onNext={completeTutorial}
               onSkip={skipTutorial}
             />
