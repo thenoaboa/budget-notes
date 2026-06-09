@@ -1,6 +1,6 @@
 // Save as: src/components/BudgetHeaderCard.tsx
 
-import { RefObject, useState } from "react";
+import { RefObject, useMemo, useState } from "react";
 
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -9,6 +9,7 @@ import type { BudgetStatusStyle } from "../types/budgetEditor";
 type Props = {
   affirmingMessage: string;
   safeToSpend: number;
+  plannedTotal: number;
   startingMoney: string;
   setStartingMoney: (value: string) => void;
   startingMoneyRef: RefObject<TextInput | null>;
@@ -29,6 +30,7 @@ type Props = {
 export function BudgetHeaderCard({
   affirmingMessage,
   safeToSpend,
+  plannedTotal,
   startingMoney,
   setStartingMoney,
   startingMoneyRef,
@@ -49,7 +51,39 @@ export function BudgetHeaderCard({
 
   const startingAmount = parseFloat(startingMoney) || 0;
 
-  const displayAmount = hasEnteredItems ? safeToSpend : startingAmount;
+  const isPlanningMode = startingAmount <= 0 && hasEnteredItems;
+
+  const planningPhrases = [
+    "Estimated total",
+    "Planned spending",
+    "You'll need about",
+  ];
+
+  const planningSubtexts = [
+    "Enter a budget to see what's left",
+    "Set a budget to track your spending",
+    "Add a budget to compare against your total",
+  ];
+
+  const planningPhraseIndex = useMemo(() => {
+    return Math.floor(Math.random() * planningPhrases.length);
+  }, []);
+
+  const displayAmount = isPlanningMode
+    ? plannedTotal
+    : hasEnteredItems
+      ? safeToSpend
+      : startingAmount;
+
+  const displayMessage = isPlanningMode
+    ? planningPhrases[planningPhraseIndex]
+    : affirmingMessage;
+
+  const displaySubtext = isPlanningMode
+    ? planningSubtexts[planningPhraseIndex]
+    : startingMoney.trim() === ""
+      ? "Tap amount to edit"
+      : headerSubtext;
 
   const inputValue = isEditingAmount
     ? startingMoney
@@ -116,7 +150,7 @@ export function BudgetHeaderCard({
           </View>
         </View>
       )}
-      <Text style={styles.headerMessage}>{affirmingMessage}</Text>
+      <Text style={styles.headerMessage}>{displayMessage}</Text>
 
       <TextInput
         ref={startingMoneyRef}
@@ -140,9 +174,7 @@ export function BudgetHeaderCard({
         editable={!highlightBudgetAmount}
       />
 
-      <Text style={styles.headerSubtext}>
-        {startingMoney.trim() === "" ? "Tap amount to edit" : headerSubtext}
-      </Text>
+      <Text style={styles.headerSubtext}>{displaySubtext}</Text>
 
       {highlightBudgetAmount && (
         <Text style={styles.highlightText}>Tap the amount to continue</Text>

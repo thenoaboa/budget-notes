@@ -330,6 +330,7 @@ export default function BudgetDashboardScreen() {
           <BudgetHeaderCard
             affirmingMessage={editor.affirmingMessage}
             safeToSpend={editor.safeToSpend}
+            plannedTotal={editor.totalSpent}
             startingMoney={editor.startingMoney}
             setStartingMoney={editor.setStartingMoney}
             startingMoneyRef={editor.startingMoneyRef}
