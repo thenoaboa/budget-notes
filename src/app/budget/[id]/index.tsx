@@ -215,9 +215,11 @@ export default function BudgetDashboardScreen() {
     router.push(`/budget/${budgetId}/items` as any);
   }
 
-  function handleAddItemPress() {
+  async function handleAddItemPress() {
     if (tutorialStep === "addItemHighlight") {
       trackTutorialStepCompleted(capture, "add_item_highlight");
+
+      await editor.saveBudgetNow();
 
       setTutorialStep("donePopup");
       return;

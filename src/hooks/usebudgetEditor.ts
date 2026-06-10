@@ -157,7 +157,28 @@ export function useBudgetEditor(budgetId: string | undefined) {
     salesTaxEnabled,
     taxRate,
   ]);
+  async function saveBudgetNow() {
+    if (!budgetId) return;
 
+    const savedDates = await autoSaveBudgetById({
+      budgetId,
+      noteTitle,
+      receiptNote,
+      startingMoney,
+      items,
+      createdAt,
+      salesTaxEnabled,
+      taxRate,
+    });
+
+    const savedCreatedAt =
+      savedDates.createdAt || createdAt || getCreatedDateFromId(budgetId);
+
+    const savedUpdatedAt = savedDates.updatedAt || new Date().toISOString();
+
+    setCreatedAt(savedCreatedAt);
+    setLastEditedAt(savedUpdatedAt);
+  }
   function addItem() {
     const newItem = createEmptyItem();
 
@@ -425,6 +446,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
 
     items,
     setItems,
+    saveBudgetNow,
 
     addItem,
     updateItem,
