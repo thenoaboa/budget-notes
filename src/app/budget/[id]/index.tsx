@@ -385,9 +385,11 @@ export default function BudgetDashboardScreen() {
             onShareBudget={async () => {
               setShowMenu(false);
 
+              const visibleItems = receiptItems.filter((item) => item.included);
+
               const itemsText =
-                receiptItems.length > 0
-                  ? receiptItems
+                visibleItems.length > 0
+                  ? visibleItems
                       .map((item) => {
                         const amount =
                           (parseFloat(item.amount) || 0) * item.quantity;
