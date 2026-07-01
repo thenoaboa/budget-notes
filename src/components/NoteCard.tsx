@@ -137,7 +137,7 @@ export function NoteCard({
 
   function startEditing() {
     swipeableRef.current?.close();
-   setDraftTitle(budget.budgetName ?? "");
+    setDraftTitle(budget.budgetName ?? "");
     setIsEditing(true);
   }
 
@@ -174,7 +174,7 @@ export function NoteCard({
           >
             <Pressable
               style={styles.menuModal}
-              onPress={(event) => event.stopPropagation()}
+              onPress={(event) => event.stopPropagation?.()}
             >
               <Pressable
                 style={styles.menuModalItem}
@@ -198,7 +198,7 @@ export function NoteCard({
           >
             <Pressable
               style={styles.copyModal}
-              onPress={(event) => event.stopPropagation()}
+              onPress={(event) => event.stopPropagation?.()}
             >
               <Text style={styles.copyConfirmTitle}>Copy budget?</Text>
 
@@ -243,23 +243,21 @@ export function NoteCard({
                 placeholder="Add title"
                 placeholderTextColor="#5F6E7E"
               />
-) : (
-  <Pressable
-    onPress={(event) => {
-      event.stopPropagation();
-      startEditing();
-    }}
-  >
-    <Text style={styles.cardTitle} numberOfLines={1}>
-      {stats.hasTitle ? stats.title : "Untitled"}
-    </Text>
-  </Pressable>
-)}
+            ) : (
+              <Text
+                style={styles.cardTitle}
+                numberOfLines={1}
+                onPress={() => startEditing()}
+              >
+                {stats.hasTitle ? stats.title : "Untitled"}
+              </Text>
+            )}
+          </View>
 
           <Pressable
             style={styles.menuButton}
             onPress={(event) => {
-              event.stopPropagation();
+              event.stopPropagation?.();
               setShowMenu(true);
             }}
           >
