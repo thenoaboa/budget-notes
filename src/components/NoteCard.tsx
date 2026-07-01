@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -139,10 +140,6 @@ export function NoteCard({
     setDraftTitle(stats.title);
     setIsEditing(true);
   }
-  function handleRenameFromMenu() {
-    setShowMenu(false);
-    startEditing();
-  }
 
   function handleCopyFromMenu() {
     setShowMenu(false);
@@ -160,6 +157,69 @@ export function NoteCard({
     setDraftTitle(cleanedTitle);
     setIsEditing(false);
     onRename(cleanedTitle);
+  }
+
+  function renderModals() {
+    return (
+      <>
+        <Modal
+          visible={showMenu}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowMenu(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowMenu(false)}
+          >
+            <Pressable
+              style={styles.menuModal}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Pressable
+                style={styles.menuModalItem}
+                onPress={handleCopyFromMenu}
+              >
+                <Text style={styles.menuModalText}>Duplicate</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal
+          visible={showCopyConfirm}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCopyConfirm(false)}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setShowCopyConfirm(false)}
+          >
+            <Pressable
+              style={styles.copyModal}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Text style={styles.copyConfirmTitle}>Copy budget?</Text>
+
+              <Text style={styles.copyConfirmText}>
+                Are you sure you want to copy this budget?
+              </Text>
+
+              <View style={styles.copyConfirmButtons}>
+                <Pressable onPress={() => setShowCopyConfirm(false)}>
+                  <Text style={styles.copyCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable onPress={confirmDuplicate}>
+                  <Text style={styles.copyConfirmButtonText}>Copy</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      </>
+    );
   }
 
   function renderCardContent() {
@@ -184,9 +244,16 @@ export function NoteCard({
                 placeholderTextColor="#5F6E7E"
               />
             ) : stats.hasTitle ? (
-              <Text style={styles.cardTitle} numberOfLines={1}>
-                {stats.title}
-              </Text>
+              <Pressable
+                onPress={(event) => {
+                  event.stopPropagation();
+                  startEditing();
+                }}
+              >
+                <Text style={styles.cardTitle} numberOfLines={1}>
+                  {stats.title}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
 
@@ -199,24 +266,6 @@ export function NoteCard({
           >
             <Text style={styles.menuButtonText}>⋮</Text>
           </Pressable>
-
-          {showMenu && (
-            <View style={styles.cardMenu}>
-              <Pressable
-                style={styles.cardMenuItem}
-                onPress={handleRenameFromMenu}
-              >
-                <Text style={styles.cardMenuItemText}>Rename</Text>
-              </Pressable>
-
-              <Pressable
-                style={styles.cardMenuItem}
-                onPress={handleCopyFromMenu}
-              >
-                <Text style={styles.cardMenuItemText}>Copy Budget</Text>
-              </Pressable>
-            </View>
-          )}
         </View>
 
         <View
@@ -274,64 +323,53 @@ export function NoteCard({
 
   if (isDesktopWeb) {
     return (
-      <View style={styles.webContainer}>
-        <View style={{ flex: 1 }}>{renderCardContent()}</View>
+      <>
+        <View style={styles.webContainer}>
+          <View style={{ flex: 1 }}>{renderCardContent()}</View>
 
-        <Pressable
-          style={[
-            styles.webDeleteButton,
-            deleteHovered && styles.webDeleteButtonHovered,
-          ]}
-          onHoverIn={() => setDeleteHovered(true)}
-          onHoverOut={() => setDeleteHovered(false)}
-          onPress={handleDelete}
-        >
-          <Text
+          <Pressable
             style={[
-              styles.webDeleteText,
-              deleteHovered && styles.webDeleteTextHovered,
+              styles.webDeleteButton,
+              deleteHovered && styles.webDeleteButtonHovered,
             ]}
+            onHoverIn={() => setDeleteHovered(true)}
+            onHoverOut={() => setDeleteHovered(false)}
+            onPress={handleDelete}
           >
-            Delete
-          </Text>
-        </Pressable>
-        {showCopyConfirm && (
-          <View style={styles.copyConfirmBox}>
-            <Text style={styles.copyConfirmTitle}>Copy budget?</Text>
-
-            <Text style={styles.copyConfirmText}>
-              Are you sure you want to copy this budget?
+            <Text
+              style={[
+                styles.webDeleteText,
+                deleteHovered && styles.webDeleteTextHovered,
+              ]}
+            >
+              Delete
             </Text>
+          </Pressable>
+        </View>
 
-            <View style={styles.copyConfirmButtons}>
-              <Pressable onPress={() => setShowCopyConfirm(false)}>
-                <Text style={styles.copyCancelText}>Cancel</Text>
-              </Pressable>
-
-              <Pressable onPress={confirmDuplicate}>
-                <Text style={styles.copyConfirmButtonText}>Copy</Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-      </View>
+        {renderModals()}
+      </>
     );
   }
 
   return (
-    <Swipeable
-      ref={swipeableRef}
-      renderRightActions={() => (
-        <View style={styles.deleteActionWrapper}>
-          <Pressable style={styles.deleteAction} onPress={handleDelete}>
-            <Text style={styles.deleteActionText}>Delete</Text>
-          </Pressable>
-        </View>
-      )}
-      overshootRight={false}
-    >
-      {renderCardContent()}
-    </Swipeable>
+    <>
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={() => (
+          <View style={styles.deleteActionWrapper}>
+            <Pressable style={styles.deleteAction} onPress={handleDelete}>
+              <Text style={styles.deleteActionText}>Delete</Text>
+            </Pressable>
+          </View>
+        )}
+        overshootRight={false}
+      >
+        {renderCardContent()}
+      </Swipeable>
+
+      {renderModals()}
+    </>
   );
 }
 
@@ -368,6 +406,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
+    position: "relative",
     backgroundColor: "#1B2633",
     borderRadius: 18,
     padding: 16,
@@ -537,71 +576,76 @@ const styles = StyleSheet.create({
     color: "#FF6B6B",
     fontWeight: "900",
   },
-  cardMenu: {
-    position: "absolute",
-    top: 44,
-    right: 16,
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
+
+  menuModal: {
+    width: "100%",
+    maxWidth: 320,
     backgroundColor: "#243342",
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#3B4D5F",
     overflow: "hidden",
-    zIndex: 20,
-    elevation: 20,
   },
 
-  cardMenuItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    minWidth: 150,
+  menuModalItem: {
+    paddingVertical: 18,
+    paddingHorizontal: 20,
   },
 
-  cardMenuItemText: {
+  menuModalText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "900",
   },
 
-  copyConfirmBox: {
-    marginTop: 14,
+  copyModal: {
+    width: "100%",
+    maxWidth: 340,
     backgroundColor: "#243342",
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: "#3B4D5F",
-    padding: 14,
+    padding: 18,
   },
 
   copyConfirmTitle: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: "900",
-    marginBottom: 6,
+    marginBottom: 8,
   },
 
   copyConfirmText: {
     color: "#CAD3DD",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "700",
-    lineHeight: 20,
-    marginBottom: 14,
+    lineHeight: 21,
+    marginBottom: 18,
   },
 
   copyConfirmButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",
-    gap: 18,
+    gap: 20,
   },
 
   copyCancelText: {
     color: "#CAD3DD",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
   },
 
   copyConfirmButtonText: {
     color: "#2ECC71",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "900",
   },
 });
