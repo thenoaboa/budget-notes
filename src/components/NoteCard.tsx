@@ -137,7 +137,7 @@ export function NoteCard({
 
   function startEditing() {
     swipeableRef.current?.close();
-    setDraftTitle(stats.title);
+   setDraftTitle(budget.budgetName ?? "");
     setIsEditing(true);
   }
 
@@ -243,19 +243,18 @@ export function NoteCard({
                 placeholder="Add title"
                 placeholderTextColor="#5F6E7E"
               />
-            ) : stats.hasTitle ? (
-              <Pressable
-                onPress={(event) => {
-                  event.stopPropagation();
-                  startEditing();
-                }}
-              >
-                <Text style={styles.cardTitle} numberOfLines={1}>
-                  {stats.title}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
+) : (
+  <Pressable
+    onPress={(event) => {
+      event.stopPropagation();
+      startEditing();
+    }}
+  >
+    <Text style={styles.cardTitle} numberOfLines={1}>
+      {stats.hasTitle ? stats.title : "Untitled"}
+    </Text>
+  </Pressable>
+)}
 
           <Pressable
             style={styles.menuButton}
