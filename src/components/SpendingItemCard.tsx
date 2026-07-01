@@ -99,6 +99,7 @@ export function SpendingItemRow({
           style={[
             styles.quantityButton,
             !item.included && styles.excludedField,
+            isDragging && styles.deleteButtonDragging,
           ]}
           onPress={() => increaseQuantity(item.id)}
           onLongPress={() => resetQuantity(item.id)}
@@ -184,11 +185,11 @@ const styles = StyleSheet.create({
   },
 
   excludedField: {
-    opacity: 0.7,
+    opacity: 0.45,
   },
 
   excludedText: {
-    opacity: 0.8,
+    opacity: 0.65,
   },
 
   itemNameInput: {
