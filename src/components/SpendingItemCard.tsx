@@ -67,7 +67,10 @@ export function SpendingItemRow({
           {showDollarSign && (
             <Text
               pointerEvents="none"
-              style={[styles.dollarSign, !item.included && styles.excludedText]}
+              style={[
+                styles.dollarSign,
+                !item.included && styles.excludedField,
+              ]}
             >
               $
             </Text>
@@ -99,7 +102,6 @@ export function SpendingItemRow({
           style={[
             styles.quantityButton,
             !item.included && styles.excludedField,
-            isDragging && styles.deleteButtonDragging,
           ]}
           onPress={() => increaseQuantity(item.id)}
           onLongPress={() => resetQuantity(item.id)}
@@ -127,6 +129,7 @@ export function SpendingItemRow({
           <TouchableOpacity
             style={[
               styles.deleteButton,
+              !item.included && styles.excludedField,
               isDragging && styles.deleteButtonDragging,
             ]}
             onPress={() => deleteItem(item.id)}
