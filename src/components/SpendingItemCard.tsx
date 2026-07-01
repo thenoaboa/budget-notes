@@ -65,7 +65,10 @@ export function SpendingItemRow({
       <View style={styles.itemControlsRow}>
         <View style={styles.itemAmountInputWrapper}>
           {showDollarSign && (
-            <Text pointerEvents="none" style={styles.dollarSign}>
+            <Text
+              pointerEvents="none"
+              style={[styles.dollarSign, !item.included && styles.excludedText]}
+            >
               $
             </Text>
           )}
@@ -77,6 +80,7 @@ export function SpendingItemRow({
             style={[
               styles.itemAmountInput,
               showDollarSign ? styles.itemAmountInputWithDollar : null,
+              !item.included && styles.excludedField,
             ]}
             placeholder="$0"
             placeholderTextColor="#8A98A8"
@@ -92,26 +96,28 @@ export function SpendingItemRow({
         </View>
 
         <TouchableOpacity
-          style={styles.quantityButton}
+          style={[
+            styles.quantityButton,
+            !item.included && styles.excludedField,
+          ]}
           onPress={() => increaseQuantity(item.id)}
           onLongPress={() => resetQuantity(item.id)}
         >
-          <Text style={styles.quantityButtonText}>x{item.quantity}</Text>
+          <Text
+            style={[
+              styles.quantityButtonText,
+              !item.included && styles.excludedText,
+            ]}
+          >
+            x{item.quantity}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.includeButton,
-            !item.included && styles.includeButtonOff,
-          ]}
+          style={styles.includeButton}
           onPress={() => toggleIncluded(item.id)}
         >
-          <Text
-            style={[
-              styles.includeButtonText,
-              !item.included && styles.includeButtonTextOff,
-            ]}
-          >
+          <Text style={styles.includeButtonText}>
             {item.included ? "On" : "Off"}
           </Text>
         </TouchableOpacity>
@@ -135,7 +141,7 @@ export function SpendingItemRow({
         ref={(ref) => {
           itemNameRefs.current[item.id] = ref;
         }}
-        style={styles.itemNameInput}
+        style={[styles.itemNameInput, !item.included && styles.excludedField]}
         placeholder="Item name"
         placeholderTextColor="#8A98A8"
         value={item.name}
@@ -173,7 +179,16 @@ const styles = StyleSheet.create({
   },
 
   itemExcluded: {
+    backgroundColor: "#141D27",
+    borderColor: "#273340",
+  },
+
+  excludedField: {
     opacity: 0.45,
+  },
+
+  excludedText: {
+    opacity: 0.65,
   },
 
   itemNameInput: {
@@ -247,18 +262,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  includeButtonOff: {
-    backgroundColor: "#333D47",
-  },
-
   includeButtonText: {
     color: "#2ECC71",
     fontSize: 13,
     fontWeight: "900",
-  },
-
-  includeButtonTextOff: {
-    color: "#A7B1BD",
   },
 
   deleteButton: {
