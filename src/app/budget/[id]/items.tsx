@@ -74,8 +74,10 @@ export default function BudgetItemsScreen() {
           </TouchableOpacity>
 
           <DraggableFlatList
-            data={editor.items.filter((item) =>
-              item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+            data={editor.items.filter(
+              (item) =>
+                !item.included &&
+                item.name.toLowerCase().includes(searchQuery.toLowerCase()),
             )}
             keyExtractor={(item) => String(item.id)}
             renderItem={renderItem}

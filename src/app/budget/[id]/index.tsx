@@ -78,7 +78,7 @@ export default function BudgetDashboardScreen() {
   const [importText, setImportText] = useState("");
 
   const receiptItems = useMemo(() => {
-    return [...editor.items].filter((item) => !item.included).reverse();
+    return [...editor.items].reverse();
   }, [editor.items]);
 
   const comparisonResults = comparedBudget
