@@ -4,6 +4,7 @@ import { Alert, Platform } from "react-native";
 
 import {
   deleteBudgetById,
+  duplicateBudgetById,
   loadBudgets,
   renameBudgetById,
 } from "../storage/budgetStorage";
@@ -36,6 +37,13 @@ export function useBudgetNotes() {
     const updatedBudgets = await renameBudgetById(budgets, budgetId, newTitle);
 
     setBudgets(updatedBudgets);
+  }
+
+  async function duplicateBudget(budgetId: string) {
+    await duplicateBudgetById(budgetId);
+
+    const loadedBudgets = await loadBudgets();
+    setBudgets(loadedBudgets);
   }
 
   function confirmDeleteBudget(budgetId: string) {
@@ -75,6 +83,7 @@ export function useBudgetNotes() {
     setSearchQuery,
     deleteBudget,
     renameBudget,
+    duplicateBudget,
     confirmDeleteBudget,
   };
 }

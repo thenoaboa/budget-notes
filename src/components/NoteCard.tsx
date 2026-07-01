@@ -17,6 +17,7 @@ type Props = {
   onPress: () => void;
   onDelete: () => void;
   onRename: (newTitle: string) => void;
+  onDuplicate: () => void;
 };
 
 type BudgetCardStats = {
@@ -101,7 +102,13 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
   };
 }
 
-export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
+export function NoteCard({
+  budget,
+  onPress,
+  onDelete,
+  onRename,
+  onDuplicate,
+}: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
   const stats = useMemo(() => getBudgetStats(budget), [budget]);
@@ -109,6 +116,8 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [deleteHovered, setDeleteHovered] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const [showCopyConfirm, setShowCopyConfirm] = useState(false);
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -129,6 +138,20 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
     swipeableRef.current?.close();
     setDraftTitle(stats.title);
     setIsEditing(true);
+  }
+  function handleRenameFromMenu() {
+    setShowMenu(false);
+    startEditing();
+  }
+
+  function handleCopyFromMenu() {
+    setShowMenu(false);
+    setShowCopyConfirm(true);
+  }
+
+  function confirmDuplicate() {
+    setShowCopyConfirm(false);
+    onDuplicate();
   }
 
   function saveTitle() {
@@ -167,9 +190,33 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
             ) : null}
           </View>
 
-          <Pressable style={styles.menuButton} onPress={startEditing}>
+          <Pressable
+            style={styles.menuButton}
+            onPress={(event) => {
+              event.stopPropagation();
+              setShowMenu(true);
+            }}
+          >
             <Text style={styles.menuButtonText}>⋮</Text>
           </Pressable>
+
+          {showMenu && (
+            <View style={styles.cardMenu}>
+              <Pressable
+                style={styles.cardMenuItem}
+                onPress={handleRenameFromMenu}
+              >
+                <Text style={styles.cardMenuItemText}>Rename</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.cardMenuItem}
+                onPress={handleCopyFromMenu}
+              >
+                <Text style={styles.cardMenuItemText}>Copy Budget</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         <View
@@ -248,6 +295,25 @@ export function NoteCard({ budget, onPress, onDelete, onRename }: Props) {
             Delete
           </Text>
         </Pressable>
+        {showCopyConfirm && (
+          <View style={styles.copyConfirmBox}>
+            <Text style={styles.copyConfirmTitle}>Copy budget?</Text>
+
+            <Text style={styles.copyConfirmText}>
+              Are you sure you want to copy this budget?
+            </Text>
+
+            <View style={styles.copyConfirmButtons}>
+              <Pressable onPress={() => setShowCopyConfirm(false)}>
+                <Text style={styles.copyCancelText}>Cancel</Text>
+              </Pressable>
+
+              <Pressable onPress={confirmDuplicate}>
+                <Text style={styles.copyConfirmButtonText}>Copy</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </View>
     );
   }
@@ -469,6 +535,73 @@ const styles = StyleSheet.create({
 
   deleteActionText: {
     color: "#FF6B6B",
+    fontWeight: "900",
+  },
+  cardMenu: {
+    position: "absolute",
+    top: 44,
+    right: 16,
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    overflow: "hidden",
+    zIndex: 20,
+    elevation: 20,
+  },
+
+  cardMenuItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minWidth: 150,
+  },
+
+  cardMenuItemText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  copyConfirmBox: {
+    marginTop: 14,
+    backgroundColor: "#243342",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    padding: 14,
+  },
+
+  copyConfirmTitle: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+
+  copyConfirmText: {
+    color: "#CAD3DD",
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+
+  copyConfirmButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: 18,
+  },
+
+  copyCancelText: {
+    color: "#CAD3DD",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  copyConfirmButtonText: {
+    color: "#2ECC71",
+    fontSize: 15,
     fontWeight: "900",
   },
 });

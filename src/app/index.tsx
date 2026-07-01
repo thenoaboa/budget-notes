@@ -37,6 +37,7 @@ export default function HomeScreen() {
     setSearchQuery,
     confirmDeleteBudget,
     renameBudget,
+    duplicateBudget,
   } = useBudgetNotes();
 
   useEffect(() => {
@@ -207,6 +208,7 @@ export default function HomeScreen() {
             onPress={() => openBudgetNote(budget.id)}
             onDelete={() => confirmDeleteBudget(budget.id)}
             onRename={(newTitle) => renameBudget(budget.id, newTitle)}
+            onDuplicate={() => duplicateBudget(budget.id)}
           />
         ))}
         <Pressable
