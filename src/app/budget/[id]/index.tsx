@@ -398,8 +398,9 @@ export default function BudgetDashboardScreen() {
                       })
                       .join("\n")
                   : "- No items added";
+              const header = editor.noteTitle.trim() || "Budget Note";
 
-              const summaryText = `Budget Note
+              const summaryText = `${header}
 
 Money available: $${(parseFloat(editor.startingMoney) || 0).toFixed(2)}
 
