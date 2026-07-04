@@ -36,6 +36,14 @@ function formatMoneyInput(text: string) {
   return (cents / 100).toFixed(2);
 }
 
+function getVisibleAmountValue(amount: string) {
+  return amount === "0.00" ? "" : amount;
+}
+
+function amountLooksEmpty(amount: string) {
+  return amount === "" || amount === "0.00";
+}
+
 export function AddItemOverlay({
   visible,
   draftItem,
@@ -47,7 +55,7 @@ export function AddItemOverlay({
   const appleScale = useRef(new Animated.Value(1)).current;
 
   const amountValue = draftItem.amount ?? "";
-  const amountIsEmpty = amountValue.length === 0;
+  const amountIsEmpty = amountLooksEmpty(amountValue);
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -149,7 +157,7 @@ export function AddItemOverlay({
                 placeholder="0.00"
                 placeholderTextColor="#8A98A8"
                 keyboardType="number-pad"
-                value={amountValue}
+                value={getVisibleAmountValue(amountValue)}
                 blurOnSubmit={false}
                 onKeyPress={handleAmountKeyPress}
                 onChangeText={(text) =>

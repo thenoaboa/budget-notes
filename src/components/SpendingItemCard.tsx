@@ -43,6 +43,14 @@ function formatMoneyInput(text: string) {
   return (cents / 100).toFixed(2);
 }
 
+function getVisibleAmountValue(amount: string) {
+  return amount === "0.00" ? "" : amount;
+}
+
+function amountLooksEmpty(amount: string) {
+  return amount === "" || amount === "0.00";
+}
+
 export function SpendingItemRow({
   item,
   itemNameRefs,
@@ -59,7 +67,7 @@ export function SpendingItemRow({
   showFoodControls = false,
 }: Props) {
   const amountValue = item.amount ?? "";
-  const amountIsEmpty = amountValue.length === 0;
+  const amountIsEmpty = amountLooksEmpty(amountValue);
 
   const appleScale = useRef(new Animated.Value(1)).current;
 
@@ -124,7 +132,7 @@ export function SpendingItemRow({
             placeholderTextColor="#8A98A8"
             keyboardType="number-pad"
             returnKeyType="next"
-            value={amountValue}
+            value={getVisibleAmountValue(amountValue)}
             blurOnSubmit={false}
             onChangeText={(text) =>
               updateItem(item.id, "amount", formatMoneyInput(text))
