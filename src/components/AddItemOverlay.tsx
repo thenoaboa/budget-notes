@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import {
+  Animated,
   Dimensions,
   Modal,
   Platform,
@@ -9,6 +10,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import type { BudgetItem } from "../types/budgetEditor";
 
@@ -41,12 +44,44 @@ export function AddItemOverlay({
   onAdd,
 }: Props) {
   const itemNameRef = useRef<TextInput>(null);
+  const appleScale = useRef(new Animated.Value(1)).current;
 
   const amountValue = draftItem.amount ?? "";
   const showDollarSign = amountValue.length > 0;
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
+
+  function animateApple() {
+    Animated.sequence([
+      Animated.timing(appleScale, {
+        toValue: 0.88,
+        duration: 60,
+        useNativeDriver: true,
+      }),
+      Animated.spring(appleScale, {
+        toValue: 1.15,
+        friction: 4,
+        tension: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(appleScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }
+
+  function toggleFood() {
+    animateApple();
+
+    setDraftItem((prev) => ({
+      ...prev,
+      isFood: !prev.isFood,
+    }));
+  }
 
   function increaseQuantity() {
     setDraftItem((prev) => ({
@@ -136,21 +171,43 @@ export function AddItemOverlay({
             </Pressable>
           </View>
 
-          <TextInput
-            ref={itemNameRef}
-            style={styles.input}
-            placeholder="Item name"
-            placeholderTextColor="#8A98A8"
-            value={draftItem.name}
-            returnKeyType={isDesktopWeb ? "done" : "default"}
-            onSubmitEditing={handleNameSubmit}
-            onChangeText={(text) =>
-              setDraftItem((prev) => ({
-                ...prev,
-                name: text,
-              }))
-            }
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              ref={itemNameRef}
+              style={[styles.input, styles.inputWithFoodButton]}
+              placeholder="Item name"
+              placeholderTextColor="#8A98A8"
+              value={draftItem.name}
+              returnKeyType={isDesktopWeb ? "done" : "default"}
+              onSubmitEditing={handleNameSubmit}
+              onChangeText={(text) =>
+                setDraftItem((prev) => ({
+                  ...prev,
+                  name: text,
+                }))
+              }
+            />
+
+            <Pressable
+              style={styles.foodButton}
+              onPress={toggleFood}
+              hitSlop={10}
+            >
+              <Animated.View style={{ transform: [{ scale: appleScale }] }}>
+                <MaterialCommunityIcons
+                  name={draftItem.isFood ? "food-apple" : "food-apple-outline"}
+                  size={20}
+                  color="#2ECC71"
+                />
+              </Animated.View>
+            </Pressable>
+          </View>
+
+          {draftItem.isFood && (
+            <Text selectable={false} style={styles.foodHelpText}>
+              Food · Excluded from sales tax
+            </Text>
+          )}
 
           <Pressable style={styles.addButton} onPress={onAdd}>
             <Text selectable={false} style={styles.addButtonText}>
@@ -267,6 +324,11 @@ const styles = StyleSheet.create({
     ...nonSelectableText,
   },
 
+  inputWrapper: {
+    position: "relative",
+    marginBottom: 10,
+  },
+
   input: {
     backgroundColor: "#2A3948",
     color: "#FFFFFF",
@@ -276,6 +338,31 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     marginBottom: 10,
+  },
+
+  inputWithFoodButton: {
+    paddingRight: 48,
+    marginBottom: 0,
+  },
+
+  foodButton: {
+    position: "absolute",
+    right: 12,
+    top: 0,
+    bottom: 0,
+    width: 28,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  foodHelpText: {
+    color: "#2ECC71",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: -5,
+    marginBottom: 10,
+    marginLeft: 4,
+    ...nonSelectableText,
   },
 
   addButton: {
