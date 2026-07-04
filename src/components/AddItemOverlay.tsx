@@ -25,15 +25,15 @@ type Props = {
   onAdd: () => void;
 };
 
-function cleanAmountInput(text: string) {
-  const cleaned = text.replace(/[^0-9.]/g, "");
-  const parts = cleaned.split(".");
+function formatMoneyInput(text: string) {
+  const digits = text.replace(/\D/g, "");
 
-  if (parts.length <= 2) {
-    return cleaned;
+  if (!digits) {
+    return "";
   }
 
-  return `${parts[0]}.${parts.slice(1).join("")}`;
+  const cents = Number(digits);
+  return (cents / 100).toFixed(2);
 }
 
 export function AddItemOverlay({
@@ -47,7 +47,6 @@ export function AddItemOverlay({
   const appleScale = useRef(new Animated.Value(1)).current;
 
   const amountValue = draftItem.amount ?? "";
-  const showDollarSign = amountValue.length > 0;
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -134,27 +133,22 @@ export function AddItemOverlay({
 
           <View style={styles.amountRow}>
             <View style={styles.amountInputWrapper}>
-              {showDollarSign && (
-                <Text pointerEvents="none" style={styles.dollarSign}>
-                  $
-                </Text>
-              )}
+              <Text pointerEvents="none" style={styles.dollarSign}>
+                $
+              </Text>
 
               <TextInput
-                style={[
-                  styles.amountInput,
-                  showDollarSign ? styles.amountInputWithDollar : null,
-                ]}
-                placeholder="$0"
+                style={[styles.amountInput, styles.amountInputWithDollar]}
+                placeholder="0.00"
                 placeholderTextColor="#8A98A8"
-                keyboardType="decimal-pad"
+                keyboardType="number-pad"
                 value={amountValue}
                 blurOnSubmit={false}
                 onKeyPress={handleAmountKeyPress}
                 onChangeText={(text) =>
                   setDraftItem((prev) => ({
                     ...prev,
-                    amount: cleanAmountInput(text),
+                    amount: formatMoneyInput(text),
                   }))
                 }
               />

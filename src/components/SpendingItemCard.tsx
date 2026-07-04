@@ -32,15 +32,15 @@ type Props = {
   showFoodControls?: boolean;
 };
 
-function cleanAmountInput(text: string) {
-  const cleaned = text.replace(/[^0-9.]/g, "");
-  const parts = cleaned.split(".");
+function formatMoneyInput(text: string) {
+  const digits = text.replace(/\D/g, "");
 
-  if (parts.length <= 2) {
-    return cleaned;
+  if (!digits) {
+    return "";
   }
 
-  return `${parts[0]}.${parts.slice(1).join("")}`;
+  const cents = Number(digits);
+  return (cents / 100).toFixed(2);
 }
 
 export function SpendingItemRow({
@@ -59,7 +59,6 @@ export function SpendingItemRow({
   showFoodControls = false,
 }: Props) {
   const amountValue = item.amount ?? "";
-  const showDollarSign = amountValue.length > 0;
 
   const appleScale = useRef(new Animated.Value(1)).current;
 
@@ -100,17 +99,12 @@ export function SpendingItemRow({
     >
       <View style={styles.itemControlsRow}>
         <View style={styles.itemAmountInputWrapper}>
-          {showDollarSign && (
-            <Text
-              pointerEvents="none"
-              style={[
-                styles.dollarSign,
-                !item.included && styles.excludedField,
-              ]}
-            >
-              $
-            </Text>
-          )}
+          <Text
+            pointerEvents="none"
+            style={[styles.dollarSign, !item.included && styles.excludedField]}
+          >
+            $
+          </Text>
 
           <TextInput
             ref={(ref) => {
@@ -118,17 +112,17 @@ export function SpendingItemRow({
             }}
             style={[
               styles.itemAmountInput,
-              showDollarSign ? styles.itemAmountInputWithDollar : null,
+              styles.itemAmountInputWithDollar,
               !item.included && styles.excludedField,
             ]}
-            placeholder="$0"
+            placeholder="0.00"
             placeholderTextColor="#8A98A8"
-            keyboardType="decimal-pad"
+            keyboardType="number-pad"
             returnKeyType="next"
             value={amountValue}
             blurOnSubmit={false}
             onChangeText={(text) =>
-              updateItem(item.id, "amount", cleanAmountInput(text))
+              updateItem(item.id, "amount", formatMoneyInput(text))
             }
             onSubmitEditing={() => itemNameRefs.current[item.id]?.focus()}
           />
@@ -206,7 +200,7 @@ export function SpendingItemRow({
               <MaterialCommunityIcons
                 name={item.isFood ? "food-apple" : "food-apple-outline"}
                 size={21}
-                color={item.isFood ? "#2ECC71" : "#2ECC71"}
+                color="#2ECC71"
               />
             </Animated.View>
           </TouchableOpacity>
