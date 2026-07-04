@@ -47,6 +47,7 @@ export function AddItemOverlay({
   const appleScale = useRef(new Animated.Value(1)).current;
 
   const amountValue = draftItem.amount ?? "";
+  const amountIsEmpty = amountValue.length === 0;
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -133,7 +134,13 @@ export function AddItemOverlay({
 
           <View style={styles.amountRow}>
             <View style={styles.amountInputWrapper}>
-              <Text pointerEvents="none" style={styles.dollarSign}>
+              <Text
+                pointerEvents="none"
+                style={[
+                  styles.dollarSign,
+                  amountIsEmpty && styles.placeholderDollarSign,
+                ]}
+              >
                 $
               </Text>
 
@@ -283,6 +290,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     zIndex: 1,
+  },
+
+  placeholderDollarSign: {
+    color: "#8A98A8",
   },
 
   amountInput: {

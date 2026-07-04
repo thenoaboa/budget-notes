@@ -59,6 +59,7 @@ export function SpendingItemRow({
   showFoodControls = false,
 }: Props) {
   const amountValue = item.amount ?? "";
+  const amountIsEmpty = amountValue.length === 0;
 
   const appleScale = useRef(new Animated.Value(1)).current;
 
@@ -101,7 +102,11 @@ export function SpendingItemRow({
         <View style={styles.itemAmountInputWrapper}>
           <Text
             pointerEvents="none"
-            style={[styles.dollarSign, !item.included && styles.excludedField]}
+            style={[
+              styles.dollarSign,
+              amountIsEmpty && styles.placeholderDollarSign,
+              !item.included && styles.excludedField,
+            ]}
           >
             $
           </Text>
@@ -309,6 +314,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "800",
     zIndex: 1,
+  },
+
+  placeholderDollarSign: {
+    color: "#8A98A8",
   },
 
   itemAmountInput: {
