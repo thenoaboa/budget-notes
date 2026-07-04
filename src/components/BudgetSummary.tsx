@@ -21,6 +21,7 @@ type SummaryItem = {
   amount: string;
   included?: boolean;
   quantity?: number;
+  isFood?: boolean;
 };
 
 type Props = {
@@ -125,14 +126,24 @@ export function BudgetSummaryBox({
     itemName: string,
     quantity: number,
     lineTotal: number,
+    isFood?: boolean,
   ) {
+    const shouldHighlightFoodAmount = salesTaxEnabled && isFood;
+
     return (
       <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
         <Text style={styles.itemText}>
           {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
         </Text>
 
-        <Text style={styles.itemAmount}>{formatMoney(lineTotal)}</Text>
+        <Text
+          style={[
+            styles.itemAmount,
+            shouldHighlightFoodAmount && styles.foodItemAmount,
+          ]}
+        >
+          {formatMoney(lineTotal)}
+        </Text>
       </Pressable>
     );
   }
@@ -183,7 +194,13 @@ export function BudgetSummaryBox({
               return (
                 <View key={item.id} style={styles.webItemRow}>
                   <View style={styles.webItemContent}>
-                    {renderItemRow(item.id, itemName, quantity, lineTotal)}
+                    {renderItemRow(
+                      item.id,
+                      itemName,
+                      quantity,
+                      lineTotal,
+                      item.isFood,
+                    )}
                   </View>
 
                   <Pressable
@@ -214,7 +231,13 @@ export function BudgetSummaryBox({
                 renderRightActions={() => renderRightActions(item.id)}
                 overshootRight={false}
               >
-                {renderItemRow(item.id, itemName, quantity, lineTotal)}
+                {renderItemRow(
+                  item.id,
+                  itemName,
+                  quantity,
+                  lineTotal,
+                  item.isFood,
+                )}
               </Swipeable>
             );
           })}
@@ -373,6 +396,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     textAlign: "right",
+  },
+
+  foodItemAmount: {
+    color: "#2ECC71",
   },
 
   deleteAction: {
