@@ -206,7 +206,7 @@ export function SpendingItemRow({
               <MaterialCommunityIcons
                 name={item.isFood ? "food-apple" : "food-apple-outline"}
                 size={21}
-                color={item.isFood ? "#123527" : "#2ECC71"}
+                color={item.isFood ? "#2ECC71" : "#2ECC71"}
               />
             </Animated.View>
           </TouchableOpacity>
