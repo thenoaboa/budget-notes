@@ -206,7 +206,7 @@ export function SpendingItemRow({
               <MaterialCommunityIcons
                 name={item.isFood ? "food-apple" : "food-apple-outline"}
                 size={21}
-                color={item.isFood ? "#2ECC71" : "#123527"}
+                color={item.isFood ? "#123527" : "#2ECC71"}
               />
             </Animated.View>
           </TouchableOpacity>
@@ -214,9 +214,7 @@ export function SpendingItemRow({
       </View>
 
       {showFoodControls && item.isFood && (
-        <Text style={styles.foodHelpText}>
-          🍏 Food · Excluded from sales tax
-        </Text>
+        <Text style={styles.foodHelpText}>Food · Excluded from sales tax</Text>
       )}
     </View>
   );
