@@ -38,11 +38,12 @@ export function mapStoredItemsToEditorItems(
   spendingItems: Budget["spendingItems"],
 ): BudgetItem[] {
   return spendingItems.map((item) => ({
-    id: item.id,
-    name: item.name,
-    amount: item.amount,
-    quantity: item.quantity ?? 1,
+    id: Number(item.id),
+    name: item.name ?? "",
+    amount: item.amount ?? "",
+    quantity: Number(item.quantity) || 1,
     included: item.included ?? true,
+    isFood: item.isFood ?? false,
   }));
 }
 
@@ -71,7 +72,10 @@ export async function autoSaveBudgetById({
 
     amount: startingMoney,
 
-    spendingItems: items,
+    spendingItems: items.map((item) => ({
+      ...item,
+      isFood: item.isFood ?? false,
+    })),
 
     createdAt: existingBudget?.createdAt || createdAt || now,
 

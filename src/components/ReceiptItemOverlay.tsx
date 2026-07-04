@@ -1,5 +1,3 @@
-// Save as: src/components/ReceiptItemOverlay.tsx
-
 import {
   Dimensions,
   Modal,
@@ -93,6 +91,7 @@ export function ReceiptItemOverlay({
             deleteItem={handleDeleteFromOverlay}
             focusNextItemOrAddCurrent={handleDesktopFinishOrNext}
             hideDeleteButton
+            showFoodControls
           />
 
           <Pressable style={styles.finishButton} onPress={onClose}>

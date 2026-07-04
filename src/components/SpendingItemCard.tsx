@@ -1,7 +1,8 @@
-// Save as: src/components/SpendingItemCard.tsx
-
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import type { MutableRefObject } from "react";
+import { useRef } from "react";
 import {
+  Animated,
   StyleSheet,
   Text,
   TextInput,
@@ -15,7 +16,11 @@ type Props = {
   item: BudgetItem;
   itemNameRefs: MutableRefObject<Record<number, TextInput | null>>;
   itemAmountRefs: MutableRefObject<Record<number, TextInput | null>>;
-  updateItem: (id: number, field: "name" | "amount", value: string) => void;
+  updateItem: (
+    id: number,
+    field: "name" | "amount" | "isFood",
+    value: string | boolean,
+  ) => void;
   increaseQuantity: (id: number) => void;
   resetQuantity: (id: number) => void;
   toggleIncluded: (id: number) => void;
@@ -24,6 +29,7 @@ type Props = {
   hideDeleteButton?: boolean;
   onDragItem?: () => void;
   isDragging?: boolean;
+  showFoodControls?: boolean;
 };
 
 function cleanAmountInput(text: string) {
@@ -50,9 +56,39 @@ export function SpendingItemRow({
   hideDeleteButton = false,
   onDragItem,
   isDragging = false,
+  showFoodControls = false,
 }: Props) {
   const amountValue = item.amount ?? "";
   const showDollarSign = amountValue.length > 0;
+
+  const appleScale = useRef(new Animated.Value(1)).current;
+
+  function animateApple() {
+    Animated.sequence([
+      Animated.timing(appleScale, {
+        toValue: 0.88,
+        duration: 60,
+        useNativeDriver: true,
+      }),
+      Animated.spring(appleScale, {
+        toValue: 1.15,
+        friction: 4,
+        tension: 180,
+        useNativeDriver: true,
+      }),
+      Animated.spring(appleScale, {
+        toValue: 1,
+        friction: 5,
+        tension: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }
+
+  function toggleFood() {
+    animateApple();
+    updateItem(item.id, "isFood", !item.isFood);
+  }
 
   return (
     <View
@@ -141,19 +177,47 @@ export function SpendingItemRow({
         )}
       </View>
 
-      <TextInput
-        ref={(ref) => {
-          itemNameRefs.current[item.id] = ref;
-        }}
-        style={[styles.itemNameInput, !item.included && styles.excludedField]}
-        placeholder="Item name"
-        placeholderTextColor="#8A98A8"
-        value={item.name}
-        returnKeyType="next"
-        blurOnSubmit={false}
-        onChangeText={(text) => updateItem(item.id, "name", text)}
-        onSubmitEditing={() => focusNextItemOrAddCurrent(item.id)}
-      />
+      <View style={styles.itemNameWrapper}>
+        <TextInput
+          ref={(ref) => {
+            itemNameRefs.current[item.id] = ref;
+          }}
+          style={[
+            styles.itemNameInput,
+            showFoodControls && styles.itemNameInputWithFoodButton,
+            !item.included && styles.excludedField,
+          ]}
+          placeholder="Item name"
+          placeholderTextColor="#8A98A8"
+          value={item.name}
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onChangeText={(text) => updateItem(item.id, "name", text)}
+          onSubmitEditing={() => focusNextItemOrAddCurrent(item.id)}
+        />
+
+        {showFoodControls && (
+          <TouchableOpacity
+            style={styles.foodButton}
+            activeOpacity={0.8}
+            onPress={toggleFood}
+          >
+            <Animated.View style={{ transform: [{ scale: appleScale }] }}>
+              <MaterialCommunityIcons
+                name={item.isFood ? "food-apple" : "food-apple-outline"}
+                size={21}
+                color={item.isFood ? "#2ECC71" : "#123527"}
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {showFoodControls && item.isFood && (
+        <Text style={styles.foodHelpText}>
+          🍏 Food · Excluded from sales tax
+        </Text>
+      )}
     </View>
   );
 }
@@ -195,6 +259,10 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
 
+  itemNameWrapper: {
+    position: "relative",
+  },
+
   itemNameInput: {
     width: "100%",
     backgroundColor: "#2A3948",
@@ -204,6 +272,29 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 12,
     borderRadius: 12,
+  },
+
+  itemNameInputWithFoodButton: {
+    paddingRight: 48,
+  },
+
+  foodButton: {
+    position: "absolute",
+    right: 12,
+    top: 0,
+    bottom: 0,
+    width: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  foodHelpText: {
+    color: "#2ECC71",
+    fontSize: 13,
+    fontWeight: "800",
+    marginTop: -3,
+    marginLeft: 4,
+    marginBottom: 1,
   },
 
   itemControlsRow: {

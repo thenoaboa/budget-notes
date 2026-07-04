@@ -1,5 +1,3 @@
-// Save as: src/hooks/useBudgetEditor.ts
-
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Platform, TextInput } from "react-native";
@@ -21,6 +19,8 @@ import {
 
 import { getCreatedDateFromId } from "../utils/budgetEditorDates";
 
+type EditableItemField = "name" | "amount" | "isFood";
+
 function createEmptyItem(): BudgetItem {
   return {
     id: Date.now(),
@@ -28,6 +28,7 @@ function createEmptyItem(): BudgetItem {
     amount: "",
     quantity: 1,
     included: true,
+    isFood: false,
   };
 }
 
@@ -89,7 +90,12 @@ export function useBudgetEditor(budgetId: string | undefined) {
         setTaxRate(existingBudget.taxRate || "8.25");
 
         setItems(
-          mapStoredItemsToEditorItems(existingBudget.spendingItems || []),
+          mapStoredItemsToEditorItems(existingBudget.spendingItems || []).map(
+            (item) => ({
+              ...item,
+              isFood: item.isFood ?? false,
+            }),
+          ),
         );
       } else {
         setCreatedAt(getCreatedDateFromId(budgetId));
@@ -157,6 +163,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     salesTaxEnabled,
     taxRate,
   ]);
+
   async function saveBudgetNow() {
     if (!budgetId) return;
 
@@ -179,6 +186,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     setCreatedAt(savedCreatedAt);
     setLastEditedAt(savedUpdatedAt);
   }
+
   function addItem() {
     const newItem = createEmptyItem();
 
@@ -213,6 +221,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         id: draftItem.id || Date.now(),
         quantity: draftItem.quantity || 1,
         included: draftItem.included ?? true,
+        isFood: draftItem.isFood ?? false,
       },
       ...prev,
     ]);
@@ -229,7 +238,11 @@ export function useBudgetEditor(budgetId: string | undefined) {
     setSelectedReceiptItemId(null);
   }
 
-  function updateItem(id: number, field: "name" | "amount", value: string) {
+  function updateItem(
+    id: number,
+    field: EditableItemField,
+    value: string | boolean,
+  ) {
     setItems((prev) =>
       prev.map((item) =>
         item.id === id
@@ -348,8 +361,8 @@ export function useBudgetEditor(budgetId: string | undefined) {
   }, [items]);
 
   const taxAmount = useMemo(() => {
-    return getTaxAmount(subtotal, salesTaxEnabled, taxRate);
-  }, [subtotal, salesTaxEnabled, taxRate]);
+    return getTaxAmount(items, salesTaxEnabled, taxRate);
+  }, [items, salesTaxEnabled, taxRate]);
 
   const totalSpent = subtotal + taxAmount;
 

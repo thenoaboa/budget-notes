@@ -1,11 +1,10 @@
-// Save as: src/types/budgetEditor.ts
-
 export type BudgetItem = {
   id: number;
   name: string;
   amount: string;
   quantity: number;
   included: boolean;
+  isFood?: boolean;
 };
 
 export type StoredSpendingItem = {
@@ -14,6 +13,7 @@ export type StoredSpendingItem = {
   name: string;
   quantity: string;
   included: boolean;
+  isFood?: boolean;
 };
 
 export type StoredBudget = {

@@ -4,6 +4,7 @@ export type StoredBudgetItem = {
   amount: string;
   quantity?: number;
   included?: boolean;
+  isFood?: boolean;
 };
 
 export type Budget = {

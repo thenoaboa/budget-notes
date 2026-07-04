@@ -1,5 +1,3 @@
-// Save as: src/utils/budgetEditorCalculations.ts
-
 import type {
   BudgetItem,
   BudgetStatus,
@@ -16,13 +14,21 @@ export function getSubtotal(items: BudgetItem[]) {
 }
 
 export function getTaxAmount(
-  subtotal: number,
+  items: BudgetItem[],
   salesTaxEnabled: boolean,
   taxRate: string,
 ) {
   if (!salesTaxEnabled) return 0;
 
-  return subtotal * ((parseFloat(taxRate) || 0) / 100);
+  const taxableSubtotal = items.reduce((total, item) => {
+    if (!item.included) return total;
+    if (item.isFood) return total;
+
+    const amount = parseFloat(item.amount) || 0;
+    return total + amount * item.quantity;
+  }, 0);
+
+  return taxableSubtotal * ((parseFloat(taxRate) || 0) / 100);
 }
 
 export function getBudgetStatus(
