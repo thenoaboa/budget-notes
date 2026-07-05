@@ -18,7 +18,7 @@ export function BudgetActionButtons({ onBackToMenu, onOpenReceipt }: Props) {
         style={styles.editReceiptButton}
         onPress={onOpenReceipt}
       >
-        <Text style={styles.editReceiptButtonText}>Receipt →</Text>
+        <Text style={styles.editReceiptButtonText}>Hidden →</Text>
       </TouchableOpacity>
     </View>
   );
