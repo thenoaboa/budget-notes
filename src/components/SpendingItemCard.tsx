@@ -68,6 +68,8 @@ export function SpendingItemRow({
 }: Props) {
   const amountValue = item.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
+  const visibleAmountValue = getVisibleAmountValue(amountValue);
+  const cursorPosition = visibleAmountValue.length;
 
   const appleScale = useRef(new Animated.Value(1)).current;
 
@@ -132,7 +134,11 @@ export function SpendingItemRow({
             placeholderTextColor="#8A98A8"
             keyboardType="number-pad"
             returnKeyType="next"
-            value={getVisibleAmountValue(amountValue)}
+            value={visibleAmountValue}
+            selection={{
+              start: cursorPosition,
+              end: cursorPosition,
+            }}
             blurOnSubmit={false}
             onChangeText={(text) =>
               updateItem(item.id, "amount", formatMoneyInput(text))
