@@ -35,12 +35,9 @@ type Props = {
 function formatMoneyInput(text: string) {
   const digits = text.replace(/\D/g, "");
 
-  if (!digits) {
-    return "";
-  }
+  if (!digits) return "";
 
-  const cents = Number(digits);
-  return (cents / 100).toFixed(2);
+  return (Number(digits) / 100).toFixed(2);
 }
 
 function getVisibleAmountValue(amount: string) {
@@ -69,9 +66,18 @@ export function SpendingItemRow({
   const amountValue = item.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
   const visibleAmountValue = getVisibleAmountValue(amountValue);
-  const cursorPosition = amountIsEmpty ? 4 : visibleAmountValue.length;
 
   const appleScale = useRef(new Animated.Value(1)).current;
+
+  function handleAmountFocus() {
+    if (!amountIsEmpty) return;
+
+    requestAnimationFrame(() => {
+      itemAmountRefs.current[item.id]?.setNativeProps({
+        selection: { start: 4, end: 4 },
+      });
+    });
+  }
 
   function animateApple() {
     Animated.sequence([
@@ -134,12 +140,9 @@ export function SpendingItemRow({
             placeholderTextColor="#8A98A8"
             keyboardType="number-pad"
             returnKeyType="next"
-            value={amountIsEmpty ? "0.00" : visibleAmountValue}
-            selection={{
-              start: cursorPosition,
-              end: cursorPosition,
-            }}
+            value={visibleAmountValue}
             blurOnSubmit={false}
+            onFocus={handleAmountFocus}
             onChangeText={(text) =>
               updateItem(item.id, "amount", formatMoneyInput(text))
             }

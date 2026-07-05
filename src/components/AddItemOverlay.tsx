@@ -28,12 +28,9 @@ type Props = {
 function formatMoneyInput(text: string) {
   const digits = text.replace(/\D/g, "");
 
-  if (!digits) {
-    return "";
-  }
+  if (!digits) return "";
 
-  const cents = Number(digits);
-  return (cents / 100).toFixed(2);
+  return (Number(digits) / 100).toFixed(2);
 }
 
 function getVisibleAmountValue(amount: string) {
@@ -52,15 +49,25 @@ export function AddItemOverlay({
   onAdd,
 }: Props) {
   const itemNameRef = useRef<TextInput>(null);
+  const amountInputRef = useRef<TextInput>(null);
   const appleScale = useRef(new Animated.Value(1)).current;
 
   const amountValue = draftItem.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
   const visibleAmountValue = getVisibleAmountValue(amountValue);
-  const cursorPosition = amountIsEmpty ? 4 : visibleAmountValue.length;
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
+
+  function handleAmountFocus() {
+    if (!amountIsEmpty) return;
+
+    requestAnimationFrame(() => {
+      amountInputRef.current?.setNativeProps({
+        selection: { start: 4, end: 4 },
+      });
+    });
+  }
 
   function animateApple() {
     Animated.sequence([
@@ -114,9 +121,7 @@ export function AddItemOverlay({
   }
 
   function handleAmountKeyPress(event: any) {
-    if (!isDesktopWeb) {
-      return;
-    }
+    if (!isDesktopWeb) return;
 
     if (event.nativeEvent.key === "Tab") {
       event.preventDefault?.();
@@ -155,16 +160,14 @@ export function AddItemOverlay({
               </Text>
 
               <TextInput
+                ref={amountInputRef}
                 style={[styles.amountInput, styles.amountInputWithDollar]}
                 placeholder="0.00"
                 placeholderTextColor="#8A98A8"
                 keyboardType="number-pad"
-                value={amountIsEmpty ? "0.00" : visibleAmountValue}
-                selection={{
-                  start: cursorPosition,
-                  end: cursorPosition,
-                }}
+                value={visibleAmountValue}
                 blurOnSubmit={false}
+                onFocus={handleAmountFocus}
                 onKeyPress={handleAmountKeyPress}
                 onChangeText={(text) =>
                   setDraftItem((prev) => ({
