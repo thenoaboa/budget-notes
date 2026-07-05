@@ -57,7 +57,7 @@ export function AddItemOverlay({
   const amountValue = draftItem.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
   const visibleAmountValue = getVisibleAmountValue(amountValue);
-  const cursorPosition = visibleAmountValue.length;
+  const cursorPosition = amountIsEmpty ? 4 : visibleAmountValue.length;
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -159,7 +159,7 @@ export function AddItemOverlay({
                 placeholder="0.00"
                 placeholderTextColor="#8A98A8"
                 keyboardType="number-pad"
-                value={visibleAmountValue}
+                value={amountIsEmpty ? "0.00" : visibleAmountValue}
                 selection={{
                   start: cursorPosition,
                   end: cursorPosition,
