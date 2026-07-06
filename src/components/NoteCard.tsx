@@ -29,6 +29,9 @@ type BudgetCardStats = {
   remainingAmount: number;
   usedPercent: number;
   barPercent: number;
+  hasBudget: boolean;
+  isPlanning: boolean;
+  isLowBudget: boolean;
   isOverBudget: boolean;
   isComplete: boolean;
 };
@@ -77,18 +80,27 @@ function getMeaningfulTitle(title?: string) {
 function getBudgetStats(budget: Budget): BudgetCardStats {
   const title = getMeaningfulTitle(budget.budgetName);
   const budgetAmount = parseMoney(budget.amount);
+
   const subtotal = (budget.spendingItems || []).reduce(
     (sum, item) => sum + getItemTotal(item),
     0,
   );
+
   const taxRate = parseMoney(budget.taxRate);
   const taxAmount = budget.salesTaxEnabled ? subtotal * (taxRate / 100) : 0;
   const spentAmount = subtotal + taxAmount;
   const remainingAmount = budgetAmount - spentAmount;
-  const usedPercent = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
+
+  const hasBudget = budgetAmount > 0;
+  const isPlanning = !hasBudget;
+  const isOverBudget = hasBudget && remainingAmount < 0;
+  const isLowBudget =
+    hasBudget && remainingAmount >= 0 && remainingAmount <= budgetAmount * 0.2;
+
+  const usedPercent = hasBudget ? (spentAmount / budgetAmount) * 100 : 100;
   const roundedUsedPercent = Math.round(usedPercent);
-  const isOverBudget = remainingAmount < 0;
-  const isComplete = budgetAmount > 0 && !isOverBudget && remainingAmount === 0;
+
+  const isComplete = hasBudget && !isOverBudget && remainingAmount === 0;
 
   return {
     title,
@@ -98,6 +110,9 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
     remainingAmount,
     usedPercent: roundedUsedPercent > 100 ? 100 : roundedUsedPercent,
     barPercent: Math.min(Math.max(usedPercent, 0), 100),
+    hasBudget,
+    isPlanning,
+    isLowBudget,
     isOverBudget,
     isComplete,
   };
@@ -223,8 +238,15 @@ export function NoteCard({
   }
 
   function renderCardContent() {
-    const amountText = formatMoney(stats.remainingAmount);
-    const amountLabel = stats.isOverBudget ? "over budget" : "remaining";
+    const amountText = stats.isPlanning
+      ? formatMoney(stats.spentAmount)
+      : formatMoney(Math.abs(stats.remainingAmount));
+
+    const amountLabel = stats.isPlanning
+      ? "needed"
+      : stats.isOverBudget
+        ? "over budget"
+        : "remaining";
 
     return (
       <Pressable style={styles.card} onPress={handlePress}>
@@ -272,6 +294,7 @@ export function NoteCard({
             <Text
               style={[
                 styles.remainingAmount,
+                stats.isLowBudget && styles.lowAmount,
                 stats.isOverBudget && styles.negativeAmount,
               ]}
               numberOfLines={1}
@@ -298,6 +321,7 @@ export function NoteCard({
             style={[
               styles.progressFill,
               { width: `${stats.barPercent}%` },
+              stats.isLowBudget && styles.lowProgressFill,
               stats.isOverBudget && styles.negativeProgressFill,
             ]}
           />
@@ -479,6 +503,10 @@ const styles = StyleSheet.create({
     lineHeight: 29,
   },
 
+  lowAmount: {
+    color: "#F1C40F",
+  },
+
   negativeAmount: {
     color: "#FF5A52",
   },
@@ -529,6 +557,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#2ECC71",
   },
 
+  lowProgressFill: {
+    backgroundColor: "#F1C40F",
+  },
+
   negativeProgressFill: {
     backgroundColor: "#FF5A52",
   },
@@ -573,6 +605,7 @@ const styles = StyleSheet.create({
     color: "#FF6B6B",
     fontWeight: "900",
   },
+
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
