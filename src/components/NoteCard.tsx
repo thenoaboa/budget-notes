@@ -95,7 +95,7 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
   const isPlanning = !hasBudget;
   const isOverBudget = hasBudget && remainingAmount < 0;
   const isLowBudget =
-    hasBudget && remainingAmount >= 0 && remainingAmount <= budgetAmount * 0.2;
+    hasBudget && remainingAmount > 0 && remainingAmount <= budgetAmount * 0.2;
 
   const usedPercent = hasBudget ? (spentAmount / budgetAmount) * 100 : 100;
   const roundedUsedPercent = Math.round(usedPercent);
