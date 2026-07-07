@@ -64,6 +64,7 @@ export default function BudgetDashboardScreen() {
 
   const exportRef = useRef<View>(null);
   const hasHandledNamePromptRef = useRef(false);
+  const namePromptInputRef = useRef<TextInput>(null);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
@@ -653,18 +654,23 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
             transparent
             animationType="fade"
             onRequestClose={() => setShowNamePromptModal(false)}
+            onShow={() => {
+              setTimeout(() => {
+                namePromptInputRef.current?.focus();
+              }, 150);
+            }}
           >
             <View style={styles.modalBackdrop}>
               <View style={styles.compareModal}>
                 <Text style={styles.modalTitle}>Name this budget?</Text>
 
                 <TextInput
+                  ref={namePromptInputRef}
                   style={styles.namePromptInput}
                   value={budgetNameDraft}
                   onChangeText={setBudgetNameDraft}
                   placeholder="Weekly groceries"
                   placeholderTextColor="#AAB7C4"
-                  autoFocus
                   returnKeyType="done"
                   onSubmitEditing={saveBudgetNameFromPrompt}
                 />
