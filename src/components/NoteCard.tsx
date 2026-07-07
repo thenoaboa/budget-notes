@@ -335,7 +335,7 @@ export function NoteCard({
               STRIPES.map((_, index) => (
                 <View
                   key={index}
-                  style={[styles.progressStripe, { left: index * 16 }]}
+                  style={[styles.progressStripe, { left: index * 18 }]}
                 />
               ))}
           </View>
