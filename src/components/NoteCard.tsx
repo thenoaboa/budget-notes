@@ -168,9 +168,13 @@ export function NoteCard({
 
   function saveTitle() {
     const cleanedTitle = draftTitle.trim();
+    const currentTitle = (budget.budgetName ?? "").trim();
 
     setDraftTitle(cleanedTitle);
     setIsEditing(false);
+
+    if (cleanedTitle === currentTitle) return;
+
     onRename(cleanedTitle);
   }
 
