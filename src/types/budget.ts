@@ -6,6 +6,7 @@ export type StoredBudgetItem = {
   included?: boolean;
   isFood?: boolean;
   note?: string;
+  link?: string;
 };
 
 export type Budget = {

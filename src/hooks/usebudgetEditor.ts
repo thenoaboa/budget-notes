@@ -19,7 +19,7 @@ import {
 
 import { getCreatedDateFromId } from "../utils/budgetEditorDates";
 
-type EditableItemField = "name" | "amount" | "isFood" | "note";
+type EditableItemField = "name" | "amount" | "isFood" | "note" | "link";
 
 function createEmptyItem(): BudgetItem {
   return {
@@ -30,6 +30,7 @@ function createEmptyItem(): BudgetItem {
     included: true,
     isFood: false,
     note: "",
+    link: "",
   };
 }
 
@@ -96,6 +97,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
               ...item,
               isFood: item.isFood ?? false,
               note: item.note ?? "",
+              link: item.link ?? "",
             }),
           ),
         );
@@ -119,7 +121,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
       loadBudget();
     }, [loadBudget]),
   );
-
   useEffect(() => {
     async function autoSaveBudget() {
       if (!budgetId || !hasLoaded) return;
@@ -225,6 +226,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         included: draftItem.included ?? true,
         isFood: draftItem.isFood ?? false,
         note: draftItem.note ?? "",
+        link: draftItem.link ?? "",
       },
       ...prev,
     ]);
@@ -300,7 +302,6 @@ export function useBudgetEditor(budgetId: string | undefined) {
   function reorderItems(updatedItems: BudgetItem[]) {
     setItems(updatedItems);
   }
-
   function deleteItem(id: number) {
     const removeItem = () => {
       setItems((prev) => prev.filter((item) => item.id !== id));

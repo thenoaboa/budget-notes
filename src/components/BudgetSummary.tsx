@@ -4,6 +4,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RefObject, useState } from "react";
 import {
   Dimensions,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -16,6 +17,8 @@ import { Swipeable } from "react-native-gesture-handler";
 import type { BudgetStatusStyle } from "../types/budgetEditor";
 import { MoneyAvailableSection } from "./MoneyAvailable";
 
+type AccessoryType = "link" | "note";
+
 type SummaryItem = {
   id: number;
   name: string;
@@ -24,6 +27,7 @@ type SummaryItem = {
   quantity?: number;
   isFood?: boolean;
   note?: string;
+  link?: string;
 };
 
 type Props = {
@@ -67,6 +71,18 @@ function formatMoney(value: number) {
   return `$${value.toFixed(2)}`;
 }
 
+function normalizeUrl(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+
+  if (/^https?:\/\//i.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  return `https://${trimmedValue}`;
+}
+
 export function BudgetSummaryBox({
   items,
   subtotal,
@@ -87,9 +103,10 @@ export function BudgetSummaryBox({
   onDeleteItem,
 }: Props) {
   const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
-  const [expandedNoteItemId, setExpandedNoteItemId] = useState<number | null>(
-    null,
-  );
+  const [expandedAccessory, setExpandedAccessory] = useState<{
+    itemId: number;
+    type: AccessoryType;
+  } | null>(null);
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -126,15 +143,63 @@ export function BudgetSummaryBox({
     );
   }
 
-  function renderNoteDropdown(item: SummaryItem) {
-    if (expandedNoteItemId !== item.id || !item.note?.trim()) {
+  function toggleAccessory(itemId: number, type: AccessoryType) {
+    setExpandedAccessory((current) => {
+      if (current?.itemId === itemId && current.type === type) {
+        return null;
+      }
+
+      return {
+        itemId,
+        type,
+      };
+    });
+  }
+
+  async function openProductLink(link: string) {
+    const normalizedUrl = normalizeUrl(link);
+
+    if (!normalizedUrl) return;
+
+    try {
+      await Linking.openURL(normalizedUrl);
+    } catch (error) {
+      console.log("Open product link failed:", error);
+    }
+  }
+
+  function renderAccessoryDropdown(item: SummaryItem) {
+    if (expandedAccessory?.itemId !== item.id) {
+      return null;
+    }
+
+    if (expandedAccessory.type === "note") {
+      if (!item.note?.trim()) {
+        return null;
+      }
+
+      return (
+        <View style={styles.accessoryDropdown}>
+          <Text style={styles.accessoryDropdownTitle}>Note</Text>
+          <Text style={styles.accessoryDropdownText}>{item.note}</Text>
+        </View>
+      );
+    }
+
+    if (!item.link?.trim()) {
       return null;
     }
 
     return (
-      <View style={styles.noteDropdown}>
-        <Text style={styles.noteDropdownTitle}>Note</Text>
-        <Text style={styles.noteDropdownText}>{item.note}</Text>
+      <View style={styles.accessoryDropdown}>
+        <Text style={styles.accessoryDropdownTitle}>Product Link</Text>
+
+        <Pressable
+          style={styles.openLinkButton}
+          onPress={() => openProductLink(item.link ?? "")}
+        >
+          <Text style={styles.openLinkButtonText}>Open Product →</Text>
+        </Pressable>
       </View>
     );
   }
@@ -146,9 +211,11 @@ export function BudgetSummaryBox({
     lineTotal: number,
     isFood?: boolean,
     note?: string,
+    link?: string,
   ) {
     const shouldHighlightFoodAmount = salesTaxEnabled && isFood;
     const hasNote = Boolean(note?.trim());
+    const hasLink = Boolean(link?.trim());
     const label = quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`;
 
     return (
@@ -156,14 +223,28 @@ export function BudgetSummaryBox({
         <View style={styles.itemLabelRow}>
           <Text style={styles.itemText}>{label}</Text>
 
+          {hasLink && (
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+                toggleAccessory(itemId, "link");
+              }}
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons
+                name="link-variant"
+                size={15}
+                color="#2ECC71"
+                style={styles.linkIcon}
+              />
+            </Pressable>
+          )}
+
           {hasNote && (
             <Pressable
               onPress={(event) => {
                 event.stopPropagation();
-
-                setExpandedNoteItemId((currentId) =>
-                  currentId === itemId ? null : itemId,
-                );
+                toggleAccessory(itemId, "note");
               }}
               hitSlop={8}
             >
@@ -242,9 +323,10 @@ export function BudgetSummaryBox({
                       lineTotal,
                       item.isFood,
                       item.note,
+                      item.link,
                     )}
 
-                    {renderNoteDropdown(item)}
+                    {renderAccessoryDropdown(item)}
                   </View>
 
                   <Pressable
@@ -283,9 +365,10 @@ export function BudgetSummaryBox({
                     lineTotal,
                     item.isFood,
                     item.note,
+                    item.link,
                   )}
 
-                  {renderNoteDropdown(item)}
+                  {renderAccessoryDropdown(item)}
                 </View>
               </Swipeable>
             );
@@ -444,12 +527,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
+  linkIcon: {
+    marginLeft: 5,
+    marginTop: 1,
+  },
+
   noteIcon: {
     marginLeft: 5,
     marginTop: 1,
   },
 
-  noteDropdown: {
+  accessoryDropdown: {
     backgroundColor: "#14251E",
     borderWidth: 1,
     borderColor: "#24533A",
@@ -459,18 +547,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  noteDropdownTitle: {
+  accessoryDropdownTitle: {
     color: "#2ECC71",
     fontSize: 13,
     fontWeight: "900",
     marginBottom: 4,
   },
 
-  noteDropdownText: {
+  accessoryDropdownText: {
     color: "#CAD3DD",
     fontSize: 14,
     fontWeight: "700",
     lineHeight: 20,
+  },
+
+  openLinkButton: {
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+
+  openLinkButtonText: {
+    color: "#2ECC71",
+    fontSize: 14,
+    fontWeight: "900",
+    textDecorationLine: "underline",
   },
 
   itemAmount: {

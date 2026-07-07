@@ -45,6 +45,7 @@ export function mapStoredItemsToEditorItems(
     included: item.included ?? true,
     isFood: item.isFood ?? false,
     note: item.note ?? "",
+    link: item.link ?? "",
   }));
 }
 
@@ -77,6 +78,7 @@ export async function autoSaveBudgetById({
       ...item,
       isFood: item.isFood ?? false,
       note: item.note ?? "",
+      link: item.link ?? "",
     })),
 
     createdAt: existingBudget?.createdAt || createdAt || now,

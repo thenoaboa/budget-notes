@@ -51,12 +51,15 @@ export function AddItemOverlay({
   const amountInputRef = useRef<TextInput>(null);
   const appleScale = useRef(new Animated.Value(1)).current;
 
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkDraft, setLinkDraft] = useState("");
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
   const amountValue = draftItem.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
   const visibleAmountValue = getVisibleAmountValue(amountValue);
+  const hasLink = Boolean(draftItem.link?.trim());
   const hasNote = Boolean(draftItem.note?.trim());
 
   const isDesktopWeb =
@@ -132,6 +135,25 @@ export function AddItemOverlay({
     }
   }
 
+  function openLinkModal() {
+    setLinkDraft(draftItem.link ?? "");
+    setShowLinkModal(true);
+  }
+
+  function saveLink() {
+    setDraftItem((prev) => ({
+      ...prev,
+      link: linkDraft.trim(),
+    }));
+
+    setShowLinkModal(false);
+  }
+
+  function cancelLink() {
+    setLinkDraft(draftItem.link ?? "");
+    setShowLinkModal(false);
+  }
+
   function openNoteModal() {
     setNoteDraft(draftItem.note ?? "");
     setShowNoteModal(true);
@@ -163,6 +185,18 @@ export function AddItemOverlay({
             </Text>
 
             <View style={styles.topActions}>
+              <Pressable
+                style={styles.linkButton}
+                onPress={openLinkModal}
+                hitSlop={10}
+              >
+                <MaterialCommunityIcons
+                  name="link-variant"
+                  size={23}
+                  color={hasLink ? "#2ECC71" : "#A7B1BD"}
+                />
+              </Pressable>
+
               <Pressable
                 style={styles.noteButton}
                 onPress={openNoteModal}
@@ -271,6 +305,46 @@ export function AddItemOverlay({
         </View>
 
         <Modal
+          visible={showLinkModal}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelLink}
+        >
+          <View style={styles.noteModalBackdrop}>
+            <View style={styles.noteModalCard}>
+              <Text selectable={false} style={styles.noteModalTitle}>
+                Product Link
+              </Text>
+
+              <TextInput
+                style={styles.noteInput}
+                value={linkDraft}
+                onChangeText={setLinkDraft}
+                placeholder="https://example.com/product"
+                placeholderTextColor="#8A98A8"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+
+              <View style={styles.noteActions}>
+                <Pressable style={styles.noteCancelButton} onPress={cancelLink}>
+                  <Text selectable={false} style={styles.noteCancelText}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable style={styles.noteSaveButton} onPress={saveLink}>
+                  <Text selectable={false} style={styles.noteSaveText}>
+                    Save
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <Modal
           visible={showNoteModal}
           transparent
           animationType="fade"
@@ -358,6 +432,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+
+  linkButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   noteButton: {

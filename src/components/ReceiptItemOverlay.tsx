@@ -48,6 +48,8 @@ export function ReceiptItemOverlay({
 
   onClose,
 }: Props) {
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkDraft, setLinkDraft] = useState("");
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteDraft, setNoteDraft] = useState("");
 
@@ -58,6 +60,7 @@ export function ReceiptItemOverlay({
     return null;
   }
 
+  const hasLink = Boolean(item.link?.trim());
   const hasNote = Boolean(item.note?.trim());
 
   function handleDesktopFinishOrNext(...args: any[]) {
@@ -72,6 +75,27 @@ export function ReceiptItemOverlay({
   function handleDeleteFromOverlay(...args: any[]) {
     onClose();
     deleteItem(...args);
+  }
+
+  function openLinkModal() {
+    if (!item) return;
+
+    setLinkDraft(item.link ?? "");
+    setShowLinkModal(true);
+  }
+
+  function cancelLink() {
+    if (!item) return;
+
+    setLinkDraft(item.link ?? "");
+    setShowLinkModal(false);
+  }
+
+  function saveLink() {
+    if (!item) return;
+
+    updateItem(item.id, "link", linkDraft.trim());
+    setShowLinkModal(false);
   }
 
   function openNoteModal() {
@@ -105,6 +129,18 @@ export function ReceiptItemOverlay({
             <Text style={styles.title}>Edit Item</Text>
 
             <View style={styles.topActions}>
+              <Pressable
+                style={styles.linkButton}
+                onPress={openLinkModal}
+                hitSlop={10}
+              >
+                <MaterialCommunityIcons
+                  name="link-variant"
+                  size={23}
+                  color={hasLink ? "#2ECC71" : "#A7B1BD"}
+                />
+              </Pressable>
+
               <Pressable
                 style={styles.noteButton}
                 onPress={openNoteModal}
@@ -141,6 +177,40 @@ export function ReceiptItemOverlay({
             <Text style={styles.finishButtonText}>Finish</Text>
           </Pressable>
         </View>
+
+        <Modal
+          visible={showLinkModal}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelLink}
+        >
+          <View style={styles.noteModalBackdrop}>
+            <View style={styles.noteModalCard}>
+              <Text style={styles.noteModalTitle}>Product Link</Text>
+
+              <TextInput
+                style={styles.noteInput}
+                value={linkDraft}
+                onChangeText={setLinkDraft}
+                placeholder="https://example.com/product"
+                placeholderTextColor="#8A98A8"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+
+              <View style={styles.noteActions}>
+                <Pressable style={styles.noteCancelButton} onPress={cancelLink}>
+                  <Text style={styles.noteCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable style={styles.noteSaveButton} onPress={saveLink}>
+                  <Text style={styles.noteSaveText}>Save</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
 
         <Modal
           visible={showNoteModal}
@@ -216,6 +286,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
+  },
+
+  linkButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   noteButton: {

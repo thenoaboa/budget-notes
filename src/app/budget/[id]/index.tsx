@@ -296,6 +296,7 @@ export default function BudgetDashboardScreen() {
             included: true,
             isFood: false,
             note: "",
+            link: "",
           };
         }
 
@@ -316,6 +317,7 @@ export default function BudgetDashboardScreen() {
             included: true,
             isFood: false,
             note: "",
+            link: "",
           };
         }
 
@@ -332,6 +334,7 @@ export default function BudgetDashboardScreen() {
             included: true,
             isFood: false,
             note: "",
+            link: "",
           };
         }
 
@@ -343,6 +346,7 @@ export default function BudgetDashboardScreen() {
           included: true,
           isFood: false,
           note: "",
+          link: "",
         };
       })
       .filter((item) => item.name.trim().length > 0) as BudgetItem[];
