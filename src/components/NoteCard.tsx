@@ -265,7 +265,6 @@ export function NoteCard({
                 onChangeText={setDraftTitle}
                 onBlur={saveTitle}
                 onSubmitEditing={saveTitle}
-                autoFocus
                 selectTextOnFocus
                 returnKeyType="done"
                 placeholder="Add title"
