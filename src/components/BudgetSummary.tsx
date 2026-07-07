@@ -1,5 +1,6 @@
 // Save as: src/components/BudgetSummary.tsx
 
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RefObject, useState } from "react";
 import {
   Dimensions,
@@ -22,6 +23,7 @@ type SummaryItem = {
   included?: boolean;
   quantity?: number;
   isFood?: boolean;
+  note?: string;
 };
 
 type Props = {
@@ -127,14 +129,26 @@ export function BudgetSummaryBox({
     quantity: number,
     lineTotal: number,
     isFood?: boolean,
+    note?: string,
   ) {
     const shouldHighlightFoodAmount = salesTaxEnabled && isFood;
+    const hasNote = Boolean(note?.trim());
+    const label = quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`;
 
     return (
       <Pressable style={styles.itemRow} onPress={() => onPressItem?.(itemId)}>
-        <Text style={styles.itemText}>
-          {quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`}
-        </Text>
+        <View style={styles.itemLabelRow}>
+          <Text style={styles.itemText}>{label}</Text>
+
+          {hasNote && (
+            <MaterialCommunityIcons
+              name="note-outline"
+              size={15}
+              color="#2ECC71"
+              style={styles.noteIcon}
+            />
+          )}
+        </View>
 
         <Text
           style={[
@@ -200,6 +214,7 @@ export function BudgetSummaryBox({
                       quantity,
                       lineTotal,
                       item.isFood,
+                      item.note,
                     )}
                   </View>
 
@@ -237,6 +252,7 @@ export function BudgetSummaryBox({
                   quantity,
                   lineTotal,
                   item.isFood,
+                  item.note,
                 )}
               </Swipeable>
             );
@@ -382,12 +398,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#1B2633",
   },
 
-  itemText: {
+  itemLabelRow: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: 12,
+  },
+
+  itemText: {
     color: "#CAD3DD",
     fontSize: 15,
     fontWeight: "700",
-    paddingRight: 12,
+  },
+
+  noteIcon: {
+    marginLeft: 5,
+    marginTop: 1,
   },
 
   itemAmount: {

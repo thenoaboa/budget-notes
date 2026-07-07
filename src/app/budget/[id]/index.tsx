@@ -293,6 +293,8 @@ export default function BudgetDashboardScreen() {
             amount: singleAmount.toFixed(2),
             quantity,
             included: true,
+            isFood: false,
+            note: "",
           };
         }
 
@@ -311,6 +313,8 @@ export default function BudgetDashboardScreen() {
             amount: singleAmount.toFixed(2),
             quantity,
             included: true,
+            isFood: false,
+            note: "",
           };
         }
 
@@ -325,6 +329,8 @@ export default function BudgetDashboardScreen() {
             amount: amountMatch[2].trim(),
             quantity: 1,
             included: true,
+            isFood: false,
+            note: "",
           };
         }
 
@@ -334,9 +340,11 @@ export default function BudgetDashboardScreen() {
           amount: "",
           quantity: 1,
           included: true,
+          isFood: false,
+          note: "",
         };
       })
-      .filter((item): item is BudgetItem => item.name.trim().length > 0);
+      .filter((item) => item.name.trim().length > 0) as BudgetItem[];
 
     if (importedItems.length === 0) return;
 

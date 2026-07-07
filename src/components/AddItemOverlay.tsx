@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -10,8 +11,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import type { BudgetItem } from "../types/budgetEditor";
 
@@ -52,9 +51,13 @@ export function AddItemOverlay({
   const amountInputRef = useRef<TextInput>(null);
   const appleScale = useRef(new Animated.Value(1)).current;
 
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+
   const amountValue = draftItem.amount ?? "";
   const amountIsEmpty = amountLooksEmpty(amountValue);
   const visibleAmountValue = getVisibleAmountValue(amountValue);
+  const hasNote = Boolean(draftItem.note?.trim());
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -129,6 +132,25 @@ export function AddItemOverlay({
     }
   }
 
+  function openNoteModal() {
+    setNoteDraft(draftItem.note ?? "");
+    setShowNoteModal(true);
+  }
+
+  function saveNote() {
+    setDraftItem((prev) => ({
+      ...prev,
+      note: noteDraft.trim(),
+    }));
+
+    setShowNoteModal(false);
+  }
+
+  function cancelNote() {
+    setNoteDraft(draftItem.note ?? "");
+    setShowNoteModal(false);
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -140,11 +162,25 @@ export function AddItemOverlay({
               New Item
             </Text>
 
-            <Pressable onPress={onClose}>
-              <Text selectable={false} style={styles.close}>
-                ×
-              </Text>
-            </Pressable>
+            <View style={styles.topActions}>
+              <Pressable
+                style={styles.noteButton}
+                onPress={openNoteModal}
+                hitSlop={10}
+              >
+                <MaterialCommunityIcons
+                  name="note-outline"
+                  size={23}
+                  color={hasNote ? "#2ECC71" : "#A7B1BD"}
+                />
+              </Pressable>
+
+              <Pressable onPress={onClose}>
+                <Text selectable={false} style={styles.close}>
+                  ×
+                </Text>
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.amountRow}>
@@ -233,6 +269,45 @@ export function AddItemOverlay({
             </Text>
           </Pressable>
         </View>
+
+        <Modal
+          visible={showNoteModal}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelNote}
+        >
+          <View style={styles.noteModalBackdrop}>
+            <View style={styles.noteModalCard}>
+              <Text selectable={false} style={styles.noteModalTitle}>
+                Item Note
+              </Text>
+
+              <TextInput
+                style={styles.noteInput}
+                value={noteDraft}
+                onChangeText={setNoteDraft}
+                multiline
+                placeholder="Add a note..."
+                placeholderTextColor="#8A98A8"
+                textAlignVertical="top"
+              />
+
+              <View style={styles.noteActions}>
+                <Pressable style={styles.noteCancelButton} onPress={cancelNote}>
+                  <Text selectable={false} style={styles.noteCancelText}>
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable style={styles.noteSaveButton} onPress={saveNote}>
+                  <Text selectable={false} style={styles.noteSaveText}>
+                    Save
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
@@ -277,6 +352,19 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
     ...nonSelectableText,
+  },
+
+  topActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+
+  noteButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   close: {
@@ -399,6 +487,74 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#101820",
     fontSize: 17,
+    fontWeight: "900",
+    ...nonSelectableText,
+  },
+
+  noteModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "center",
+    paddingHorizontal: 22,
+  },
+
+  noteModalCard: {
+    backgroundColor: "#101820",
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  noteModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 12,
+    ...nonSelectableText,
+  },
+
+  noteInput: {
+    minHeight: 130,
+    backgroundColor: "#182638",
+    color: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    borderRadius: 16,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 14,
+  },
+
+  noteActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+
+  noteCancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+
+  noteCancelText: {
+    color: "#AAB7C4",
+    fontSize: 15,
+    fontWeight: "800",
+    ...nonSelectableText,
+  },
+
+  noteSaveButton: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+  },
+
+  noteSaveText: {
+    color: "#101820",
+    fontSize: 15,
     fontWeight: "900",
     ...nonSelectableText,
   },

@@ -18,7 +18,7 @@ type Props = {
   itemAmountRefs: MutableRefObject<Record<number, TextInput | null>>;
   updateItem: (
     id: number,
-    field: "name" | "amount" | "isFood",
+    field: "name" | "amount" | "isFood" | "note",
     value: string | boolean,
   ) => void;
   increaseQuantity: (id: number) => void;

@@ -44,6 +44,7 @@ export function mapStoredItemsToEditorItems(
     quantity: Number(item.quantity) || 1,
     included: item.included ?? true,
     isFood: item.isFood ?? false,
+    note: item.note ?? "",
   }));
 }
 
@@ -75,6 +76,7 @@ export async function autoSaveBudgetById({
     spendingItems: items.map((item) => ({
       ...item,
       isFood: item.isFood ?? false,
+      note: item.note ?? "",
     })),
 
     createdAt: existingBudget?.createdAt || createdAt || now,

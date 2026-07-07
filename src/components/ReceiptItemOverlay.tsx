@@ -1,3 +1,5 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useState } from "react";
 import {
   Dimensions,
   Modal,
@@ -5,6 +7,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -45,12 +48,17 @@ export function ReceiptItemOverlay({
 
   onClose,
 }: Props) {
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
 
   if (!item) {
     return null;
   }
+
+  const hasNote = Boolean(item.note?.trim());
 
   function handleDesktopFinishOrNext(...args: any[]) {
     if (isDesktopWeb) {
@@ -66,6 +74,27 @@ export function ReceiptItemOverlay({
     deleteItem(...args);
   }
 
+  function openNoteModal() {
+    if (!item) return;
+
+    setNoteDraft(item.note ?? "");
+    setShowNoteModal(true);
+  }
+
+  function cancelNote() {
+    if (!item) return;
+
+    setNoteDraft(item.note ?? "");
+    setShowNoteModal(false);
+  }
+
+  function saveNote() {
+    if (!item) return;
+
+    updateItem(item.id, "note", noteDraft.trim());
+    setShowNoteModal(false);
+  }
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -75,9 +104,23 @@ export function ReceiptItemOverlay({
           <View style={styles.topRow}>
             <Text style={styles.title}>Edit Item</Text>
 
-            <Pressable onPress={onClose}>
-              <Text style={styles.close}>×</Text>
-            </Pressable>
+            <View style={styles.topActions}>
+              <Pressable
+                style={styles.noteButton}
+                onPress={openNoteModal}
+                hitSlop={10}
+              >
+                <MaterialCommunityIcons
+                  name="note-outline"
+                  size={23}
+                  color={hasNote ? "#2ECC71" : "#A7B1BD"}
+                />
+              </Pressable>
+
+              <Pressable onPress={onClose}>
+                <Text style={styles.close}>×</Text>
+              </Pressable>
+            </View>
           </View>
 
           <SpendingItemRow
@@ -98,11 +141,43 @@ export function ReceiptItemOverlay({
             <Text style={styles.finishButtonText}>Finish</Text>
           </Pressable>
         </View>
+
+        <Modal
+          visible={showNoteModal}
+          transparent
+          animationType="fade"
+          onRequestClose={cancelNote}
+        >
+          <View style={styles.noteModalBackdrop}>
+            <View style={styles.noteModalCard}>
+              <Text style={styles.noteModalTitle}>Item Note</Text>
+
+              <TextInput
+                style={styles.noteInput}
+                value={noteDraft}
+                onChangeText={setNoteDraft}
+                multiline
+                placeholder="Add a note..."
+                placeholderTextColor="#8A98A8"
+                textAlignVertical="top"
+              />
+
+              <View style={styles.noteActions}>
+                <Pressable style={styles.noteCancelButton} onPress={cancelNote}>
+                  <Text style={styles.noteCancelText}>Cancel</Text>
+                </Pressable>
+
+                <Pressable style={styles.noteSaveButton} onPress={saveNote}>
+                  <Text style={styles.noteSaveText}>Save</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -137,6 +212,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  topActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+
+  noteButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   close: {
     color: "#A7B1BD",
     fontSize: 28,
@@ -154,6 +242,71 @@ const styles = StyleSheet.create({
   finishButtonText: {
     color: "#101820",
     fontSize: 17,
+    fontWeight: "900",
+  },
+
+  noteModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.65)",
+    justifyContent: "center",
+    paddingHorizontal: 22,
+  },
+
+  noteModalCard: {
+    backgroundColor: "#101820",
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  noteModalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 12,
+  },
+
+  noteInput: {
+    minHeight: 130,
+    backgroundColor: "#182638",
+    color: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    borderRadius: 16,
+    padding: 12,
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 14,
+  },
+
+  noteActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+
+  noteCancelButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+
+  noteCancelText: {
+    color: "#AAB7C4",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  noteSaveButton: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+  },
+
+  noteSaveText: {
+    color: "#101820",
+    fontSize: 15,
     fontWeight: "900",
   },
 });

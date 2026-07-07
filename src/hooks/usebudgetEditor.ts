@@ -19,7 +19,7 @@ import {
 
 import { getCreatedDateFromId } from "../utils/budgetEditorDates";
 
-type EditableItemField = "name" | "amount" | "isFood";
+type EditableItemField = "name" | "amount" | "isFood" | "note";
 
 function createEmptyItem(): BudgetItem {
   return {
@@ -29,6 +29,7 @@ function createEmptyItem(): BudgetItem {
     quantity: 1,
     included: true,
     isFood: false,
+    note: "",
   };
 }
 
@@ -94,6 +95,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
             (item) => ({
               ...item,
               isFood: item.isFood ?? false,
+              note: item.note ?? "",
             }),
           ),
         );
@@ -222,6 +224,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         quantity: draftItem.quantity || 1,
         included: draftItem.included ?? true,
         isFood: draftItem.isFood ?? false,
+        note: draftItem.note ?? "",
       },
       ...prev,
     ]);
