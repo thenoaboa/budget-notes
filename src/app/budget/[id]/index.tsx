@@ -117,9 +117,11 @@ export default function BudgetDashboardScreen() {
     if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
       setShowNamePromptModal(true);
 
-      router.replace(`/budget/${budgetId}` as any);
+      setTimeout(() => {
+        router.replace(`/budget/${budgetId}` as any);
+      }, 100);
     }
-  }, [shouldShowNamePrompt]);
+  }, [shouldShowNamePrompt, editor.noteTitle, budgetId, router]);
 
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();
