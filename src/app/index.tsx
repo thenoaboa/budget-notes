@@ -109,7 +109,7 @@ export default function HomeScreen() {
 
     const id = Date.now().toString();
 
-    router.push(`/budget/${id}` as any);
+    router.push(`/budget/${id}?showNamePrompt=1` as any);
 
     resetSearchInBackground();
   }

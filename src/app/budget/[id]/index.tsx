@@ -54,7 +54,7 @@ type TutorialStep =
 export default function BudgetDashboardScreen() {
   const router = useRouter();
   const posthog = usePostHog();
-  const { id } = useLocalSearchParams();
+  const { id, showNamePrompt } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
   const editor = useBudgetEditor(budgetId);
@@ -76,6 +76,8 @@ export default function BudgetDashboardScreen() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddItemsChoiceModal, setShowAddItemsChoiceModal] = useState(false);
   const [importText, setImportText] = useState("");
+  const [showNamePromptModal, setShowNamePromptModal] = useState(false);
+  const [budgetNameDraft, setBudgetNameDraft] = useState("");
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -106,6 +108,31 @@ export default function BudgetDashboardScreen() {
 
       setTutorialStep(nextStep);
     }, 150);
+  }
+
+  useEffect(() => {
+    if (showNamePrompt === "1" && !editor.noteTitle?.trim()) {
+      setShowNamePromptModal(true);
+    }
+  }, [showNamePrompt, editor.noteTitle]);
+
+  async function saveBudgetNameFromPrompt() {
+    const trimmedName = budgetNameDraft.trim();
+
+    if (!trimmedName) {
+      setShowNamePromptModal(false);
+      return;
+    }
+
+    (editor as any).setNoteTitle?.(trimmedName);
+    (editor as any).setBudgetName?.(trimmedName);
+    (editor as any).saveTitle?.(trimmedName);
+
+    setShowNamePromptModal(false);
+
+    setTimeout(() => {
+      editor.saveBudgetNow?.();
+    }, 0);
   }
 
   useEffect(() => {
@@ -608,6 +635,47 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
               onSkip={skipTutorial}
             />
           )}
+
+          <Modal
+            visible={showNamePromptModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowNamePromptModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>Name this budget?</Text>
+
+                <TextInput
+                  style={styles.namePromptInput}
+                  value={budgetNameDraft}
+                  onChangeText={setBudgetNameDraft}
+                  placeholder="Weekly groceries"
+                  placeholderTextColor="#AAB7C4"
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={saveBudgetNameFromPrompt}
+                />
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={saveBudgetNameFromPrompt}
+                >
+                  <Text style={styles.budgetOptionText}>Save</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setBudgetNameDraft("");
+                    setShowNamePromptModal(false);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Skip for Now</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
           <Modal
             visible={showAddItemsChoiceModal}
             transparent
@@ -906,6 +974,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
   },
+  namePromptInput: {
+    backgroundColor: "#182638",
+    color: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+
   importInput: {
     minHeight: 160,
     color: "#FFFFFF",
