@@ -180,7 +180,6 @@ export function BudgetSummaryBox({
 
       return (
         <View style={styles.accessoryDropdown}>
-          <Text style={styles.accessoryDropdownTitle}>Note</Text>
           <Text style={styles.accessoryDropdownText}>{item.note}</Text>
         </View>
       );
@@ -192,8 +191,6 @@ export function BudgetSummaryBox({
 
     return (
       <View style={styles.accessoryDropdown}>
-        <Text style={styles.accessoryDropdownTitle}>Product Link</Text>
-
         <Pressable
           style={styles.openLinkButton}
           onPress={() => openProductLink(item.link ?? "")}
@@ -234,7 +231,7 @@ export function BudgetSummaryBox({
               <MaterialCommunityIcons
                 name="link-variant"
                 size={15}
-                color="#2ECC71"
+                color="#4A90E2"
                 style={styles.linkIcon}
               />
             </Pressable>
@@ -538,20 +535,13 @@ const styles = StyleSheet.create({
   },
 
   accessoryDropdown: {
-    backgroundColor: "#14251E",
+    backgroundColor: "#182638",
     borderWidth: 1,
-    borderColor: "#24533A",
+    borderColor: "#344657",
     borderRadius: 14,
     padding: 12,
     marginTop: 4,
     marginBottom: 8,
-  },
-
-  accessoryDropdownTitle: {
-    color: "#2ECC71",
-    fontSize: 13,
-    fontWeight: "900",
-    marginBottom: 4,
   },
 
   accessoryDropdownText: {
@@ -567,7 +557,7 @@ const styles = StyleSheet.create({
   },
 
   openLinkButtonText: {
-    color: "#2ECC71",
+    color: "#4A90E2",
     fontSize: 14,
     fontWeight: "900",
     textDecorationLine: "underline",
