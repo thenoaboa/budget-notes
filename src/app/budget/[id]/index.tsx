@@ -57,6 +57,9 @@ export default function BudgetDashboardScreen() {
   const { id, showNamePrompt } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
+  const shouldShowNamePrompt = Array.isArray(showNamePrompt)
+    ? showNamePrompt[0]
+    : showNamePrompt;
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
@@ -111,10 +114,10 @@ export default function BudgetDashboardScreen() {
   }
 
   useEffect(() => {
-    if (showNamePrompt === "1" && !editor.noteTitle?.trim()) {
+    if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
       setShowNamePromptModal(true);
     }
-  }, [showNamePrompt, editor.noteTitle]);
+  }, [shouldShowNamePrompt, editor.noteTitle]);
 
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();
@@ -124,15 +127,10 @@ export default function BudgetDashboardScreen() {
       return;
     }
 
-    (editor as any).setNoteTitle?.(trimmedName);
-    (editor as any).setBudgetName?.(trimmedName);
-    (editor as any).saveTitle?.(trimmedName);
+    editor.setNoteTitle(trimmedName);
+    await editor.saveBudgetNow(trimmedName);
 
     setShowNamePromptModal(false);
-
-    setTimeout(() => {
-      editor.saveBudgetNow?.();
-    }, 0);
   }
 
   useEffect(() => {

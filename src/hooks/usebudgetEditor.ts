@@ -164,12 +164,12 @@ export function useBudgetEditor(budgetId: string | undefined) {
     taxRate,
   ]);
 
-  async function saveBudgetNow() {
+  async function saveBudgetNow(overrideTitle?: string) {
     if (!budgetId) return;
 
     const savedDates = await autoSaveBudgetById({
       budgetId,
-      noteTitle,
+      noteTitle: overrideTitle ?? noteTitle,
       receiptNote,
       startingMoney,
       items,
