@@ -27,7 +27,6 @@ import { ReceiptItemOverlay } from "../../../components/ReceiptItemOverlay";
 import { TutorialOverlay } from "../../../components/TutorialOverlay";
 import { useBudgetEditor } from "../../../hooks/usebudgetEditor";
 import {
-  createBudgetFromImportedItems,
   duplicateBudgetById,
   loadBudgets,
 } from "../../../storage/budgetStorage";
@@ -83,6 +82,9 @@ export default function BudgetDashboardScreen() {
   const [importText, setImportText] = useState("");
   const [showNamePromptModal, setShowNamePromptModal] = useState(false);
   const [budgetNameDraft, setBudgetNameDraft] = useState("");
+  const [namePromptMode, setNamePromptMode] = useState<"create" | "rename">(
+    "create",
+  );
 
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
@@ -122,6 +124,8 @@ export default function BudgetDashboardScreen() {
 
     if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
       hasHandledNamePromptRef.current = true;
+      setNamePromptMode("create");
+      setBudgetNameDraft("");
       setShowNamePromptModal(true);
     }
   }, [shouldShowNamePrompt, editor.noteTitle]);
@@ -469,12 +473,11 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                 setShowCopiedMessage(false);
               }, 900);
             }}
-            onImportList={async () => {
+            onImportList={() => {
               setShowMenu(false);
-
-              const newBudget = await createBudgetFromImportedItems([]);
-
-              router.replace(`/budget/${newBudget.id}` as any);
+              setNamePromptMode("rename");
+              setBudgetNameDraft(editor.noteTitle.trim());
+              setShowNamePromptModal(true);
             }}
           />
 
@@ -666,7 +669,11 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
           >
             <View style={styles.modalBackdrop}>
               <View style={styles.compareModal}>
-                <Text style={styles.modalTitle}>Name this budget?</Text>
+                <Text style={styles.modalTitle}>
+                  {namePromptMode === "rename"
+                    ? "Rename budget"
+                    : "Name this budget?"}
+                </Text>
 
                 <TextInput
                   ref={namePromptInputRef}
@@ -693,7 +700,9 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
                     setShowNamePromptModal(false);
                   }}
                 >
-                  <Text style={styles.cancelButtonText}>Skip for Now</Text>
+                  <Text style={styles.cancelButtonText}>
+                    {namePromptMode === "rename" ? "Cancel" : "Skip for Now"}
+                  </Text>
                 </Pressable>
               </View>
             </View>
