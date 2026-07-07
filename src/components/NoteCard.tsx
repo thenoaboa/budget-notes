@@ -586,9 +586,9 @@ const styles = StyleSheet.create({
 
   progressStripe: {
     position: "absolute",
-    top: -10,
-    width: 10,
-    height: 28,
+    top: -8,
+    width: 8,
+    height: 24,
     backgroundColor: "rgba(255,255,255,0.14)",
     transform: [{ rotate: "35deg" }],
   },
