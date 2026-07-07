@@ -63,6 +63,7 @@ export default function BudgetDashboardScreen() {
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
+  const hasHandledNamePromptRef = useRef(false);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
@@ -114,14 +115,15 @@ export default function BudgetDashboardScreen() {
   }
 
   useEffect(() => {
-    if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
-      setShowNamePromptModal(true);
-
-      setTimeout(() => {
-        router.replace(`/budget/${budgetId}` as any);
-      }, 100);
+    if (hasHandledNamePromptRef.current) {
+      return;
     }
-  }, [shouldShowNamePrompt, editor.noteTitle, budgetId, router]);
+
+    if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
+      hasHandledNamePromptRef.current = true;
+      setShowNamePromptModal(true);
+    }
+  }, [shouldShowNamePrompt, editor.noteTitle]);
 
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();

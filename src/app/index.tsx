@@ -119,7 +119,7 @@ export default function HomeScreen() {
       existingBudgetCount: visibleBudgets.length,
     });
 
-    router.push(`/budget/${id}?showNamePrompt=1` as any);
+    router.push(`/budget/${id}` as any);
 
     resetSearchInBackground();
   }
