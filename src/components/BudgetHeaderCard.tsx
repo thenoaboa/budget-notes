@@ -50,7 +50,6 @@ export function BudgetHeaderCard({
   const [isEditingAmount, setIsEditingAmount] = useState(false);
 
   const startingAmount = parseFloat(startingMoney) || 0;
-
   const isPlanningMode = startingAmount <= 0 && hasEnteredItems;
 
   const planningPhrases = [
@@ -98,9 +97,20 @@ export function BudgetHeaderCard({
     setIsEditingAmount(true);
   }
 
+  function closeMenu() {
+    if (showMenu) {
+      onMenuPress?.();
+    }
+  }
+
   return (
     <Pressable
       onPress={() => {
+        if (showMenu) {
+          closeMenu();
+          return;
+        }
+
         if (highlightBudgetAmount) {
           onBudgetAmountTutorialFocus?.();
         }
@@ -114,12 +124,23 @@ export function BudgetHeaderCard({
         highlightBudgetAmount && styles.highlightedHeaderCard,
       ]}
     >
-      <Pressable style={styles.menuButton} onPress={onMenuPress}>
+      <Pressable
+        style={styles.menuButton}
+        onPress={(event) => {
+          event.stopPropagation();
+          onMenuPress?.();
+        }}
+      >
         <Text style={styles.menuDots}>⋮</Text>
       </Pressable>
 
       {showMenu && (
-        <View style={styles.dropdownMenu}>
+        <Pressable
+          style={styles.dropdownMenu}
+          onPress={(event) => {
+            event.stopPropagation();
+          }}
+        >
           <View style={styles.dropdownRow}>
             <Pressable style={styles.dropdownButton} onPress={onCompareBudgets}>
               <Text style={styles.dropdownText}>Compare</Text>
@@ -148,8 +169,9 @@ export function BudgetHeaderCard({
               <Text style={styles.dropdownText}>Rename</Text>
             </Pressable>
           </View>
-        </View>
+        </Pressable>
       )}
+
       <Text style={styles.headerMessage}>{displayMessage}</Text>
 
       <TextInput
@@ -197,7 +219,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     right: 14,
-    zIndex: 20,
+    zIndex: 30,
   },
 
   menuDots: {
@@ -211,20 +233,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 40,
     right: 12,
-    zIndex: 25,
-  },
-
-  dropdownArrow: {
-    alignSelf: "flex-end",
-    marginRight: 12,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 9,
-    borderRightWidth: 9,
-    borderBottomWidth: 10,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: "#182638",
+    zIndex: 40,
+    elevation: 40,
   },
 
   dropdownButton: {
@@ -288,6 +298,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     marginTop: 8,
   },
+
   dropdownRow: {
     flexDirection: "row",
   },
