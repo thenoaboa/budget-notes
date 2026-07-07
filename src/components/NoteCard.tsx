@@ -335,7 +335,7 @@ export function NoteCard({
               STRIPES.map((_, index) => (
                 <View
                   key={index}
-                  style={[styles.progressStripe, { left: index * 18 }]}
+                  style={[styles.progressStripe, { left: index * 16 }]}
                 />
               ))}
           </View>
@@ -586,9 +586,9 @@ const styles = StyleSheet.create({
 
   progressStripe: {
     position: "absolute",
-    top: -8,
-    width: 8,
-    height: 24,
+    top: -10,
+    width: 10,
+    height: 28,
     backgroundColor: "rgba(255,255,255,0.14)",
     transform: [{ rotate: "35deg" }],
   },
