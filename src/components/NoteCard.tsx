@@ -36,6 +36,8 @@ type BudgetCardStats = {
   isComplete: boolean;
 };
 
+const STRIPES = Array.from({ length: 40 });
+
 function parseMoney(value?: string) {
   const cleanedValue = (value || "").replace(/[^0-9.-]/g, "");
   const parsedValue = Number.parseFloat(cleanedValue);
@@ -328,18 +330,37 @@ export function NoteCard({
               stats.isLowBudget && styles.lowProgressFill,
               stats.isOverBudget && styles.negativeProgressFill,
             ]}
-          />
+          >
+            {stats.isPlanning &&
+              STRIPES.map((_, index) => (
+                <View
+                  key={index}
+                  style={[styles.progressStripe, { left: index * 18 }]}
+                />
+              ))}
+          </View>
         </View>
 
         <View style={styles.footerRow}>
-          <Text style={styles.footerText}>{stats.usedPercent}% used</Text>
-
-          {stats.isComplete ? (
-            <Text style={styles.completeText}>✓ Budget complete</Text>
+          {stats.isPlanning ? (
+            <>
+              <Text style={styles.completeText}>No budget set</Text>
+              <Text style={styles.footerText}>
+                {formatMoney(stats.spentAmount)} planned
+              </Text>
+            </>
+          ) : stats.isComplete ? (
+            <>
+              <Text style={styles.footerText}>{stats.usedPercent}% used</Text>
+              <Text style={styles.completeText}>✓ Budget complete</Text>
+            </>
           ) : (
-            <Text style={styles.footerText}>
-              {formatMoney(stats.spentAmount)} spent
-            </Text>
+            <>
+              <Text style={styles.footerText}>{stats.usedPercent}% used</Text>
+              <Text style={styles.footerText}>
+                {formatMoney(stats.spentAmount)} planned
+              </Text>
+            </>
           )}
         </View>
       </Pressable>
@@ -559,6 +580,17 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 999,
     backgroundColor: "#2ECC71",
+    overflow: "hidden",
+    position: "relative",
+  },
+
+  progressStripe: {
+    position: "absolute",
+    top: -8,
+    width: 8,
+    height: 24,
+    backgroundColor: "rgba(255,255,255,0.14)",
+    transform: [{ rotate: "35deg" }],
   },
 
   lowProgressFill: {
