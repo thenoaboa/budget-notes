@@ -36,7 +36,7 @@ type BudgetCardStats = {
   isComplete: boolean;
 };
 
-const STRIPES = Array.from({ length: 40 });
+const STRIPES = Array.from({ length: 200 });
 
 function parseMoney(value?: string) {
   const cleanedValue = (value || "").replace(/[^0-9.-]/g, "");
