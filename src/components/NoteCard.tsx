@@ -589,8 +589,8 @@ const styles = StyleSheet.create({
     top: -8,
     width: 8,
     height: 24,
-    backgroundColor: "rgba(255,255,255,0.14)",
-    transform: [{ rotate: "35deg" }],
+    backgroundColor: "#7FFFB0",
+    transform: [{ rotate: "35deg" as const }],
   },
 
   lowProgressFill: {
