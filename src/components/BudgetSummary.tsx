@@ -87,6 +87,9 @@ export function BudgetSummaryBox({
   onDeleteItem,
 }: Props) {
   const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
+  const [expandedNoteItemId, setExpandedNoteItemId] = useState<number | null>(
+    null,
+  );
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
@@ -123,6 +126,19 @@ export function BudgetSummaryBox({
     );
   }
 
+  function renderNoteDropdown(item: SummaryItem) {
+    if (expandedNoteItemId !== item.id || !item.note?.trim()) {
+      return null;
+    }
+
+    return (
+      <View style={styles.noteDropdown}>
+        <Text style={styles.noteDropdownTitle}>Note</Text>
+        <Text style={styles.noteDropdownText}>{item.note}</Text>
+      </View>
+    );
+  }
+
   function renderItemRow(
     itemId: number,
     itemName: string,
@@ -141,12 +157,23 @@ export function BudgetSummaryBox({
           <Text style={styles.itemText}>{label}</Text>
 
           {hasNote && (
-            <MaterialCommunityIcons
-              name="note-outline"
-              size={15}
-              color="#2ECC71"
-              style={styles.noteIcon}
-            />
+            <Pressable
+              onPress={(event) => {
+                event.stopPropagation();
+
+                setExpandedNoteItemId((currentId) =>
+                  currentId === itemId ? null : itemId,
+                );
+              }}
+              hitSlop={8}
+            >
+              <MaterialCommunityIcons
+                name="note-outline"
+                size={15}
+                color="#2ECC71"
+                style={styles.noteIcon}
+              />
+            </Pressable>
           )}
         </View>
 
@@ -216,6 +243,8 @@ export function BudgetSummaryBox({
                       item.isFood,
                       item.note,
                     )}
+
+                    {renderNoteDropdown(item)}
                   </View>
 
                   <Pressable
@@ -246,14 +275,18 @@ export function BudgetSummaryBox({
                 renderRightActions={() => renderRightActions(item.id)}
                 overshootRight={false}
               >
-                {renderItemRow(
-                  item.id,
-                  itemName,
-                  quantity,
-                  lineTotal,
-                  item.isFood,
-                  item.note,
-                )}
+                <View>
+                  {renderItemRow(
+                    item.id,
+                    itemName,
+                    quantity,
+                    lineTotal,
+                    item.isFood,
+                    item.note,
+                  )}
+
+                  {renderNoteDropdown(item)}
+                </View>
               </Swipeable>
             );
           })}
@@ -357,7 +390,7 @@ const styles = StyleSheet.create({
 
   webItemRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
 
@@ -414,6 +447,30 @@ const styles = StyleSheet.create({
   noteIcon: {
     marginLeft: 5,
     marginTop: 1,
+  },
+
+  noteDropdown: {
+    backgroundColor: "#14251E",
+    borderWidth: 1,
+    borderColor: "#24533A",
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+
+  noteDropdownTitle: {
+    color: "#2ECC71",
+    fontSize: 13,
+    fontWeight: "900",
+    marginBottom: 4,
+  },
+
+  noteDropdownText: {
+    color: "#CAD3DD",
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
   },
 
   itemAmount: {
