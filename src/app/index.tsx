@@ -165,9 +165,7 @@ export default function HomeScreen() {
               <Text style={styles.billIcon}>🐷</Text>
             </Pressable>
 
-            <Text style={styles.simpleTitle} numberOfLines={1}>
-              Budget Note
-            </Text>
+            <Text style={styles.simpleTitle}>Budget Note</Text>
           </View>
 
           <View style={styles.subtitleRow}>
@@ -299,16 +297,18 @@ const styles = StyleSheet.create({
   },
 
   titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    position: "relative",
   },
 
   billButton: {
-    width: 42,
-    height: 42,
+    position: "absolute",
+    left: 0,
+    top: 30,
+    width: 34,
+    height: 34,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 2,
   },
 
   billIcon: {
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontWeight: "900",
     letterSpacing: -1,
-    paddingLeft: 42,
+    lineHeight: 48,
   },
 
   subtitleRow: {
