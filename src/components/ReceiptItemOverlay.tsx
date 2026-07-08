@@ -135,7 +135,7 @@ export function ReceiptItemOverlay({
                 hitSlop={10}
               >
                 <MaterialCommunityIcons
-                  name={hasLink ? "link" : "link-variant"}
+                  name="link-variant"
                   size={24}
                   color={hasLink ? "#4A90E2" : "#A7B1BD"}
                 />
