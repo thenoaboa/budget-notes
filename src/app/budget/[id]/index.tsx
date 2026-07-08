@@ -448,7 +448,7 @@ export default function BudgetDashboardScreen() {
                         let text = `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`;
 
                         if (item.link?.trim()) {
-                          text += `\n  Link: ${item.link.trim()}`;
+                          text += `\n${item.link.trim()}`;
                         }
 
                         return text;
