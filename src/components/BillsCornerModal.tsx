@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
     Modal,
     Pressable,
@@ -13,6 +14,21 @@ type BillsCornerModalProps = {
 };
 
 export function BillsCornerModal({ visible, onClose }: BillsCornerModalProps) {
+  const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const id = setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: 0,
+        animated: false,
+      });
+    }, 0);
+
+    return () => clearTimeout(id);
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
@@ -23,6 +39,7 @@ export function BillsCornerModal({ visible, onClose }: BillsCornerModalProps) {
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <ScrollView
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
