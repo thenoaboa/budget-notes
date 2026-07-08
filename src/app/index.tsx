@@ -305,12 +305,8 @@ const styles = StyleSheet.create({
   billButton: {
     width: 42,
     height: 42,
-    borderRadius: 21,
-    backgroundColor: "#FCE7F3",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
   },
 
   billIcon: {
