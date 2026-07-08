@@ -1,4 +1,11 @@
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from "react-native";
 
 type BillsCornerModalProps = {
   visible: boolean;
@@ -15,41 +22,46 @@ export function BillsCornerModal({ visible, onClose }: BillsCornerModalProps) {
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
-          <Text style={styles.pig}>🐷</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <Text style={styles.pig}>🐷</Text>
 
-          <Text style={styles.title}>Hi, I’m Bill.</Text>
+            <Text style={styles.title}>Hi, I’m Bill.</Text>
 
-          <Text style={styles.body}>
-            I’m here to help you answer one simple question:
-          </Text>
-
-          <Text style={styles.question}>Can I afford this?</Text>
-
-          <Text style={styles.body}>
-            Budgeting isn’t about restriction. It’s about knowing where your
-            money is going before it disappears.
-          </Text>
-
-          <View style={styles.lessonBox}>
-            <Text style={styles.lessonLabel}>Lesson 1</Text>
-
-            <Text style={styles.lessonTitle}>
-              A budget is a plan, not a punishment.
+            <Text style={styles.body}>
+              I’m here to help you answer one simple question:
             </Text>
 
-            <Text style={styles.lessonText}>
-              A budget doesn’t tell you “no.” It helps you see what happens if
-              you say “yes.”
+            <Text style={styles.question}>Can I afford this?</Text>
+
+            <Text style={styles.body}>
+              Budgeting isn’t about restriction. It’s about knowing where your
+              money is going before it disappears.
             </Text>
-          </View>
 
-          <Pressable style={styles.primaryButton} onPress={onClose}>
-            <Text style={styles.primaryButtonText}>Got it</Text>
-          </Pressable>
+            <View style={styles.lessonBox}>
+              <Text style={styles.lessonLabel}>Lesson 1</Text>
 
-          <Pressable style={styles.secondaryButton} onPress={onClose}>
-            <Text style={styles.secondaryButtonText}>Not now</Text>
-          </Pressable>
+              <Text style={styles.lessonTitle}>
+                A budget is a plan, not a punishment.
+              </Text>
+
+              <Text style={styles.lessonText}>
+                A budget doesn’t tell you “no.” It helps you see what happens if
+                you say “yes.”
+              </Text>
+            </View>
+
+            <Pressable style={styles.primaryButton} onPress={onClose}>
+              <Text style={styles.primaryButtonText}>Got it</Text>
+            </Pressable>
+
+            <Pressable style={styles.secondaryButton} onPress={onClose}>
+              <Text style={styles.secondaryButtonText}>Not now</Text>
+            </Pressable>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -62,42 +74,48 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 48,
   },
 
   card: {
     width: "100%",
     maxWidth: 430,
+    maxHeight: "90%",
     backgroundColor: "#FFFFFF",
     borderRadius: 28,
+    overflow: "hidden",
+  },
+
+  scrollContent: {
     padding: 24,
     alignItems: "center",
   },
 
   pig: {
-    fontSize: 52,
-    marginBottom: 8,
+    fontSize: 44,
+    marginBottom: 6,
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "900",
     color: "#101820",
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: "center",
   },
 
   body: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#4B5563",
     textAlign: "center",
-    lineHeight: 23,
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: 10,
     fontWeight: "600",
   },
 
   question: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "900",
     color: "#2ECC71",
     textAlign: "center",
@@ -109,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0FDF4",
     borderRadius: 18,
     padding: 16,
-    marginTop: 8,
+    marginTop: 6,
     marginBottom: 18,
     borderWidth: 1,
     borderColor: "#BBF7D0",
