@@ -302,8 +302,8 @@ const styles = StyleSheet.create({
 
   billButton: {
     position: "absolute",
-    right: 8,
-    top: 10,
+    right: -6,
+    top: 20,
     width: 42,
     height: 42,
     alignItems: "center",
