@@ -441,12 +441,19 @@ export default function BudgetDashboardScreen() {
                       .map((item) => {
                         const amount =
                           (parseFloat(item.amount) || 0) * item.quantity;
+
                         const quantityText =
                           item.quantity > 1 ? ` x${item.quantity}` : "";
 
-                        return `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`;
+                        let text = `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`;
+
+                        if (item.link?.trim()) {
+                          text += `\n  Link: ${item.link.trim()}`;
+                        }
+
+                        return text;
                       })
-                      .join("\n")
+                      .join("\n\n")
                   : "- No items added";
               const header = editor.noteTitle.trim() || "Budget Note";
 
