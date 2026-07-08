@@ -487,6 +487,11 @@ Left after spending: $${editor.safeToSpend.toFixed(2)}`;
             keyboardShouldPersistTaps="handled"
             alwaysBounceVertical
             bounces
+            onTouchStart={() => {
+              if (showMenu) {
+                setShowMenu(false);
+              }
+            }}
           >
             {comparedBudget && (
               <View style={styles.compareCard}>
