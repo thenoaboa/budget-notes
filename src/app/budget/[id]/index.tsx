@@ -457,11 +457,13 @@ export default function BudgetDashboardScreen() {
                   : "- No items added";
               const header = editor.noteTitle.trim() || "Budget Note";
 
+              const hasBudget =
+                editor.startingMoney.trim() !== "" &&
+                !Number.isNaN(parseFloat(editor.startingMoney));
+
               const summaryText = `${header}
 
-Money available: $${(parseFloat(editor.startingMoney) || 0).toFixed(2)}
-
-Items:
+${hasBudget ? `Money available: $${parseFloat(editor.startingMoney).toFixed(2)}\n\n` : ""}Items:
 ${itemsText}
 
 ${
@@ -470,7 +472,7 @@ ${
 `
     : ""
 }Planned total: $${editor.totalSpent.toFixed(2)}
-Left after spending: $${editor.safeToSpend.toFixed(2)}`;
+${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
 
               await Clipboard.setStringAsync(summaryText);
 
