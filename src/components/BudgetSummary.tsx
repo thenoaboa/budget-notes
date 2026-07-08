@@ -1,5 +1,3 @@
-// Save as: src/components/BudgetSummary.tsx
-
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RefObject, useState } from "react";
 import {
@@ -72,15 +70,15 @@ function formatMoney(value: number) {
 }
 
 function normalizeUrl(value: string) {
-  const trimmedValue = value.trim();
+  const trimmed = value.trim();
 
-  if (!trimmedValue) return "";
+  if (!trimmed) return "";
 
-  if (/^https?:\/\//i.test(trimmedValue)) {
-    return trimmedValue;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
   }
 
-  return `https://${trimmedValue}`;
+  return `https://${trimmed}`;
 }
 
 export function BudgetSummaryBox({
@@ -103,6 +101,7 @@ export function BudgetSummaryBox({
   onDeleteItem,
 }: Props) {
   const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
+
   const [expandedAccessory, setExpandedAccessory] = useState<{
     itemId: number;
     type: AccessoryType;
@@ -123,9 +122,8 @@ export function BudgetSummaryBox({
   const visibleItems = items.filter((item) => {
     const name = item.name.trim();
     const amount = parseMoney(item.amount);
-    const isIncluded = item.included !== false;
 
-    return isIncluded && (name !== "" || amount > 0);
+    return item.included !== false && (name !== "" || amount > 0);
   });
 
   function handleDeleteItem(itemId: number) {
@@ -167,30 +165,33 @@ export function BudgetSummaryBox({
       console.log("Open product link failed:", error);
     }
   }
-
-  function renderAccessoryDropdown(item: SummaryItem) {
-    if (expandedAccessory?.itemId !== item.id) {
-      return null;
-    }
-
-    if (expandedAccessory.type === "note") {
-      if (!item.note?.trim()) {
-        return null;
-      }
-
-      return (
-        <View style={styles.accessoryDropdown}>
-          <Text style={styles.accessoryDropdownText}>{item.note}</Text>
-        </View>
-      );
-    }
-
-    if (!item.link?.trim()) {
+  function renderNoteDropdown(item: SummaryItem) {
+    if (
+      expandedAccessory?.itemId !== item.id ||
+      expandedAccessory.type !== "note" ||
+      !item.note?.trim()
+    ) {
       return null;
     }
 
     return (
-      <View style={styles.accessoryDropdown}>
+      <View style={styles.noteDropdown}>
+        <Text style={styles.noteDropdownText}>{item.note}</Text>
+      </View>
+    );
+  }
+
+  function renderLinkDropdown(item: SummaryItem) {
+    if (
+      expandedAccessory?.itemId !== item.id ||
+      expandedAccessory.type !== "link" ||
+      !item.link?.trim()
+    ) {
+      return null;
+    }
+
+    return (
+      <View style={styles.linkDropdown}>
         <Pressable
           style={styles.openLinkButton}
           onPress={() => openProductLink(item.link ?? "")}
@@ -211,8 +212,10 @@ export function BudgetSummaryBox({
     link?: string,
   ) {
     const shouldHighlightFoodAmount = salesTaxEnabled && isFood;
+
     const hasNote = Boolean(note?.trim());
     const hasLink = Boolean(link?.trim());
+
     const label = quantity > 1 ? `${itemName} x${quantity}:` : `${itemName}:`;
 
     return (
@@ -222,11 +225,11 @@ export function BudgetSummaryBox({
 
           {hasLink && (
             <Pressable
+              hitSlop={8}
               onPress={(event) => {
                 event.stopPropagation();
                 toggleAccessory(itemId, "link");
               }}
-              hitSlop={8}
             >
               <MaterialCommunityIcons
                 name="link-variant"
@@ -239,11 +242,11 @@ export function BudgetSummaryBox({
 
           {hasNote && (
             <Pressable
+              hitSlop={8}
               onPress={(event) => {
                 event.stopPropagation();
                 toggleAccessory(itemId, "note");
               }}
-              hitSlop={8}
             >
               <MaterialCommunityIcons
                 name="note-outline"
@@ -266,7 +269,6 @@ export function BudgetSummaryBox({
       </Pressable>
     );
   }
-
   return (
     <View style={styles.summaryBox}>
       {!hasEnteredAnyItem ? (
@@ -296,7 +298,6 @@ export function BudgetSummaryBox({
 
           {visibleItems.map((item) => {
             const amount = parseMoney(item.amount);
-
             const quantity =
               Number.isFinite(item.quantity) &&
               item.quantity &&
@@ -306,7 +307,6 @@ export function BudgetSummaryBox({
 
             const itemName = item.name.trim() || "Unnamed item";
             const lineTotal = amount * quantity;
-
             const isHovered = hoveredDeleteId === item.id;
 
             if (isDesktopWeb) {
@@ -323,7 +323,8 @@ export function BudgetSummaryBox({
                       item.link,
                     )}
 
-                    {renderAccessoryDropdown(item)}
+                    {renderNoteDropdown(item)}
+                    {renderLinkDropdown(item)}
                   </View>
 
                   <Pressable
@@ -365,7 +366,8 @@ export function BudgetSummaryBox({
                     item.link,
                   )}
 
-                  {renderAccessoryDropdown(item)}
+                  {renderNoteDropdown(item)}
+                  {renderLinkDropdown(item)}
                 </View>
               </Swipeable>
             );
@@ -438,7 +440,6 @@ export function BudgetSummaryBox({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   summaryBox: {
     backgroundColor: "#1B2633",
@@ -534,26 +535,36 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  accessoryDropdown: {
-    backgroundColor: "#182638",
+  noteDropdown: {
+    backgroundColor: "#14251E",
     borderWidth: 1,
-    borderColor: "#344657",
+    borderColor: "#24533A",
     borderRadius: 14,
     padding: 12,
     marginTop: 4,
     marginBottom: 8,
   },
 
-  accessoryDropdownText: {
+  noteDropdownText: {
     color: "#CAD3DD",
     fontSize: 14,
     fontWeight: "700",
     lineHeight: 20,
   },
 
+  linkDropdown: {
+    backgroundColor: "#162332",
+    borderWidth: 1,
+    borderColor: "#4A90E2",
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+
   openLinkButton: {
     alignSelf: "flex-start",
-    marginTop: 4,
+    paddingVertical: 2,
   },
 
   openLinkButtonText: {
