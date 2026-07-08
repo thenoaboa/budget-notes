@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 
+import { BillsCornerModal } from "../components/BillsCornerModal";
 import { NoteCard } from "../components/NoteCard";
 import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
@@ -28,6 +29,7 @@ export default function HomeScreen() {
     useState<HomeTutorialStep>("hidden");
 
   const [deletedCount, setDeletedCount] = useState(0);
+  const [isBillsCornerOpen, setIsBillsCornerOpen] = useState(false);
 
   const {
     visibleBudgets,
@@ -81,6 +83,14 @@ export default function HomeScreen() {
     setHomeTutorialStep("popup");
 
     posthog?.capture("welcome_tutorial_replayed");
+  }
+
+  function openBillsCorner() {
+    setIsBillsCornerOpen(true);
+
+    posthog?.capture("bills_corner_opened", {
+      source: "main_menu_pig_icon",
+    });
   }
 
   function resetSearchInBackground() {
@@ -146,7 +156,17 @@ export default function HomeScreen() {
         alwaysBounceVertical
       >
         <View style={styles.simpleHeader}>
-          <Text style={styles.simpleTitle}>Budget Note</Text>
+          <View style={styles.titleRow}>
+            <Pressable
+              style={styles.billButton}
+              onPress={openBillsCorner}
+              hitSlop={10}
+            >
+              <Text style={styles.billIcon}>🐷</Text>
+            </Pressable>
+
+            <Text style={styles.simpleTitle}>Budget Note</Text>
+          </View>
 
           <View style={styles.subtitleRow}>
             <Text style={styles.simpleSubtitle} numberOfLines={1}>
@@ -211,6 +231,7 @@ export default function HomeScreen() {
             onDuplicate={() => duplicateBudget(budget.id)}
           />
         ))}
+
         <Pressable
           style={styles.deletedButton}
           onPress={() => router.push("/deleted-budgets" as any)}
@@ -222,6 +243,11 @@ export default function HomeScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <BillsCornerModal
+        visible={isBillsCornerOpen}
+        onClose={() => setIsBillsCornerOpen(false)}
+      />
 
       {homeTutorialStep === "popup" && (
         <TutorialOverlay
@@ -268,6 +294,27 @@ const styles = StyleSheet.create({
 
   simpleHeader: {
     marginBottom: 22,
+  },
+
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  billButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FCE7F3",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+
+  billIcon: {
+    fontSize: 25,
   },
 
   simpleTitle: {
