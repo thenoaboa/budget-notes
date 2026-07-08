@@ -157,6 +157,8 @@ export default function HomeScreen() {
       >
         <View style={styles.simpleHeader}>
           <View style={styles.titleRow}>
+            <Text style={styles.simpleTitle}>Budget Note</Text>
+
             <Pressable
               style={styles.billButton}
               onPress={openBillsCorner}
@@ -164,8 +166,6 @@ export default function HomeScreen() {
             >
               <Text style={styles.billIcon}>🐷</Text>
             </Pressable>
-
-            <Text style={styles.simpleTitle}>Budget Note</Text>
           </View>
 
           <View style={styles.subtitleRow}>
@@ -302,10 +302,10 @@ const styles = StyleSheet.create({
 
   billButton: {
     position: "absolute",
-    left: 0,
-    top: 30,
-    width: 34,
-    height: 34,
+    right: 0,
+    top: 14,
+    width: 42,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
@@ -321,6 +321,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -1,
     lineHeight: 48,
+    paddingRight: 54,
   },
 
   subtitleRow: {
