@@ -191,9 +191,9 @@ export function AddItemOverlay({
                 hitSlop={10}
               >
                 <MaterialCommunityIcons
-                  name="link-variant"
-                  size={23}
-                  color={hasLink ? "#2ECC71" : "#A7B1BD"}
+                  name={hasLink ? "link" : "link-variant"}
+                  size={24}
+                  color={hasLink ? "#4A90E2" : "#A7B1BD"}
                 />
               </Pressable>
 
