@@ -43,6 +43,7 @@ import { compareBudgets } from "../../../utils/compareBudgets";
 
 type TutorialStep =
   | "hidden"
+  | "nameBudget"
   | "budgetPopup"
   | "budgetHighlight"
   | "addItemPopup"
@@ -133,15 +134,16 @@ export default function BudgetDashboardScreen() {
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();
 
-    if (!trimmedName) {
-      setShowNamePromptModal(false);
-      return;
+    if (trimmedName) {
+      editor.setNoteTitle(trimmedName);
+      await editor.saveBudgetNow(trimmedName);
     }
 
-    editor.setNoteTitle(trimmedName);
-    await editor.saveBudgetNow(trimmedName);
-
     setShowNamePromptModal(false);
+
+    if (tutorialStep === "nameBudget") {
+      setTutorialStep("budgetPopup");
+    }
   }
 
   useEffect(() => {
@@ -158,12 +160,16 @@ export default function BudgetDashboardScreen() {
           source: "budget_screen",
         });
 
-        setTutorialStep("budgetPopup");
+        if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
+          setTutorialStep("nameBudget");
+        } else {
+          setTutorialStep("budgetPopup");
+        }
       }
     }
 
     loadTutorial();
-  }, []);
+  }, [shouldShowNamePrompt, editor.noteTitle]);
 
   async function completeTutorial() {
     tutorialStoppedRef.current = true;
@@ -674,7 +680,13 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             visible={showNamePromptModal}
             transparent
             animationType="fade"
-            onRequestClose={() => setShowNamePromptModal(false)}
+            onRequestClose={() => {
+              setShowNamePromptModal(false);
+
+              if (tutorialStep === "nameBudget") {
+                setTutorialStep("budgetPopup");
+              }
+            }}
             onShow={() => {
               setTimeout(() => {
                 namePromptInputRef.current?.focus();
@@ -712,6 +724,10 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
                   onPress={() => {
                     setBudgetNameDraft("");
                     setShowNamePromptModal(false);
+
+                    if (tutorialStep === "nameBudget") {
+                      setTutorialStep("budgetPopup");
+                    }
                   }}
                 >
                   <Text style={styles.cancelButtonText}>
