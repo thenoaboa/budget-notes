@@ -1,5 +1,3 @@
-// Save as: src/app/budget/[id]/index.tsx
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -127,7 +125,6 @@ export default function BudgetDashboardScreen() {
       hasHandledNamePromptRef.current = true;
       setNamePromptMode("create");
       setBudgetNameDraft("");
-      setShowNamePromptModal(true);
     }
   }, [shouldShowNamePrompt, editor.noteTitle]);
 
@@ -169,7 +166,7 @@ export default function BudgetDashboardScreen() {
     }
 
     loadTutorial();
-  }, [shouldShowNamePrompt, editor.noteTitle]);
+  }, []);
 
   async function completeTutorial() {
     tutorialStoppedRef.current = true;
@@ -637,6 +634,16 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               <Text style={styles.copiedToastText}>{toastMessage}</Text>
             </View>
           )}
+          {!tutorialDismissed && tutorialStep === "nameBudget" && (
+            <TutorialOverlay
+              title="Let’s name your budget"
+              body="Give this budget a name so you can easily find it again later."
+              buttonText="Name Budget"
+              onNext={() => setShowNamePromptModal(true)}
+              onSkip={skipTutorial}
+            />
+          )}
+
           {!tutorialDismissed && tutorialStep === "budgetPopup" && (
             <TutorialOverlay
               title="Set your budget"
