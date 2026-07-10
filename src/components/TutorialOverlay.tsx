@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 type Props = {
   title: string;
@@ -6,6 +6,11 @@ type Props = {
   buttonText?: string;
   onNext: () => void;
   onSkip: () => void;
+
+  inputValue?: string;
+  onChangeInput?: (value: string) => void;
+  inputPlaceholder?: string;
+  showInput?: boolean;
 };
 
 export function TutorialOverlay({
@@ -14,22 +19,68 @@ export function TutorialOverlay({
   buttonText = "Next",
   onNext,
   onSkip,
+  inputValue = "",
+  onChangeInput,
+  inputPlaceholder = "Weekly groceries",
+  showInput = false,
 }: Props) {
   return (
     <View style={styles.overlay} pointerEvents="auto">
-      <View style={styles.card}>
-        <Text style={styles.title}>{title}</Text>
+      <View style={styles.dialogueWrapper}>
+        <View style={styles.billBadge}>
+          <Text style={styles.billIcon}>🐷</Text>
 
-        <Text style={styles.body}>{body}</Text>
+          <View>
+            <Text style={styles.billName}>Bill</Text>
+            <Text style={styles.billLabel}>Budget guide</Text>
+          </View>
+        </View>
 
-        <View style={styles.buttonRow}>
-          <Pressable style={styles.skipButton} onPress={onSkip} hitSlop={12}>
-            <Text style={styles.skipText}>Skip</Text>
-          </Pressable>
+        <View style={styles.card}>
+          <View style={styles.speechTailBorder} />
+          <View style={styles.speechTail} />
 
-          <Pressable style={styles.nextButton} onPress={onNext} hitSlop={12}>
-            <Text style={styles.nextButtonText}>{buttonText}</Text>
-          </Pressable>
+          <Text style={styles.title}>{title}</Text>
+
+          <Text style={styles.body}>{body}</Text>
+
+          {showInput && (
+            <TextInput
+              style={styles.input}
+              value={inputValue}
+              onChangeText={onChangeInput}
+              placeholder={inputPlaceholder}
+              placeholderTextColor="#7E91A3"
+              autoCapitalize="sentences"
+              returnKeyType="done"
+              onSubmitEditing={onNext}
+              accessibilityLabel="Budget name"
+            />
+          )}
+
+          <View style={styles.buttonRow}>
+            <Pressable
+              style={styles.skipButton}
+              onPress={onSkip}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Skip tutorial"
+            >
+              <Text style={styles.skipText}>
+                {showInput ? "Skip for now" : "Skip"}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.nextButton}
+              onPress={onNext}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={buttonText}
+            >
+              <Text style={styles.nextButtonText}>{buttonText}</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
@@ -46,7 +97,41 @@ const styles = StyleSheet.create({
     elevation: 99999,
   },
 
+  dialogueWrapper: {
+    width: "100%",
+    maxWidth: 430,
+    alignSelf: "center",
+  },
+
+  billBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginLeft: 12,
+    marginBottom: 10,
+  },
+
+  billIcon: {
+    fontSize: 44,
+    marginRight: 10,
+  },
+
+  billName: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+    lineHeight: 21,
+  },
+
+  billLabel: {
+    color: "#9FB0BF",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 1,
+  },
+
   card: {
+    position: "relative",
     backgroundColor: "#17232F",
     borderRadius: 24,
     borderWidth: 1,
@@ -54,6 +139,34 @@ const styles = StyleSheet.create({
     padding: 22,
     zIndex: 100000,
     elevation: 100000,
+  },
+
+  speechTailBorder: {
+    position: "absolute",
+    top: -13,
+    left: 34,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 13,
+    borderRightWidth: 13,
+    borderBottomWidth: 13,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#2ECC71",
+  },
+
+  speechTail: {
+    position: "absolute",
+    top: -11,
+    left: 35,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 12,
+    borderRightWidth: 12,
+    borderBottomWidth: 12,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "#17232F",
   },
 
   title: {
@@ -67,7 +180,20 @@ const styles = StyleSheet.create({
     color: "#CAD3DD",
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 28,
+    marginBottom: 22,
+  },
+
+  input: {
+    backgroundColor: "#101820",
+    color: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontWeight: "800",
+    marginBottom: 22,
   },
 
   buttonRow: {
