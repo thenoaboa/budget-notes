@@ -99,15 +99,14 @@ export default function HomeScreen() {
     setIsBillsCornerOpen(false);
 
     await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+    await AsyncStorage.removeItem("budget-note-welcome-tutorial-complete");
 
     posthog?.capture("bills_lesson_started", {
       lesson: 1,
       source: "bills_corner",
     });
 
-    const id = Date.now().toString();
-
-    router.push(`/budget/${id}?showNamePrompt=1` as any);
+    setHomeTutorialStep("popup");
   }
 
   function resetSearchInBackground() {
@@ -175,6 +174,12 @@ export default function HomeScreen() {
         <View style={styles.simpleHeader}>
           <View style={styles.titleRow}>
             <Text style={styles.simpleTitle}>Budget Note</Text>
+          </View>
+
+          <View style={styles.subtitleRow}>
+            <Text style={styles.simpleSubtitle} numberOfLines={1}>
+              Plan today, spend confidently.
+            </Text>
 
             <Pressable
               style={styles.billButton}
@@ -185,12 +190,6 @@ export default function HomeScreen() {
             >
               <Text style={styles.billIcon}>🐷</Text>
             </Pressable>
-          </View>
-
-          <View style={styles.subtitleRow}>
-            <Text style={styles.simpleSubtitle} numberOfLines={1}>
-              Plan today, spend confidently.
-            </Text>
 
             {SHOW_LEGACY_HELP_BUTTON && (
               <Pressable
@@ -326,17 +325,17 @@ const styles = StyleSheet.create({
 
   billButton: {
     position: "absolute",
-    right: -6,
-    top: 8,
-    width: 42,
-    height: 42,
+    right: 0,
+    top: -4,
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
   },
 
   billIcon: {
-    fontSize: 25,
+    fontSize: 22,
   },
 
   simpleTitle: {
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
   subtitleRow: {
     position: "relative",
     marginTop: 6,
-    paddingRight: SHOW_LEGACY_HELP_BUTTON ? 34 : 0,
+    paddingRight: 34,
   },
 
   simpleSubtitle: {
