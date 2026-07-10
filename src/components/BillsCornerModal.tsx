@@ -11,9 +11,14 @@ import {
 type BillsCornerModalProps = {
   visible: boolean;
   onClose: () => void;
+  onStartTutorial: () => void;
 };
 
-export function BillsCornerModal({ visible, onClose }: BillsCornerModalProps) {
+export function BillsCornerModal({
+  visible,
+  onClose,
+  onStartTutorial,
+}: BillsCornerModalProps) {
   const scrollRef = useRef<ScrollView>(null);
   const [scrollKey, setScrollKey] = useState(0);
 
@@ -49,28 +54,36 @@ export function BillsCornerModal({ visible, onClose }: BillsCornerModalProps) {
             <Text style={styles.question}>Can I afford this?</Text>
 
             <Text style={styles.body}>
-              Budgeting isn’t about restriction. It’s about knowing where your
-              money is going before it disappears.
+              Let’s build your first budget together and see what happens before
+              you spend.
             </Text>
 
             <View style={styles.lessonBox}>
               <Text style={styles.lessonLabel}>Lesson 1</Text>
 
-              <Text style={styles.lessonTitle}>
-                A budget is a plan, not a punishment.
-              </Text>
+              <Text style={styles.lessonTitle}>Build your first budget</Text>
 
               <Text style={styles.lessonText}>
-                A budget doesn’t tell you “no.” It helps you see what happens if
-                you say “yes.”
+                Start with the money you have available, add what you’re
+                thinking about buying, and I’ll help you track what’s left.
               </Text>
             </View>
 
-            <Pressable style={styles.primaryButton} onPress={onClose}>
-              <Text style={styles.primaryButtonText}>Got it</Text>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={onStartTutorial}
+              accessibilityRole="button"
+              accessibilityLabel="Start Lesson 1"
+            >
+              <Text style={styles.primaryButtonText}>Start Lesson 1</Text>
             </Pressable>
 
-            <Pressable style={styles.secondaryButton} onPress={onClose}>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close Bill's Corner"
+            >
               <Text style={styles.secondaryButtonText}>Not now</Text>
             </Pressable>
           </ScrollView>

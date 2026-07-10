@@ -21,6 +21,8 @@ import { loadDeletedBudgets } from "../storage/budgetStorage";
 
 type HomeTutorialStep = "hidden" | "popup" | "highlightNewNote";
 
+const SHOW_LEGACY_HELP_BUTTON = false;
+
 export default function HomeScreen() {
   const router = useRouter();
   const posthog = usePostHog();
@@ -93,6 +95,21 @@ export default function HomeScreen() {
     });
   }
 
+  async function startBillsLessonOne() {
+    setIsBillsCornerOpen(false);
+
+    await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
+
+    posthog?.capture("bills_lesson_started", {
+      lesson: 1,
+      source: "bills_corner",
+    });
+
+    const id = Date.now().toString();
+
+    router.push(`/budget/${id}?showNamePrompt=1` as any);
+  }
+
   function resetSearchInBackground() {
     setTimeout(() => {
       setSearchVisible(false);
@@ -163,6 +180,8 @@ export default function HomeScreen() {
               style={styles.billButton}
               onPress={openBillsCorner}
               hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Open Bill's Corner"
             >
               <Text style={styles.billIcon}>🐷</Text>
             </Pressable>
@@ -173,12 +192,16 @@ export default function HomeScreen() {
               Plan today, spend confidently.
             </Text>
 
-            <Pressable
-              style={styles.helpButton}
-              onPress={replayWelcomeTutorial}
-            >
-              <Text style={styles.helpButtonText}>?</Text>
-            </Pressable>
+            {SHOW_LEGACY_HELP_BUTTON && (
+              <Pressable
+                style={styles.helpButton}
+                onPress={replayWelcomeTutorial}
+                accessibilityRole="button"
+                accessibilityLabel="Replay welcome tutorial"
+              >
+                <Text style={styles.helpButtonText}>?</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -247,6 +270,7 @@ export default function HomeScreen() {
       <BillsCornerModal
         visible={isBillsCornerOpen}
         onClose={() => setIsBillsCornerOpen(false)}
+        onStartTutorial={startBillsLessonOne}
       />
 
       {homeTutorialStep === "popup" && (
@@ -325,7 +349,7 @@ const styles = StyleSheet.create({
   subtitleRow: {
     position: "relative",
     marginTop: 6,
-    paddingRight: 34,
+    paddingRight: SHOW_LEGACY_HELP_BUTTON ? 34 : 0,
   },
 
   simpleSubtitle: {
