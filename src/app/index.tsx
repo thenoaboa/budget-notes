@@ -32,6 +32,7 @@ export default function HomeScreen() {
 
   const [deletedCount, setDeletedCount] = useState(0);
   const [isBillsCornerOpen, setIsBillsCornerOpen] = useState(false);
+  const [lessonOneCompleted, setLessonOneCompleted] = useState(false);
 
   const {
     visibleBudgets,
@@ -87,16 +88,25 @@ export default function HomeScreen() {
     posthog?.capture("welcome_tutorial_replayed");
   }
 
-  function openBillsCorner() {
+  async function openBillsCorner() {
+    const completed = await AsyncStorage.getItem(
+      "budget-note-tutorial-complete-v2",
+    );
+
+    const lessonCompleted = completed === "true";
+
+    setLessonOneCompleted(lessonCompleted);
     setIsBillsCornerOpen(true);
 
     posthog?.capture("bills_corner_opened", {
       source: "main_menu_pig_icon",
+      lessonOneCompleted: lessonCompleted,
     });
   }
 
   async function startBillsLessonOne() {
     setIsBillsCornerOpen(false);
+    setLessonOneCompleted(false);
 
     await AsyncStorage.removeItem("budget-note-tutorial-complete-v2");
     await AsyncStorage.removeItem("budget-note-welcome-tutorial-complete");
@@ -268,6 +278,7 @@ export default function HomeScreen() {
 
       <BillsCornerModal
         visible={isBillsCornerOpen}
+        lessonOneCompleted={lessonOneCompleted}
         onClose={() => setIsBillsCornerOpen(false)}
         onStartTutorial={startBillsLessonOne}
       />
