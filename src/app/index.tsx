@@ -19,7 +19,12 @@ import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
 import { loadDeletedBudgets } from "../storage/budgetStorage";
 
-type HomeTutorialStep = "hidden" | "popup" | "highlightNewNote";
+type HomeTutorialStep =
+  | "hidden"
+  | "billIntro"
+  | "billMission"
+  | "popup"
+  | "highlightNewNote";
 
 const SHOW_LEGACY_HELP_BUTTON = false;
 
@@ -52,7 +57,7 @@ export default function HomeScreen() {
       );
 
       if (!completed) {
-        setHomeTutorialStep("popup");
+        setHomeTutorialStep("billIntro");
       }
     }
 
@@ -83,7 +88,7 @@ export default function HomeScreen() {
   }
 
   function replayWelcomeTutorial() {
-    setHomeTutorialStep("popup");
+    setHomeTutorialStep("billIntro");
 
     posthog?.capture("welcome_tutorial_replayed");
   }
@@ -116,7 +121,7 @@ export default function HomeScreen() {
       source: "bills_corner",
     });
 
-    setHomeTutorialStep("popup");
+    setHomeTutorialStep("billIntro");
   }
 
   function resetSearchInBackground() {
@@ -226,7 +231,7 @@ export default function HomeScreen() {
         </Pressable>
 
         {homeTutorialStep === "highlightNewNote" && (
-          <Text style={styles.highlightText}>Tap here to continue</Text>
+          <Text style={styles.highlightText}>Tap + New Budget to continue</Text>
         )}
 
         {searchVisible && (
@@ -283,11 +288,55 @@ export default function HomeScreen() {
         onStartTutorial={startBillsLessonOne}
       />
 
+      {homeTutorialStep === "billIntro" && (
+        <TutorialOverlay
+          title="Hi, I’m Bill."
+          body="I’m your budget guide, and I’m here to help you plan before you spend."
+          buttonText="Next"
+          onNext={() => setHomeTutorialStep("billMission")}
+          onSkip={async () => {
+            posthog?.capture("tutorial_skipped", {
+              tutorialVersion: "welcome_v1",
+              source: "bill_intro",
+            });
+
+            await AsyncStorage.setItem(
+              "budget-note-tutorial-complete-v2",
+              "skipped",
+            );
+
+            await completeWelcomeTutorial();
+          }}
+        />
+      )}
+
+      {homeTutorialStep === "billMission" && (
+        <TutorialOverlay
+          title="One simple question"
+          body="Whenever you’re thinking about spending money, I’ll help you answer: Can I afford this?"
+          buttonText="Next"
+          onNext={() => setHomeTutorialStep("popup")}
+          onSkip={async () => {
+            posthog?.capture("tutorial_skipped", {
+              tutorialVersion: "welcome_v1",
+              source: "bill_mission",
+            });
+
+            await AsyncStorage.setItem(
+              "budget-note-tutorial-complete-v2",
+              "skipped",
+            );
+
+            await completeWelcomeTutorial();
+          }}
+        />
+      )}
+
       {homeTutorialStep === "popup" && (
         <TutorialOverlay
-          title="Hi, welcome to Budget Note."
-          body="Tap “+ New Budget” to start your first budget."
-          buttonText="OK"
+          title="Let’s build your first budget"
+          body="Press the “+ New Budget” button to get started."
+          buttonText="Show Me"
           onNext={() => setHomeTutorialStep("highlightNewNote")}
           onSkip={async () => {
             posthog?.capture("tutorial_skipped", {
