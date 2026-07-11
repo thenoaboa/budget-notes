@@ -107,9 +107,11 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 430,
     maxHeight: "90%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#17232F",
     borderRadius: 28,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#2ECC71",
   },
 
   scrollContent: {
@@ -125,14 +127,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontWeight: "900",
-    color: "#101820",
+    color: "#FFFFFF",
     marginBottom: 10,
     textAlign: "center",
   },
 
   body: {
     fontSize: 15,
-    color: "#4B5563",
+    color: "#CAD3DD",
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 10,
@@ -149,13 +151,13 @@ const styles = StyleSheet.create({
 
   lessonBox: {
     width: "100%",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "#182638",
     borderRadius: 18,
     padding: 16,
     marginTop: 6,
     marginBottom: 18,
     borderWidth: 1,
-    borderColor: "#BBF7D0",
+    borderColor: "#2D4562",
   },
 
   lessonLabel: {
@@ -170,13 +172,13 @@ const styles = StyleSheet.create({
   lessonTitle: {
     fontSize: 17,
     fontWeight: "900",
-    color: "#101820",
+    color: "#FFFFFF",
     marginBottom: 6,
   },
 
   lessonText: {
     fontSize: 15,
-    color: "#374151",
+    color: "#CAD3DD",
     lineHeight: 22,
     fontWeight: "600",
   },
