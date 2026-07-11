@@ -30,6 +30,7 @@ type BudgetCardStats = {
   usedPercent: number;
   barPercent: number;
   hasBudget: boolean;
+  isEmpty: boolean;
   isPlanning: boolean;
   isLowBudget: boolean;
   isOverBudget: boolean;
@@ -94,12 +95,18 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
   const remainingAmount = budgetAmount - spentAmount;
 
   const hasBudget = budgetAmount > 0;
-  const isPlanning = !hasBudget;
+  const hasItems = (budget.spendingItems || []).length > 0;
+  const isEmpty = !hasBudget && !hasItems;
+  const isPlanning = !hasBudget && hasItems;
   const isOverBudget = hasBudget && remainingAmount < 0;
   const isLowBudget =
     hasBudget && remainingAmount > 0 && remainingAmount <= budgetAmount * 0.2;
 
-  const usedPercent = hasBudget ? (spentAmount / budgetAmount) * 100 : 100;
+  const usedPercent = hasBudget
+    ? (spentAmount / budgetAmount) * 100
+    : isPlanning
+      ? 100
+      : 0;
   const roundedUsedPercent = Math.round(usedPercent);
 
   const isComplete = hasBudget && !isOverBudget && remainingAmount === 0;
@@ -113,6 +120,7 @@ function getBudgetStats(budget: Budget): BudgetCardStats {
     usedPercent: roundedUsedPercent > 100 ? 100 : roundedUsedPercent,
     barPercent: Math.min(Math.max(usedPercent, 0), 100),
     hasBudget,
+    isEmpty,
     isPlanning,
     isLowBudget,
     isOverBudget,
@@ -248,11 +256,13 @@ export function NoteCard({
       ? formatMoney(stats.spentAmount)
       : formatMoney(Math.abs(stats.remainingAmount));
 
-    const amountLabel = stats.isPlanning
-      ? "needed"
-      : stats.isOverBudget
-        ? "over budget"
-        : "remaining";
+    const amountLabel = stats.isEmpty
+      ? "ready to plan"
+      : stats.isPlanning
+        ? "needed"
+        : stats.isOverBudget
+          ? "over budget"
+          : "remaining";
 
     return (
       <Pressable style={styles.card} onPress={handlePress}>
@@ -341,7 +351,7 @@ export function NoteCard({
         </View>
 
         <View style={styles.footerRow}>
-          {stats.isPlanning ? (
+          {stats.isEmpty || stats.isPlanning ? (
             <>
               <Text style={styles.completeText}>No budget set</Text>
               <Text style={styles.footerText}>
