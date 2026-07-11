@@ -47,7 +47,8 @@ type TutorialStep =
   | "addItemPopup"
   | "addItemHighlight"
   | "donePopup"
-  | "menuPopup";
+  | "savedPopup"
+  | "finishPopup";
 
 export default function BudgetDashboardScreen() {
   const router = useRouter();
@@ -669,15 +670,26 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               title="Track what’s left"
               body="Your remaining balance updates automatically with every purchase you add."
               buttonText="Next"
-              onNext={() => setTutorialStep("menuPopup")}
+              onNext={() => setTutorialStep("savedPopup")}
               onSkip={skipTutorial}
             />
           )}
-          {!tutorialDismissed && tutorialStep === "menuPopup" && (
+          {!tutorialDismissed && tutorialStep === "savedPopup" && (
             <TutorialOverlay
-              title="Budget Saved"
-              body="Your budget saves automatically. After adding items or an available amount, tap Menu to return to your budget list and rename it."
-              buttonText="Got it"
+              title="Your budget is saved"
+              body="Budget Note saves your changes automatically, so you can come back and keep planning anytime."
+              buttonText="Next"
+              onNext={() => setTutorialStep("finishPopup")}
+              onSkip={skipTutorial}
+            />
+          )}
+          {!tutorialDismissed && tutorialStep === "finishPopup" && (
+            <TutorialOverlay
+              title="Now it’s your turn"
+              body={
+                "You know how to name a budget, set your spending limit, and add what you’re thinking about buying.\n\nWhenever you’re wondering, “Can I afford this?” I’ll be here to help."
+              }
+              buttonText="Start Planning"
               onNext={completeTutorial}
               onSkip={skipTutorial}
             />
