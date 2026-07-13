@@ -2,7 +2,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { ComicLessonScreen } from "@/components/lessons/ComicLessonScreen";
-import { getBillLessonById } from "@/data/billLessons";
+import { billLessons, getBillLessonById } from "@/data/billLessons";
+
+export function generateStaticParams() {
+  return billLessons.map((lesson) => ({
+    lessonId: lesson.id,
+  }));
+}
 
 export default function BillLessonRoute() {
   const params = useLocalSearchParams<{
@@ -20,7 +26,9 @@ export default function BillLessonRoute() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorEmoji}>🐷</Text>
+
           <Text style={styles.errorTitle}>Lesson not found</Text>
+
           <Text style={styles.errorText}>
             This lesson may have been moved or removed.
           </Text>
@@ -50,27 +58,33 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#111513",
   },
+
   errorContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
+
   errorEmoji: {
     fontSize: 64,
     marginBottom: 16,
   },
+
   errorTitle: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "800",
   },
+
   errorText: {
     color: "#AAB4AE",
     fontSize: 15,
     textAlign: "center",
     marginTop: 8,
+    lineHeight: 22,
   },
+
   backButton: {
     backgroundColor: "#4E7D3A",
     borderRadius: 14,
@@ -78,6 +92,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 24,
   },
+
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
