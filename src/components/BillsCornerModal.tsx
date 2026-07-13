@@ -13,6 +13,8 @@ type BillsCornerModalProps = {
   lessonOneCompleted: boolean;
   onClose: () => void;
   onStartTutorial: () => void;
+  onOpenLessons: () => void;
+  showLessons?: boolean;
 };
 
 export function BillsCornerModal({
@@ -20,6 +22,8 @@ export function BillsCornerModal({
   lessonOneCompleted,
   onClose,
   onStartTutorial,
+  onOpenLessons,
+  showLessons = true,
 }: BillsCornerModalProps) {
   const scrollRef = useRef<ScrollView>(null);
   const [scrollKey, setScrollKey] = useState(0);
@@ -29,6 +33,11 @@ export function BillsCornerModal({
 
     setScrollKey((current) => current + 1);
   }, [visible]);
+
+  function handleOpenLessons() {
+    onClose();
+    onOpenLessons();
+  }
 
   return (
     <Modal
@@ -76,7 +85,10 @@ export function BillsCornerModal({
                 </View>
 
                 <Pressable
-                  style={styles.primaryButton}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
                   onPress={onStartTutorial}
                   accessibilityRole="button"
                   accessibilityLabel="Start Lesson 1"
@@ -97,7 +109,10 @@ export function BillsCornerModal({
                 <Text style={styles.sectionTitle}>Lessons</Text>
 
                 <Pressable
-                  style={styles.activeLessonCard}
+                  style={({ pressed }) => [
+                    styles.activeLessonCard,
+                    pressed && styles.buttonPressed,
+                  ]}
                   onPress={onStartTutorial}
                   accessibilityRole="button"
                   accessibilityLabel="Replay Lesson 1"
@@ -122,9 +137,41 @@ export function BillsCornerModal({
                   <Text style={styles.replayText}>Replay Lesson →</Text>
                 </Pressable>
 
+                {showLessons && (
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.availableLessonCard,
+                      pressed && styles.buttonPressed,
+                    ]}
+                    onPress={handleOpenLessons}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open Lesson 2 Can I Afford This"
+                  >
+                    <View style={styles.lessonHeader}>
+                      <Text style={styles.lessonNumber}>Lesson 2</Text>
+
+                      <View style={styles.availableBadge}>
+                        <Text style={styles.availableBadgeText}>Available</Text>
+                      </View>
+                    </View>
+
+                    <Text style={styles.activeLessonTitle}>
+                      Can I Afford This?
+                    </Text>
+
+                    <Text style={styles.activeLessonText}>
+                      Learn the difference between being able to buy something
+                      and truly being able to afford it.
+                    </Text>
+
+                    <Text style={styles.startLessonText}>Start Lesson →</Text>
+                  </Pressable>
+                )}
+
                 <View style={styles.lockedLessonCard}>
                   <View style={styles.lessonHeader}>
-                    <Text style={styles.lockedLessonNumber}>Lesson 2</Text>
+                    <Text style={styles.lockedLessonNumber}>Lesson 3</Text>
+
                     <Text style={styles.comingSoon}>Coming soon</Text>
                   </View>
 
@@ -137,7 +184,8 @@ export function BillsCornerModal({
 
                 <View style={styles.lockedLessonCard}>
                   <View style={styles.lessonHeader}>
-                    <Text style={styles.lockedLessonNumber}>Lesson 3</Text>
+                    <Text style={styles.lockedLessonNumber}>Lesson 4</Text>
+
                     <Text style={styles.comingSoon}>Coming soon</Text>
                   </View>
 
@@ -163,7 +211,10 @@ export function BillsCornerModal({
             )}
 
             <Pressable
-              style={styles.secondaryButton}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                pressed && styles.buttonPressed,
+              ]}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close Bill's Corner"
@@ -288,6 +339,16 @@ const styles = StyleSheet.create({
     borderColor: "#2ECC71",
   },
 
+  availableLessonCard: {
+    width: "100%",
+    backgroundColor: "#1A2D2A",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#2ECC71",
+  },
+
   lessonHeader: {
     width: "100%",
     flexDirection: "row",
@@ -317,6 +378,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  availableBadge: {
+    backgroundColor: "#2ECC71",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+
+  availableBadgeText: {
+    color: "#101820",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+
   activeLessonTitle: {
     color: "#FFFFFF",
     fontSize: 18,
@@ -332,6 +406,13 @@ const styles = StyleSheet.create({
   },
 
   replayText: {
+    color: "#2ECC71",
+    fontSize: 14,
+    fontWeight: "900",
+    marginTop: 12,
+  },
+
+  startLessonText: {
     color: "#2ECC71",
     fontSize: 14,
     fontWeight: "900",
@@ -427,5 +508,9 @@ const styles = StyleSheet.create({
     color: "#93A4B4",
     fontSize: 15,
     fontWeight: "800",
+  },
+
+  buttonPressed: {
+    opacity: 0.72,
   },
 });

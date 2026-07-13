@@ -123,6 +123,15 @@ export default function HomeScreen() {
 
     setHomeTutorialStep("billIntro");
   }
+  function openBillsLessons() {
+    setIsBillsCornerOpen(false);
+
+    posthog?.capture("bills_lessons_opened", {
+      source: "bills_corner_modal",
+    });
+
+    router.push("/bills-corner" as any);
+  }
 
   function resetSearchInBackground() {
     setTimeout(() => {
@@ -286,6 +295,8 @@ export default function HomeScreen() {
         lessonOneCompleted={lessonOneCompleted}
         onClose={() => setIsBillsCornerOpen(false)}
         onStartTutorial={startBillsLessonOne}
+        onOpenLessons={openBillsLessons}
+        showLessons={true}
       />
 
       {homeTutorialStep === "billIntro" && (
