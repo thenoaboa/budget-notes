@@ -309,6 +309,170 @@ export const billLessons: BillLesson[] = [
   },
 ];
 
+export const mixedReviewQuestions: PracticeQuestion[] = [
+  {
+    id: "mixed-target-sale",
+    type: "scenario",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "You planned to spend $60 at a store. Your cart is $56 before tax. What is the safest next step?",
+    answers: [
+      "Check the estimated tax before checking out",
+      "Add another item because you still have $4",
+      "Ignore the budget because the items are on sale",
+      "Raise the limit after buying everything",
+    ],
+    correctAnswerIndex: 0,
+    explanation:
+      "The listed total is not always the final total. Tax could push the cart over your $60 limit.",
+  },
+  {
+    id: "mixed-phone-bill",
+    type: "true-false",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "Having enough money in your account today automatically means a purchase is affordable.",
+    correctAnswer: false,
+    explanation:
+      "Money in the account may already be needed for bills, food, transportation, or other planned expenses.",
+  },
+  {
+    id: "mixed-weekend-choice",
+    type: "multiple-choice",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "You have $45 of uncommitted spending money left. Which plan keeps you within that amount?",
+    answers: [
+      "$18 dinner, $12 movie ticket, and $9 snacks",
+      "$25 dinner, $15 movie ticket, and $10 snacks",
+      "$30 dinner and $20 shopping",
+      "$40 dinner and $8 parking",
+    ],
+    correctAnswerIndex: 0,
+    explanation:
+      "The first plan totals $39. Every other option is more than the $45 available.",
+  },
+  {
+    id: "mixed-remove-item",
+    type: "select-item",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "Your cart totals $67 and your limit is $60. Which one item could you remove to get within the limit?",
+    budgetLimit: 60,
+    items: [
+      { id: "soap", name: "Soap", price: 5, emoji: "🧼" },
+      { id: "candle", name: "Candle", price: 9, emoji: "🕯️" },
+      { id: "batteries", name: "Batteries", price: 6, emoji: "🔋" },
+      { id: "snack", name: "Snack", price: 3, emoji: "🍫" },
+    ],
+    correctItemId: "candle",
+    explanation:
+      "You are $7 over. Removing the $9 candle lowers the total to $58.",
+  },
+  {
+    id: "mixed-plan-order",
+    type: "order",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt: "Put these steps in the best order before making a purchase.",
+    steps: [
+      { id: "check-needs", text: "Check what the remaining money must cover" },
+      { id: "buy", text: "Make the purchase" },
+      { id: "set-limit", text: "Set a spending limit" },
+      { id: "check-total", text: "Review the full total" },
+    ],
+    correctOrder: ["set-limit", "check-needs", "check-total", "buy"],
+    explanation:
+      "Set the limit, protect the money needed elsewhere, review the full total, and then decide whether to buy.",
+  },
+  {
+    id: "mixed-friend-invite",
+    type: "scenario",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "A friend invites you out, but the money left in your account is reserved for gas until payday. What is the best response?",
+    answers: [
+      "Spend the gas money and solve it later",
+      "Check whether a cheaper option fits without touching the gas money",
+      "Use a credit card so it does not affect the account today",
+      "Ignore the gas expense because it is not due yet",
+    ],
+    correctAnswerIndex: 1,
+    explanation:
+      "Money reserved for a need is not available spending money. A cheaper plan may still work without creating another problem.",
+  },
+  {
+    id: "mixed-discount",
+    type: "true-false",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "A discounted item is automatically a smart purchase because it costs less than normal.",
+    correctAnswer: false,
+    explanation:
+      "A discount only changes the price. The purchase still needs to fit your plan and be worth buying.",
+  },
+  {
+    id: "mixed-full-impact",
+    type: "multiple-choice",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt: "Which number gives the clearest picture of a purchase's impact?",
+    answers: [
+      "The sticker price only",
+      "The price after discounts only",
+      "The full cost compared with available spending money",
+      "The amount currently in the checking account",
+    ],
+    correctAnswerIndex: 2,
+    explanation:
+      "The full cost must be compared with money that is genuinely available after other needs are protected.",
+  },
+  {
+    id: "mixed-small-items",
+    type: "scenario",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "Several small items push your list $11 over budget. What should you do first?",
+    answers: [
+      "Review the least important items and remove enough to fit",
+      "Keep everything because each item is inexpensive",
+      "Increase the budget without checking anything",
+      "Ignore the difference because it is close",
+    ],
+    correctAnswerIndex: 0,
+    explanation:
+      "Small purchases still add up. Removing lower-priority items protects the spending limit.",
+  },
+  {
+    id: "mixed-leftover",
+    type: "true-false",
+    lessonId: "mixed-review",
+    lessonNumber: 0,
+    lessonTitle: "Mixed Review",
+    prompt:
+      "Leaving some room below your spending limit can protect you from tax, price changes, or forgotten costs.",
+    correctAnswer: true,
+    explanation:
+      "A small buffer makes the plan more realistic and reduces the chance of going over.",
+  },
+];
+
 export function getBillLessonById(id: string): BillLesson | undefined {
   return billLessons.find((lesson) => lesson.id === id);
 }
@@ -344,10 +508,8 @@ export function getPracticeQuestionsForLesson(
   }));
 }
 
-export function getAllPracticeQuestions(): PracticeQuestion[] {
-  return billLessons.flatMap((lesson) =>
-    getPracticeQuestionsForLesson(lesson.id),
-  );
+export function getMixedReviewQuestions(): PracticeQuestion[] {
+  return [...mixedReviewQuestions];
 }
 
 export function shufflePracticeQuestions(

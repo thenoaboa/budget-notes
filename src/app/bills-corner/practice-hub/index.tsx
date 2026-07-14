@@ -13,36 +13,58 @@ import {
 import { billLessons, getPracticeQuestionsForLesson } from "@/data/billLessons";
 import type { BillLessonProgress } from "@/storage/billLessonProgress";
 import { getBillLessonProgress } from "@/storage/billLessonProgress";
+import {
+    MAX_PRACTICE_COINS,
+    getBillPracticeState,
+} from "@/storage/billPracticeState";
 
 type ProgressMap = Record<string, BillLessonProgress>;
 
+function renderCoins(coinsRemaining: number): string {
+  return Array.from({ length: MAX_PRACTICE_COINS }, (_, index) =>
+    index < coinsRemaining ? "🪙" : "⚫",
+  ).join(" ");
+}
+
 export default function PracticeHubScreen() {
   const [progressByLesson, setProgressByLesson] = useState<ProgressMap>({});
+  const [coinsRemaining, setCoinsRemaining] = useState(MAX_PRACTICE_COINS);
   const [loading, setLoading] = useState(true);
 
-  const loadProgress = useCallback(async () => {
+  const loadPracticeHub = useCallback(async () => {
     setLoading(true);
 
-    const entries = await Promise.all(
-      billLessons.map(async (lesson) => {
-        const progress = await getBillLessonProgress(lesson.id);
-        return [lesson.id, progress] as const;
-      }),
-    );
+    const [practiceState, entries] = await Promise.all([
+      getBillPracticeState(),
 
+      Promise.all(
+        billLessons.map(async (lesson) => {
+          const progress = await getBillLessonProgress(lesson.id);
+
+          return [lesson.id, progress] as const;
+        }),
+      ),
+    ]);
+
+    setCoinsRemaining(practiceState.coinsRemaining);
     setProgressByLesson(Object.fromEntries(entries));
     setLoading(false);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void loadProgress();
-    }, [loadProgress]),
+      void loadPracticeHub();
+    }, [loadPracticeHub]),
   );
 
   const availableLessons = billLessons.filter((lesson) => {
     const progress = progressByLesson[lesson.id];
-    return progress?.lessonCompleted || progress?.testCompleted;
+
+    return (
+      progress?.lessonCompleted ||
+      progress?.testCompleted ||
+      progress?.practiceCompleted
+    );
   });
 
   const canStartMixedReview = availableLessons.length > 0;
@@ -68,6 +90,7 @@ export default function PracticeHubScreen() {
 
           <View style={styles.headerText}>
             <Text style={styles.title}>Practice with Bill</Text>
+
             <Text style={styles.subtitle}>
               Review completed lessons without replaying the full story.
             </Text>
@@ -77,12 +100,21 @@ export default function PracticeHubScreen() {
         </View>
 
         <View style={styles.coinCard}>
-          <View>
+          <View style={styles.coinInformation}>
             <Text style={styles.coinLabel}>Practice coins</Text>
-            <Text style={styles.coinHelp}>A wrong answer uses one coin.</Text>
+
+            <Text style={styles.coinHelp}>
+              Wrong answers use one coin and save automatically.
+            </Text>
           </View>
 
-          <Text style={styles.coins}>🪙 🪙 🪙 🪙 🪙</Text>
+          <View style={styles.coinDisplay}>
+            <Text style={styles.coins}>{renderCoins(coinsRemaining)}</Text>
+
+            <Text style={styles.coinCount}>
+              {coinsRemaining} of {MAX_PRACTICE_COINS}
+            </Text>
+          </View>
         </View>
 
         <Text style={styles.sectionTitle}>Challenges</Text>
@@ -97,9 +129,13 @@ export default function PracticeHubScreen() {
           onPress={() =>
             router.push({
               pathname: "/bills-corner/practice-hub/session",
-              params: { mode: "mixed" },
+              params: {
+                mode: "mixed",
+              },
             })
           }
+          accessibilityRole="button"
+          accessibilityLabel="Start Mixed Review"
         >
           <View style={styles.featureIcon}>
             <Text style={styles.featureEmoji}>🧠</Text>
@@ -107,9 +143,11 @@ export default function PracticeHubScreen() {
 
           <View style={styles.featureContent}>
             <Text style={styles.featureTitle}>Mixed Review</Text>
+
             <Text style={styles.featureDescription}>
-              Five shuffled questions from every completed lesson.
+              Five new scenarios that are different from the lesson tests.
             </Text>
+
             <Text
               style={[
                 styles.featureStatus,
@@ -117,9 +155,7 @@ export default function PracticeHubScreen() {
               ]}
             >
               {canStartMixedReview
-                ? `${availableLessons.length} lesson${
-                    availableLessons.length === 1 ? "" : "s"
-                  } available`
+                ? "Unique mixed-review questions"
                 : "Complete a lesson to unlock"}
             </Text>
           </View>
@@ -136,10 +172,12 @@ export default function PracticeHubScreen() {
 
           <View style={styles.featureContent}>
             <Text style={styles.featureTitle}>Daily Challenge</Text>
+
             <Text style={styles.featureDescription}>
               Return each day for a fresh five-question challenge.
             </Text>
-            <Text style={styles.lockedText}>Coming next</Text>
+
+            <Text style={styles.lockedText}>Coming in a future update</Text>
           </View>
 
           <Text style={styles.cardChevron}>🔒</Text>
@@ -150,14 +188,18 @@ export default function PracticeHubScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator />
+
             <Text style={styles.loadingText}>Loading progress...</Text>
           </View>
         ) : (
           billLessons.map((lesson) => {
             const progress = progressByLesson[lesson.id];
+
             const unlocked =
               progress?.lessonCompleted === true ||
-              progress?.testCompleted === true;
+              progress?.testCompleted === true ||
+              progress?.practiceCompleted === true;
+
             const questionCount = getPracticeQuestionsForLesson(
               lesson.id,
             ).length;
@@ -180,6 +222,8 @@ export default function PracticeHubScreen() {
                     },
                   })
                 }
+                accessibilityRole="button"
+                accessibilityLabel={`Practice Lesson ${lesson.lessonNumber}: ${lesson.title}`}
               >
                 <View style={styles.lessonNumber}>
                   <Text style={styles.lessonNumberText}>
@@ -189,6 +233,7 @@ export default function PracticeHubScreen() {
 
                 <View style={styles.lessonContent}>
                   <Text style={styles.lessonTitle}>{lesson.title}</Text>
+
                   <Text style={styles.lessonDescription}>
                     {questionCount} practice questions
                   </Text>
@@ -224,15 +269,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#111513",
   },
+
   content: {
     padding: 20,
     paddingBottom: 50,
   },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 24,
   },
+
   backButton: {
     width: 42,
     height: 42,
@@ -242,29 +290,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#1B211E",
     marginRight: 12,
   },
+
   backButtonText: {
     color: "#FFFFFF",
     fontSize: 34,
     lineHeight: 36,
   },
+
   headerText: {
     flex: 1,
   },
+
   title: {
     color: "#FFFFFF",
     fontSize: 25,
     fontWeight: "800",
   },
+
   subtitle: {
     color: "#AAB4AE",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 4,
   },
+
   billEmoji: {
     fontSize: 38,
     marginLeft: 10,
   },
+
   coinCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -276,19 +330,40 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 26,
   },
+
+  coinInformation: {
+    flex: 1,
+    paddingRight: 12,
+  },
+
   coinLabel: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },
+
   coinHelp: {
     color: "#8F9A94",
     fontSize: 12,
+    lineHeight: 17,
     marginTop: 4,
   },
-  coins: {
-    fontSize: 17,
+
+  coinDisplay: {
+    alignItems: "flex-end",
   },
+
+  coins: {
+    fontSize: 15,
+  },
+
+  coinCount: {
+    color: "#AAB4AE",
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 5,
+  },
+
   sectionTitle: {
     color: "#FFFFFF",
     fontSize: 20,
@@ -296,6 +371,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 4,
   },
+
   featureCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -306,6 +382,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
   },
+
   featureIcon: {
     width: 48,
     height: 48,
@@ -315,29 +392,35 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
+
   featureEmoji: {
     fontSize: 24,
   },
+
   featureContent: {
     flex: 1,
   },
+
   featureTitle: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "700",
   },
+
   featureDescription: {
     color: "#AAB4AE",
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
   },
+
   featureStatus: {
     color: "#7CB55B",
     fontSize: 12,
     fontWeight: "700",
     marginTop: 8,
   },
+
   lessonCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -348,6 +431,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
   },
+
   lessonNumber: {
     width: 44,
     height: 44,
@@ -357,55 +441,67 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
+
   lessonNumberText: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "800",
   },
+
   lessonContent: {
     flex: 1,
   },
+
   lessonTitle: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },
+
   lessonDescription: {
     color: "#AAB4AE",
     fontSize: 13,
     marginTop: 4,
   },
+
   lessonStatusRow: {
     flexDirection: "row",
     marginTop: 8,
   },
+
   lessonStatus: {
     color: "#7CB55B",
     fontSize: 12,
     fontWeight: "700",
   },
+
   cardChevron: {
     color: "#FFFFFF",
     fontSize: 28,
     marginLeft: 10,
   },
+
   disabledCard: {
     opacity: 0.52,
   },
+
   lockedText: {
     color: "#7F8A84",
     fontSize: 12,
     fontWeight: "700",
     marginTop: 8,
   },
+
   buttonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.99 }],
   },
+
   loadingContainer: {
     alignItems: "center",
     paddingVertical: 30,
   },
+
   loadingText: {
     color: "#AAB4AE",
     fontSize: 13,

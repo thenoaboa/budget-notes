@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     Pressable,
     SafeAreaView,
     ScrollView,
@@ -11,14 +12,18 @@ import {
 
 import {
     PracticeQuestion,
-    getAllPracticeQuestions,
+    getMixedReviewQuestions,
     getPracticeQuestionsForLesson,
     shufflePracticeQuestions,
 } from "@/data/billLessons";
 import { recordBillPracticeResult } from "@/storage/billLessonProgress";
+import {
+    MAX_PRACTICE_COINS,
+    getBillPracticeState,
+    spendBillPracticeCoin,
+} from "@/storage/billPracticeState";
 
 const SESSION_LENGTH = 5;
-const STARTING_COINS = 5;
 
 type AnswerValue = string | number | boolean | string[];
 
@@ -61,7 +66,7 @@ export default function PracticeSessionScreen() {
     const source =
       mode === "lesson" && lessonId
         ? getPracticeQuestionsForLesson(lessonId)
-        : getAllPracticeQuestions();
+        : getMixedReviewQuestions();
 
     return shufflePracticeQuestions(source).slice(0, SESSION_LENGTH);
   }, [lessonId, mode]);
@@ -74,12 +79,32 @@ export default function PracticeSessionScreen() {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [wasCorrect, setWasCorrect] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [coins, setCoins] = useState(STARTING_COINS);
+  const [coins, setCoins] = useState(MAX_PRACTICE_COINS);
+  const [coinsLoaded, setCoinsLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
 
   const currentQuestion = questions[questionIndex];
 
-  const submitAnswer = () => {
+  useEffect(() => {
+    let active = true;
+
+    async function loadCoins() {
+      const state = await getBillPracticeState();
+
+      if (active) {
+        setCoins(state.coinsRemaining);
+        setCoinsLoaded(true);
+      }
+    }
+
+    void loadCoins();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const submitAnswer = async () => {
     if (!currentQuestion || selectedAnswer === null || answerSubmitted) {
       return;
     }
@@ -92,7 +117,8 @@ export default function PracticeSessionScreen() {
     if (correct) {
       setCorrectAnswers((current) => current + 1);
     } else {
-      setCoins((current) => Math.max(0, current - 1));
+      const nextState = await spendBillPracticeCoin();
+      setCoins(nextState.coinsRemaining);
     }
   };
 
@@ -140,6 +166,17 @@ export default function PracticeSessionScreen() {
     setSelectedAnswer(null);
   };
 
+  if (!coinsLoaded) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator />
+          <Text style={styles.loadingText}>Loading practice...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (questions.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -170,7 +207,7 @@ export default function PracticeSessionScreen() {
             You answered {correctAnswers} of {questions.length} correctly.
           </Text>
           <Text style={styles.resultsCoins}>
-            Coins remaining: {coins} of {STARTING_COINS}
+            Coins remaining: {coins} of {MAX_PRACTICE_COINS}
           </Text>
 
           <Pressable
@@ -317,6 +354,12 @@ export default function PracticeSessionScreen() {
             <Text style={styles.feedbackText}>
               {currentQuestion.explanation}
             </Text>
+
+            {!wasCorrect && (
+              <Text style={styles.coinLostText}>
+                One coin was used. You have {coins} remaining.
+              </Text>
+            )}
           </View>
         )}
 
@@ -328,7 +371,7 @@ export default function PracticeSessionScreen() {
               pressed && selectedAnswer !== null && styles.buttonPressed,
             ]}
             disabled={selectedAnswer === null}
-            onPress={submitAnswer}
+            onPress={() => void submitAnswer()}
           >
             <Text style={styles.primaryButtonText}>Check answer</Text>
           </Pressable>
@@ -535,6 +578,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 6,
   },
+  coinLostText: {
+    color: "#E0B96A",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 10,
+  },
   primaryButton: {
     backgroundColor: "#4E7D3A",
     borderRadius: 16,
@@ -555,6 +604,17 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.99 }],
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 30,
+  },
+  loadingText: {
+    color: "#AAB4AE",
+    fontSize: 13,
+    marginTop: 10,
   },
   emptyContainer: {
     flex: 1,
