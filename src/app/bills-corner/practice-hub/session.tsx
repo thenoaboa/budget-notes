@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Modal,
+    Platform,
     Pressable,
     SafeAreaView,
     ScrollView,
@@ -97,6 +99,7 @@ export default function PracticeSessionScreen() {
   const [coinsLoaded, setCoinsLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
   const [watchingAd, setWatchingAd] = useState(false);
+  const [showWebAdModal, setShowWebAdModal] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   const currentQuestion = questions[questionIndex];
@@ -215,6 +218,11 @@ export default function PracticeSessionScreen() {
   };
 
   const watchAdForCoin = async () => {
+    if (Platform.OS === "web") {
+      setShowWebAdModal(true);
+      return;
+    }
+
     if (watchingAd) {
       return;
     }
@@ -268,6 +276,42 @@ export default function PracticeSessionScreen() {
 
     return (
       <SafeAreaView style={styles.safeArea}>
+        <Modal
+          visible={showWebAdModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowWebAdModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={styles.modalEmoji}>🐷</Text>
+
+              <Text style={styles.modalTitle}>Watch ads are coming!</Text>
+
+              <Text style={styles.modalText}>
+                Rewarded ads will be available in the Android and iPhone
+                versions of Budget Note.
+              </Text>
+
+              <Text style={styles.modalSubtext}>
+                Watch a short ad to instantly restore a practice coin.
+              </Text>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.modalButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => setShowWebAdModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close rewarded ads message"
+              >
+                <Text style={styles.modalButtonText}>Got it</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+
         <View style={styles.outOfCoinsContainer}>
           <Text style={styles.outOfCoinsEmoji}>🐷</Text>
           <Text style={styles.outOfCoinsTitle}>
@@ -566,6 +610,61 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#111513",
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.72)",
+    padding: 24,
+  },
+  modalCard: {
+    width: "100%",
+    maxWidth: 380,
+    alignItems: "center",
+    backgroundColor: "#1B211E",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#2A332E",
+    padding: 24,
+  },
+  modalEmoji: {
+    fontSize: 44,
+  },
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 21,
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 12,
+  },
+  modalText: {
+    color: "#AAB4AE",
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+    marginTop: 10,
+  },
+  modalSubtext: {
+    color: "#D6DDD9",
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+    marginTop: 12,
+  },
+  modalButton: {
+    width: "100%",
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4E7D3A",
+    borderRadius: 14,
+    marginTop: 20,
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
   },
   content: {
     flexGrow: 1,
