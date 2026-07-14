@@ -23,7 +23,6 @@ export default function BillsCornerScreen() {
 
             <View style={styles.headerText}>
               <Text style={styles.title}>Bill&apos;s Corner</Text>
-
               <Text style={styles.subtitle}>
                 Quick lessons for making smarter spending decisions.
               </Text>
@@ -45,7 +44,6 @@ export default function BillsCornerScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Lessons</Text>
-
           <Text style={styles.sectionCount}>
             {billLessons.length} available
           </Text>
@@ -68,16 +66,13 @@ export default function BillsCornerScreen() {
 
             <View style={styles.lessonInformation}>
               <Text style={styles.lessonTitle}>{lesson.title}</Text>
-
               <Text style={styles.lessonDescription}>{lesson.description}</Text>
 
               <View style={styles.lessonMetadata}>
                 <Text style={styles.metadataText}>
                   About {lesson.durationMinutes} min
                 </Text>
-
                 <Text style={styles.metadataDivider}>•</Text>
-
                 <Text style={styles.metadataText}>
                   {lesson.panels.length} parts
                 </Text>
@@ -91,15 +86,19 @@ export default function BillsCornerScreen() {
         <View style={styles.practiceSectionHeader}>
           <Text style={styles.sectionTitle}>Practice</Text>
 
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+          <View style={styles.newBadge}>
+            <Text style={styles.newBadgeText}>NEW</Text>
           </View>
         </View>
 
-        <View
-          style={styles.practiceCard}
-          accessibilityRole="summary"
-          accessibilityLabel="Practice with Bill. Coming soon."
+        <Pressable
+          style={({ pressed }) => [
+            styles.practiceCard,
+            pressed && styles.practiceCardPressed,
+          ]}
+          onPress={() => router.push("/bills-corner/practice-hub")}
+          accessibilityRole="button"
+          accessibilityLabel="Open Practice with Bill"
         >
           <View style={styles.practiceIconContainer}>
             <Text style={styles.practiceIcon}>🎯</Text>
@@ -108,8 +107,7 @@ export default function BillsCornerScreen() {
           <View style={styles.practiceInformation}>
             <View style={styles.practiceTitleRow}>
               <Text style={styles.practiceTitle}>Practice with Bill</Text>
-
-              <Text style={styles.lockIcon}>🔒</Text>
+              <Text style={styles.practiceChevron}>›</Text>
             </View>
 
             <Text style={styles.practiceDescription}>
@@ -130,18 +128,16 @@ export default function BillsCornerScreen() {
               <View style={styles.practiceFeature}>
                 <Text style={styles.practiceFeatureIcon}>🪙</Text>
                 <Text style={styles.practiceFeatureText}>
-                  Earn and use coins
+                  Five practice coins
                 </Text>
               </View>
             </View>
           </View>
-        </View>
+        </Pressable>
 
         <View style={styles.comingSoonCard}>
           <Text style={styles.comingSoonEmoji}>📚</Text>
-
           <Text style={styles.comingSoonTitle}>More lessons coming soon</Text>
-
           <Text style={styles.comingSoonBody}>
             Bill is working on more ways to help you plan before you spend.
           </Text>
@@ -156,48 +152,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#111513",
   },
-
   content: {
     padding: 20,
     paddingBottom: 50,
   },
-
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
     marginBottom: 30,
   },
-
   headerLeft: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     paddingRight: 10,
   },
-
   billEmoji: {
     fontSize: 48,
     marginRight: 14,
   },
-
   headerText: {
     flex: 1,
   },
-
   title: {
     color: "#FFFFFF",
     fontSize: 28,
     fontWeight: "800",
   },
-
   subtitle: {
     color: "#AAB4AE",
     fontSize: 15,
     lineHeight: 21,
     marginTop: 5,
   },
-
   closeButton: {
     width: 42,
     height: 42,
@@ -206,25 +194,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginLeft: 8,
   },
-
   closeButtonPressed: {
     opacity: 0.6,
   },
-
   closeButtonText: {
     color: "#FFFFFF",
     fontSize: 26,
     fontWeight: "700",
     lineHeight: 28,
   },
-
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-
   practiceSectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -232,19 +216,16 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 12,
   },
-
   sectionTitle: {
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "700",
   },
-
   sectionCount: {
     color: "#7CB55B",
     fontSize: 13,
     fontWeight: "600",
   },
-
   lessonCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -255,12 +236,10 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
   },
-
   lessonCardPressed: {
     opacity: 0.75,
     transform: [{ scale: 0.99 }],
   },
-
   lessonNumber: {
     width: 46,
     height: 46,
@@ -270,143 +249,123 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 14,
   },
-
   lessonNumberText: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "800",
   },
-
   lessonInformation: {
     flex: 1,
   },
-
   lessonTitle: {
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 5,
   },
-
   lessonDescription: {
     color: "#AAB4AE",
     fontSize: 14,
     lineHeight: 20,
   },
-
   lessonMetadata: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 10,
   },
-
   metadataText: {
     color: "#7CB55B",
     fontSize: 12,
     fontWeight: "600",
   },
-
   metadataDivider: {
     color: "#59645E",
     marginHorizontal: 8,
   },
-
   chevron: {
     color: "#FFFFFF",
     fontSize: 32,
     marginLeft: 10,
   },
-
-  comingSoonBadge: {
+  newBadge: {
     backgroundColor: "#29352F",
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-
-  comingSoonBadgeText: {
+  newBadgeText: {
     color: "#7CB55B",
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.7,
   },
-
   practiceCard: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: "#171C19",
+    backgroundColor: "#1B211E",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#3A463F",
-    borderStyle: "dashed",
+    borderColor: "#4E7D3A",
     padding: 16,
-    opacity: 0.88,
   },
-
+  practiceCardPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.99 }],
+  },
   practiceIconContainer: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#252D29",
+    backgroundColor: "#29352F",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 14,
   },
-
   practiceIcon: {
     fontSize: 25,
   },
-
   practiceInformation: {
     flex: 1,
   },
-
   practiceTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
   },
-
   practiceTitle: {
     flex: 1,
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
   },
-
-  lockIcon: {
-    fontSize: 15,
+  practiceChevron: {
+    color: "#FFFFFF",
+    fontSize: 30,
+    lineHeight: 30,
     marginLeft: 10,
   },
-
   practiceDescription: {
-    color: "#9AA59F",
+    color: "#AAB4AE",
     fontSize: 14,
     lineHeight: 20,
     marginTop: 5,
   },
-
   practiceFeatures: {
     marginTop: 13,
     gap: 8,
   },
-
   practiceFeature: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   practiceFeatureIcon: {
     width: 24,
     fontSize: 14,
   },
-
   practiceFeatureText: {
-    color: "#7F8A84",
+    color: "#8F9A94",
     fontSize: 12,
     fontWeight: "600",
   },
-
   comingSoonCard: {
     alignItems: "center",
     backgroundColor: "#171C19",
@@ -417,18 +376,15 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: 24,
   },
-
   comingSoonEmoji: {
     fontSize: 34,
     marginBottom: 10,
   },
-
   comingSoonTitle: {
     color: "#FFFFFF",
     fontSize: 17,
     fontWeight: "700",
   },
-
   comingSoonBody: {
     color: "#8F9A94",
     fontSize: 14,

@@ -137,6 +137,12 @@ export type BillLesson = {
   panels: LessonPanel[];
 };
 
+export type PracticeQuestion = KnowledgeQuestion & {
+  lessonId: string;
+  lessonNumber: number;
+  lessonTitle: string;
+};
+
 export const billLessons: BillLesson[] = [
   {
     id: "can-i-afford-this",
@@ -167,52 +173,20 @@ export const billLessons: BillLesson[] = [
         type: "expenses",
         text: "What else does that $300 need to cover?",
         expenses: [
-          {
-            name: "Gas",
-            amount: 60,
-            emoji: "⛽",
-          },
-          {
-            name: "Phone bill",
-            amount: 50,
-            emoji: "📱",
-          },
-          {
-            name: "Birthday gift",
-            amount: 40,
-            emoji: "🎁",
-          },
-          {
-            name: "Groceries",
-            amount: 80,
-            emoji: "🛒",
-          },
+          { name: "Gas", amount: 60, emoji: "⛽" },
+          { name: "Phone bill", amount: 50, emoji: "📱" },
+          { name: "Birthday gift", amount: 40, emoji: "🎁" },
+          { name: "Groceries", amount: 80, emoji: "🛒" },
         ],
       },
       {
         type: "calculation",
         text: "You could pay for them, but you cannot afford the full impact.",
         rows: [
-          {
-            label: "Money available",
-            amount: 300,
-            highlight: "positive",
-          },
-          {
-            label: "Shoes",
-            amount: -120,
-            highlight: "negative",
-          },
-          {
-            label: "Other needs",
-            amount: -230,
-            highlight: "negative",
-          },
-          {
-            label: "Left over",
-            amount: -50,
-            highlight: "negative",
-          },
+          { label: "Money available", amount: 300, highlight: "positive" },
+          { label: "Shoes", amount: -120, highlight: "negative" },
+          { label: "Other needs", amount: -230, highlight: "negative" },
+          { label: "Left over", amount: -50, highlight: "negative" },
         ],
       },
       {
@@ -337,4 +311,57 @@ export const billLessons: BillLesson[] = [
 
 export function getBillLessonById(id: string): BillLesson | undefined {
   return billLessons.find((lesson) => lesson.id === id);
+}
+
+export function getKnowledgeTestPanel(
+  lesson: BillLesson,
+): KnowledgeTestPanel | undefined {
+  return lesson.panels.find(
+    (panel): panel is KnowledgeTestPanel => panel.type === "knowledge-test",
+  );
+}
+
+export function getPracticeQuestionsForLesson(
+  lessonId: string,
+): PracticeQuestion[] {
+  const lesson = getBillLessonById(lessonId);
+
+  if (!lesson) {
+    return [];
+  }
+
+  const test = getKnowledgeTestPanel(lesson);
+
+  if (!test) {
+    return [];
+  }
+
+  return test.questions.map((question) => ({
+    ...question,
+    lessonId: lesson.id,
+    lessonNumber: lesson.lessonNumber,
+    lessonTitle: lesson.title,
+  }));
+}
+
+export function getAllPracticeQuestions(): PracticeQuestion[] {
+  return billLessons.flatMap((lesson) =>
+    getPracticeQuestionsForLesson(lesson.id),
+  );
+}
+
+export function shufflePracticeQuestions(
+  questions: PracticeQuestion[],
+): PracticeQuestion[] {
+  const shuffled = [...questions];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
 }

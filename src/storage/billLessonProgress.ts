@@ -4,14 +4,18 @@ export type BillLessonProgress = {
   lessonCompleted: boolean;
   testCompleted: boolean;
   practiceCompleted: boolean;
+  bestPracticeScore: number;
+  practiceAttempts: number;
 };
 
 const STORAGE_PREFIX = "budget-note-bill-lesson-progress";
 
-const EMPTY_PROGRESS: BillLessonProgress = {
+export const EMPTY_PROGRESS: BillLessonProgress = {
   lessonCompleted: false,
   testCompleted: false,
   practiceCompleted: false,
+  bestPracticeScore: 0,
+  practiceAttempts: 0,
 };
 
 function getStorageKey(lessonId: string): string {
@@ -34,9 +38,20 @@ export async function getBillLessonProgress(
       lessonCompleted: parsed.lessonCompleted === true,
       testCompleted: parsed.testCompleted === true,
       practiceCompleted: parsed.practiceCompleted === true,
+
+      bestPracticeScore:
+        typeof parsed.bestPracticeScore === "number"
+          ? parsed.bestPracticeScore
+          : 0,
+
+      practiceAttempts:
+        typeof parsed.practiceAttempts === "number"
+          ? parsed.practiceAttempts
+          : 0,
     };
   } catch (error) {
     console.warn("Unable to load Bill lesson progress:", error);
+
     return { ...EMPTY_PROGRESS };
   }
 }
@@ -46,7 +61,11 @@ export async function updateBillLessonProgress(
   updates: Partial<BillLessonProgress>,
 ): Promise<BillLessonProgress> {
   const current = await getBillLessonProgress(lessonId);
-  const next = { ...current, ...updates };
+
+  const next: BillLessonProgress = {
+    ...current,
+    ...updates,
+  };
 
   try {
     await AsyncStorage.setItem(getStorageKey(lessonId), JSON.stringify(next));
@@ -55,4 +74,23 @@ export async function updateBillLessonProgress(
   }
 
   return next;
+}
+
+export async function recordBillPracticeResult(
+  lessonId: string,
+  correctAnswers: number,
+  totalQuestions: number,
+): Promise<BillLessonProgress> {
+  const current = await getBillLessonProgress(lessonId);
+
+  const score =
+    totalQuestions > 0
+      ? Math.round((correctAnswers / totalQuestions) * 100)
+      : 0;
+
+  return updateBillLessonProgress(lessonId, {
+    practiceCompleted: true,
+    bestPracticeScore: Math.max(current.bestPracticeScore, score),
+    practiceAttempts: current.practiceAttempts + 1,
+  });
 }

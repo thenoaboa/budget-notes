@@ -11,14 +11,12 @@ import {
 } from "react-native";
 
 import { billLessons, getBillLessonById } from "@/data/billLessons";
-import type { BillLessonProgress } from "@/storage/billLessonProgress";
-import { getBillLessonProgress } from "@/storage/billLessonProgress";
+import {
+  EMPTY_PROGRESS,
+  getBillLessonProgress,
+} from "@/storage/billLessonProgress";
 
-const EMPTY_PROGRESS: BillLessonProgress = {
-  lessonCompleted: false,
-  testCompleted: false,
-  practiceCompleted: false,
-};
+import type { BillLessonProgress } from "@/storage/billLessonProgress";
 
 export function generateStaticParams() {
   return billLessons.map((lesson) => ({ lessonId: lesson.id }));
