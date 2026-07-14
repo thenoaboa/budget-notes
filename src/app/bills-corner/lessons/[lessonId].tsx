@@ -48,6 +48,14 @@ export default function BillLessonRoute() {
       lesson={lesson}
       onClose={() => router.back()}
       onOpenBudgets={() => router.push("/")}
+      onStartPractice={() =>
+        router.push({
+          pathname: "/bills-corner/lessons/practice",
+          params: {
+            lessonId: lesson.id,
+          },
+        })
+      }
       onComplete={() => router.replace("/bills-corner")}
     />
   );

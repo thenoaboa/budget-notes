@@ -27,6 +27,7 @@ type ComicLessonScreenProps = {
   lesson: BillLesson;
   onClose: () => void;
   onOpenBudgets: () => void;
+  onStartPractice: () => void;
   onComplete: () => void;
 };
 
@@ -34,6 +35,7 @@ export function ComicLessonScreen({
   lesson,
   onClose,
   onOpenBudgets,
+  onStartPractice,
   onComplete,
 }: ComicLessonScreenProps) {
   const [panelIndex, setPanelIndex] = useState(0);
@@ -127,6 +129,7 @@ export function ComicLessonScreen({
             onSelectAnswer={setSelectedAnswerIndex}
             onOpenBudgets={onOpenBudgets}
             onContinue={goToNextPanel}
+            onStartPractice={onStartPractice}
             onComplete={onComplete}
           />
         </ScrollView>
@@ -164,6 +167,7 @@ type PanelRendererProps = {
   onSelectAnswer: (index: number) => void;
   onOpenBudgets: () => void;
   onContinue: () => void;
+  onStartPractice: () => void;
   onComplete: () => void;
 };
 
@@ -173,6 +177,7 @@ function PanelRenderer({
   onSelectAnswer,
   onOpenBudgets,
   onContinue,
+  onStartPractice,
   onComplete,
 }: PanelRendererProps) {
   switch (panel.type) {
@@ -207,7 +212,13 @@ function PanelRenderer({
       );
 
     case "knowledge-test":
-      return <KnowledgeTestPanelView panel={panel} onComplete={onComplete} />;
+      return (
+        <KnowledgeTestPanelView
+          panel={panel}
+          onStartPractice={onStartPractice}
+          onComplete={onComplete}
+        />
+      );
 
     default:
       return null;
@@ -456,11 +467,13 @@ function ActionPanelView({
 
 type KnowledgeTestPanelViewProps = {
   panel: KnowledgeTestPanel;
+  onStartPractice: () => void;
   onComplete: () => void;
 };
 
 function KnowledgeTestPanelView({
   panel,
+  onStartPractice,
   onComplete,
 }: KnowledgeTestPanelViewProps) {
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -568,6 +581,7 @@ function KnowledgeTestPanelView({
         score={score}
         total={panel.questions.length}
         onRetake={retakeTest}
+        onStartPractice={onStartPractice}
         onComplete={onComplete}
       />
     );
@@ -1012,11 +1026,13 @@ function KnowledgeResults({
   score,
   total,
   onRetake,
+  onStartPractice,
   onComplete,
 }: {
   score: number;
   total: number;
   onRetake: () => void;
+  onStartPractice: () => void;
   onComplete: () => void;
 }) {
   const percent = score / total;
@@ -1043,9 +1059,11 @@ function KnowledgeResults({
           styles.actionPrimaryButton,
           pressed && styles.actionButtonPressed,
         ]}
-        onPress={onComplete}
+        onPress={onStartPractice}
       >
-        <Text style={styles.actionPrimaryButtonText}>Finish lesson</Text>
+        <Text style={styles.actionPrimaryButtonText}>
+          Practice with Budget Note
+        </Text>
       </Pressable>
 
       <Pressable
@@ -1056,6 +1074,16 @@ function KnowledgeResults({
         onPress={onRetake}
       >
         <Text style={styles.actionSecondaryButtonText}>Retake test</Text>
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.finishLessonButton,
+          pressed && styles.actionButtonPressed,
+        ]}
+        onPress={onComplete}
+      >
+        <Text style={styles.finishLessonButtonText}>Finish lesson</Text>
       </Pressable>
     </View>
   );
@@ -1531,6 +1559,15 @@ const styles = StyleSheet.create({
   },
   actionButtonPressed: {
     opacity: 0.75,
+  },
+  finishLessonButton: {
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  finishLessonButtonText: {
+    color: "#AAB4AE",
+    fontSize: 15,
+    fontWeight: "800",
   },
   nextButton: {
     minHeight: 56,
