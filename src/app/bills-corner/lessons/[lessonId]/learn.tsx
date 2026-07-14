@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { ComicLessonScreen } from "@/components/lessons/ComicLessonScreen";
@@ -16,17 +17,16 @@ export default function BillLessonLearnRoute() {
     : params.lessonId;
   const lesson = lessonId ? getBillLessonById(lessonId) : undefined;
 
-  if (!lesson || !lessonId) {
-    return <MissingActivity />;
-  }
+  if (!lesson || !lessonId) return <MissingActivity />;
 
   const resolvedLessonId = lessonId;
 
-  async function startTest() {
-    await updateBillLessonProgress(resolvedLessonId, {
-      lessonCompleted: true,
-    });
+  const markLessonCompleted = useCallback(async () => {
+    await updateBillLessonProgress(resolvedLessonId, { lessonCompleted: true });
+  }, [resolvedLessonId]);
 
+  async function startTest() {
+    await markLessonCompleted();
     router.replace(
       `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}/test` as never,
     );
@@ -48,6 +48,7 @@ export default function BillLessonLearnRoute() {
           `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}/practice` as never,
         )
       }
+      onActivityCompleted={markLessonCompleted}
       onComplete={startTest}
     />
   );

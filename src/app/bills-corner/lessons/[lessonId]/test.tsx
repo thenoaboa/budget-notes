@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 import { ComicLessonScreen } from "@/components/lessons/ComicLessonScreen";
@@ -19,27 +19,22 @@ export default function BillLessonTestRoute() {
     ? params.lessonId[0]
     : params.lessonId;
   const lesson = lessonId ? getBillLessonById(lessonId) : undefined;
-
   const [checked, setChecked] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
   useEffect(() => {
     let active = true;
-
     async function load() {
       if (!lessonId) {
         if (active) setChecked(true);
         return;
       }
-
       const progress = await getBillLessonProgress(lessonId);
-
       if (active) {
         setUnlocked(progress.lessonCompleted);
         setChecked(true);
       }
     }
-
     load();
     return () => {
       active = false;
@@ -52,9 +47,9 @@ export default function BillLessonTestRoute() {
     );
   }
 
-  if (!checked) {
-    return <StatusScreen emoji="🐷" title="Loading activity…" />;
-  }
+  const resolvedLessonId = lessonId;
+
+  if (!checked) return <StatusScreen emoji="🐷" title="Loading activity…" />;
 
   if (!unlocked) {
     return (
@@ -72,14 +67,15 @@ export default function BillLessonTestRoute() {
     );
   }
 
-  const resolvedLessonId = lessonId;
-
-  async function startPractice() {
+  const markTestCompleted = useCallback(async () => {
     await updateBillLessonProgress(resolvedLessonId, {
       lessonCompleted: true,
       testCompleted: true,
     });
+  }, [resolvedLessonId]);
 
+  async function startPractice() {
+    await markTestCompleted();
     router.replace(
       `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}/practice` as never,
     );
@@ -97,6 +93,7 @@ export default function BillLessonTestRoute() {
       onOpenBudgets={() => router.push("/" as never)}
       onStartTest={() => undefined}
       onStartPractice={startPractice}
+      onActivityCompleted={markTestCompleted}
       onComplete={() =>
         router.replace(
           `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}` as never,

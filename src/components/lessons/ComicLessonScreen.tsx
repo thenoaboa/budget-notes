@@ -32,6 +32,7 @@ type ComicLessonScreenProps = {
   onOpenBudgets: () => void;
   onStartTest: () => void;
   onStartPractice: () => void;
+  onActivityCompleted: () => void;
   onComplete: () => void;
 };
 
@@ -42,6 +43,7 @@ export function ComicLessonScreen({
   onOpenBudgets,
   onStartTest,
   onStartPractice,
+  onActivityCompleted,
   onComplete,
 }: ComicLessonScreenProps) {
   const activityPanels = useMemo(() => {
@@ -65,6 +67,12 @@ export function ComicLessonScreen({
   useEffect(() => {
     setSelectedAnswerIndex(null);
   }, [panelIndex]);
+
+  useEffect(() => {
+    if (mode === "learn" && panel?.type === "action") {
+      onActivityCompleted();
+    }
+  }, [mode, panel?.type, onActivityCompleted]);
 
   function goToPreviousPanel() {
     if (isFirstPanel) {
@@ -151,6 +159,7 @@ export function ComicLessonScreen({
             onContinue={goToNextPanel}
             onStartTest={onStartTest}
             onStartPractice={onStartPractice}
+            onActivityCompleted={onActivityCompleted}
             onComplete={onComplete}
           />
         </ScrollView>
@@ -190,6 +199,7 @@ type PanelRendererProps = {
   onContinue: () => void;
   onStartTest: () => void;
   onStartPractice: () => void;
+  onActivityCompleted: () => void;
   onComplete: () => void;
 };
 
@@ -201,6 +211,7 @@ function PanelRenderer({
   onContinue,
   onStartTest,
   onStartPractice,
+  onActivityCompleted,
   onComplete,
 }: PanelRendererProps) {
   switch (panel.type) {
@@ -238,6 +249,7 @@ function PanelRenderer({
       return (
         <KnowledgeTestPanelView
           panel={panel}
+          onActivityCompleted={onActivityCompleted}
           onStartPractice={onStartPractice}
           onComplete={onComplete}
         />
@@ -490,12 +502,14 @@ function ActionPanelView({
 
 type KnowledgeTestPanelViewProps = {
   panel: KnowledgeTestPanel;
+  onActivityCompleted: () => void;
   onStartPractice: () => void;
   onComplete: () => void;
 };
 
 function KnowledgeTestPanelView({
   panel,
+  onActivityCompleted,
   onStartPractice,
   onComplete,
 }: KnowledgeTestPanelViewProps) {
@@ -515,6 +529,12 @@ function KnowledgeTestPanelView({
   const questionNumber = questionIndex + 1;
 
   const explanation = useMemo(() => question.explanation, [question]);
+
+  useEffect(() => {
+    if (showResults) {
+      onActivityCompleted();
+    }
+  }, [showResults, onActivityCompleted]);
 
   function recordAnswer(correct: boolean) {
     if (hasAnswered) return;
