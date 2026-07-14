@@ -29,7 +29,9 @@ export default function LessonActivityMenuRoute() {
     : params.lessonId;
   const lesson = lessonId ? getBillLessonById(lessonId) : undefined;
 
-  const [progress, setProgress] = useState<BillLessonProgress>(EMPTY_PROGRESS);
+  const [progress, setProgress] = useState<BillLessonProgress>({
+    ...EMPTY_PROGRESS,
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -72,8 +74,13 @@ export default function LessonActivityMenuRoute() {
     );
   }
 
-  const testUnlocked = progress.lessonCompleted;
-  const practiceUnlocked = progress.testCompleted;
+  const testUnlocked =
+    progress.lessonCompleted ||
+    progress.testCompleted ||
+    progress.practiceCompleted;
+
+  const practiceUnlocked = progress.testCompleted || progress.practiceCompleted;
+
   const fullyCompleted = progress.practiceCompleted;
 
   return (
