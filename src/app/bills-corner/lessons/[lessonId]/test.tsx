@@ -14,28 +14,57 @@ export function generateStaticParams() {
 }
 
 export default function BillLessonTestRoute() {
-  const params = useLocalSearchParams<{ lessonId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    lessonId?: string | string[];
+  }>();
+
   const lessonId = Array.isArray(params.lessonId)
     ? params.lessonId[0]
     : params.lessonId;
+
   const lesson = lessonId ? getBillLessonById(lessonId) : undefined;
+
   const [checked, setChecked] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
 
+  const markTestCompleted = useCallback(async () => {
+    if (!lessonId) {
+      return;
+    }
+
+    await updateBillLessonProgress(lessonId, {
+      lessonCompleted: true,
+      testCompleted: true,
+    });
+  }, [lessonId]);
+
   useEffect(() => {
     let active = true;
-    async function load() {
+
+    async function loadProgress() {
       if (!lessonId) {
-        if (active) setChecked(true);
+        if (active) {
+          setChecked(true);
+        }
+
         return;
       }
+
       const progress = await getBillLessonProgress(lessonId);
+
       if (active) {
-        setUnlocked(progress.lessonCompleted);
+        setUnlocked(
+          progress.lessonCompleted ||
+            progress.testCompleted ||
+            progress.practiceCompleted,
+        );
+
         setChecked(true);
       }
     }
-    load();
+
+    void loadProgress();
+
     return () => {
       active = false;
     };
@@ -49,7 +78,9 @@ export default function BillLessonTestRoute() {
 
   const resolvedLessonId = lessonId;
 
-  if (!checked) return <StatusScreen emoji="🐷" title="Loading activity…" />;
+  if (!checked) {
+    return <StatusScreen emoji="🐷" title="Loading activity…" />;
+  }
 
   if (!unlocked) {
     return (
@@ -60,24 +91,30 @@ export default function BillLessonTestRoute() {
         buttonText="Start the lesson"
         onPress={() =>
           router.replace(
-            `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}/learn` as never,
+            `/bills-corner/lessons/${encodeURIComponent(
+              resolvedLessonId,
+            )}/learn` as never,
           )
         }
       />
     );
   }
 
-  const markTestCompleted = useCallback(async () => {
-    await updateBillLessonProgress(resolvedLessonId, {
-      lessonCompleted: true,
-      testCompleted: true,
-    });
-  }, [resolvedLessonId]);
-
   async function startPractice() {
     await markTestCompleted();
+
     router.replace(
-      `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}/practice` as never,
+      `/bills-corner/lessons/${encodeURIComponent(
+        resolvedLessonId,
+      )}/practice` as never,
+    );
+  }
+
+  async function completeTest() {
+    await markTestCompleted();
+
+    router.replace(
+      `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}` as never,
     );
   }
 
@@ -87,18 +124,16 @@ export default function BillLessonTestRoute() {
       mode="test"
       onClose={() =>
         router.replace(
-          `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}` as never,
+          `/bills-corner/lessons/${encodeURIComponent(
+            resolvedLessonId,
+          )}` as never,
         )
       }
       onOpenBudgets={() => router.push("/" as never)}
       onStartTest={() => undefined}
       onStartPractice={startPractice}
       onActivityCompleted={markTestCompleted}
-      onComplete={() =>
-        router.replace(
-          `/bills-corner/lessons/${encodeURIComponent(resolvedLessonId)}` as never,
-        )
-      }
+      onComplete={completeTest}
     />
   );
 }
@@ -121,7 +156,9 @@ function StatusScreen({
       <View style={styles.errorContainer}>
         <Text style={styles.errorEmoji}>{emoji}</Text>
         <Text style={styles.errorTitle}>{title}</Text>
+
         {!!body && <Text style={styles.errorText}>{body}</Text>}
+
         {!!buttonText && (
           <Pressable
             style={styles.backButton}
@@ -136,20 +173,30 @@ function StatusScreen({
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#111513" },
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#111513",
+  },
+
   errorContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
   },
-  errorEmoji: { fontSize: 64, marginBottom: 16 },
+
+  errorEmoji: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+
   errorTitle: {
     color: "#FFFFFF",
     fontSize: 24,
     fontWeight: "800",
     textAlign: "center",
   },
+
   errorText: {
     color: "#AAB4AE",
     fontSize: 15,
@@ -157,6 +204,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 22,
   },
+
   backButton: {
     backgroundColor: "#4E7D3A",
     borderRadius: 14,
@@ -164,5 +212,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginTop: 24,
   },
-  backButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
 });
