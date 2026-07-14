@@ -2,19 +2,17 @@ import { useFocusEffect } from "@react-navigation/native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { billLessons, getBillLessonById } from "@/data/billLessons";
-import {
-    BillLessonProgress,
-    getBillLessonProgress,
-} from "@/storage/billLessonProgress";
+import type { BillLessonProgress } from "@/storage/billLessonProgress";
+import { getBillLessonProgress } from "@/storage/billLessonProgress";
 
 const EMPTY_PROGRESS: BillLessonProgress = {
   lessonCompleted: false,
