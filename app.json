@@ -19,7 +19,18 @@
       ],
       "@sentry/react-native",
       "react-native-google-mobile-ads"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "65154429-7b5b-429f-ac87-2fdbea73a084"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.budgetnote.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
   },
   "react-native-google-mobile-ads": {
     "android_app_id": "ca-app-pub-3940256099942544~3347511713",
