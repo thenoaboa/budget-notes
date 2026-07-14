@@ -23,30 +23,44 @@ import type {
   StoryPanel,
 } from "@/data/billLessons";
 
+export type ComicLessonMode = "learn" | "test";
+
 type ComicLessonScreenProps = {
   lesson: BillLesson;
+  mode: ComicLessonMode;
   onClose: () => void;
   onOpenBudgets: () => void;
+  onStartTest: () => void;
   onStartPractice: () => void;
   onComplete: () => void;
 };
 
 export function ComicLessonScreen({
   lesson,
+  mode,
   onClose,
   onOpenBudgets,
+  onStartTest,
   onStartPractice,
   onComplete,
 }: ComicLessonScreenProps) {
+  const activityPanels = useMemo(() => {
+    if (mode === "test") {
+      return lesson.panels.filter((panel) => panel.type === "knowledge-test");
+    }
+
+    return lesson.panels.filter((panel) => panel.type !== "knowledge-test");
+  }, [lesson.panels, mode]);
+
   const [panelIndex, setPanelIndex] = useState(0);
   const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(
     null,
   );
 
-  const panel = lesson.panels[panelIndex];
+  const panel = activityPanels[panelIndex];
   const isFirstPanel = panelIndex === 0;
-  const isLastPanel = panelIndex === lesson.panels.length - 1;
-  const progress = (panelIndex + 1) / lesson.panels.length;
+  const isLastPanel = panelIndex === activityPanels.length - 1;
+  const progress = (panelIndex + 1) / activityPanels.length;
 
   useEffect(() => {
     setSelectedAnswerIndex(null);
@@ -71,7 +85,9 @@ export function ComicLessonScreen({
       return;
     }
 
-    setPanelIndex((current) => Math.min(lesson.panels.length - 1, current + 1));
+    setPanelIndex((current) =>
+      Math.min(activityPanels.length - 1, current + 1),
+    );
   }
 
   const quizNeedsAnswer = panel.type === "quiz" && selectedAnswerIndex === null;
@@ -91,7 +107,11 @@ export function ComicLessonScreen({
             <Text style={styles.navigationButtonText}>‹</Text>
           </Pressable>
 
-          <Text style={styles.lessonLabel}>Lesson {lesson.lessonNumber}</Text>
+          <Text style={styles.lessonLabel}>
+            {mode === "test"
+              ? "Test Your Knowledge"
+              : `Lesson ${lesson.lessonNumber}`}
+          </Text>
 
           <Pressable
             style={styles.closeButton}
@@ -115,7 +135,7 @@ export function ComicLessonScreen({
         </View>
 
         <Text style={styles.stepLabel}>
-          {panelIndex + 1} of {lesson.panels.length}
+          {panelIndex + 1} of {activityPanels.length}
         </Text>
 
         <ScrollView
@@ -129,6 +149,7 @@ export function ComicLessonScreen({
             onSelectAnswer={setSelectedAnswerIndex}
             onOpenBudgets={onOpenBudgets}
             onContinue={goToNextPanel}
+            onStartTest={onStartTest}
             onStartPractice={onStartPractice}
             onComplete={onComplete}
           />
@@ -167,6 +188,7 @@ type PanelRendererProps = {
   onSelectAnswer: (index: number) => void;
   onOpenBudgets: () => void;
   onContinue: () => void;
+  onStartTest: () => void;
   onStartPractice: () => void;
   onComplete: () => void;
 };
@@ -177,6 +199,7 @@ function PanelRenderer({
   onSelectAnswer,
   onOpenBudgets,
   onContinue,
+  onStartTest,
   onStartPractice,
   onComplete,
 }: PanelRendererProps) {
@@ -207,7 +230,7 @@ function PanelRenderer({
         <ActionPanelView
           panel={panel}
           onOpenBudgets={onOpenBudgets}
-          onStartTest={onContinue}
+          onStartTest={onStartTest}
         />
       );
 
