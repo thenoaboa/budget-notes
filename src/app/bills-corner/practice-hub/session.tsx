@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Pressable,
     SafeAreaView,
     ScrollView,
@@ -16,9 +17,13 @@ import {
     getPracticeQuestionsForLesson,
     shufflePracticeQuestions,
 } from "@/data/billLessons";
+import { showBillRewardedAd } from "@/services/billRewardedAd";
 import { recordBillPracticeResult } from "@/storage/billLessonProgress";
 import {
+    BillPracticeState,
+    EMPTY_PRACTICE_STATE,
     MAX_PRACTICE_COINS,
+    addBillPracticeCoin,
     getBillPracticeState,
     spendBillPracticeCoin,
 } from "@/storage/billPracticeState";
@@ -51,6 +56,14 @@ function isAnswerCorrect(
   }
 }
 
+function formatCountdown(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
 export default function PracticeSessionScreen() {
   const params = useLocalSearchParams<{
     mode?: string | string[];
@@ -79,9 +92,12 @@ export default function PracticeSessionScreen() {
   const [answerSubmitted, setAnswerSubmitted] = useState(false);
   const [wasCorrect, setWasCorrect] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [coins, setCoins] = useState(MAX_PRACTICE_COINS);
+  const [practiceState, setPracticeState] =
+    useState<BillPracticeState>(EMPTY_PRACTICE_STATE);
   const [coinsLoaded, setCoinsLoaded] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [watchingAd, setWatchingAd] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   const currentQuestion = questions[questionIndex];
 
@@ -92,8 +108,9 @@ export default function PracticeSessionScreen() {
       const state = await getBillPracticeState();
 
       if (active) {
-        setCoins(state.coinsRemaining);
+        setPracticeState(state);
         setCoinsLoaded(true);
+        setNow(Date.now());
       }
     }
 
@@ -104,8 +121,34 @@ export default function PracticeSessionScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (practiceState.coinsRemaining >= MAX_PRACTICE_COINS) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [practiceState.coinsRemaining]);
+
+  useEffect(() => {
+    if (practiceState.nextCoinAt !== null && now >= practiceState.nextCoinAt) {
+      void getBillPracticeState().then((nextState) => {
+        setPracticeState(nextState);
+        setNow(Date.now());
+      });
+    }
+  }, [now, practiceState.nextCoinAt]);
+
   const submitAnswer = async () => {
-    if (!currentQuestion || selectedAnswer === null || answerSubmitted) {
+    if (
+      !currentQuestion ||
+      selectedAnswer === null ||
+      answerSubmitted ||
+      practiceState.coinsRemaining <= 0
+    ) {
       return;
     }
 
@@ -116,15 +159,20 @@ export default function PracticeSessionScreen() {
 
     if (correct) {
       setCorrectAnswers((current) => current + 1);
-    } else {
-      const nextState = await spendBillPracticeCoin();
-      setCoins(nextState.coinsRemaining);
+      return;
     }
+
+    const nextState = await spendBillPracticeCoin();
+    setPracticeState(nextState);
+    setNow(Date.now());
   };
 
   const moveToNextQuestion = async () => {
+    if (practiceState.coinsRemaining <= 0) {
+      return;
+    }
+
     const isLastQuestion = questionIndex >= questions.length - 1;
-    const nextCorrectTotal = correctAnswers;
 
     if (isLastQuestion) {
       setFinished(true);
@@ -132,7 +180,7 @@ export default function PracticeSessionScreen() {
       if (mode === "lesson" && lessonId) {
         await recordBillPracticeResult(
           lessonId,
-          nextCorrectTotal,
+          correctAnswers,
           questions.length,
         );
       }
@@ -166,12 +214,89 @@ export default function PracticeSessionScreen() {
     setSelectedAnswer(null);
   };
 
+  const watchAdForCoin = async () => {
+    if (watchingAd) {
+      return;
+    }
+
+    setWatchingAd(true);
+
+    try {
+      const earnedReward = await showBillRewardedAd();
+
+      if (!earnedReward) {
+        Alert.alert(
+          "No coin earned",
+          "Finish the rewarded ad to receive a practice coin.",
+        );
+        return;
+      }
+
+      const nextState = await addBillPracticeCoin(1);
+      setPracticeState(nextState);
+      setNow(Date.now());
+
+      Alert.alert("Coin restored", "You earned 1 practice coin.");
+    } catch (error) {
+      console.warn("Unable to show rewarded ad:", error);
+
+      Alert.alert(
+        "Ad unavailable",
+        "The rewarded ad could not load. Try again in a moment.",
+      );
+    } finally {
+      setWatchingAd(false);
+    }
+  };
+
   if (!coinsLoaded) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator />
           <Text style={styles.loadingText}>Loading practice...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (practiceState.coinsRemaining <= 0) {
+    const nextCoinIn =
+      practiceState.nextCoinAt === null
+        ? "30:00"
+        : formatCountdown(practiceState.nextCoinAt - now);
+
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.outOfCoinsContainer}>
+          <Text style={styles.outOfCoinsEmoji}>🐷</Text>
+          <Text style={styles.outOfCoinsTitle}>
+            You&apos;re out of practice coins
+          </Text>
+          <Text style={styles.outOfCoinsText}>
+            Your next coin will recharge in {nextCoinIn}.
+          </Text>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              watchingAd && styles.disabledButton,
+              pressed && !watchingAd && styles.buttonPressed,
+            ]}
+            disabled={watchingAd}
+            onPress={() => void watchAdForCoin()}
+          >
+            <Text style={styles.primaryButtonText}>
+              {watchingAd ? "Loading ad..." : "Watch ad for +1 coin"}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.secondaryButton}
+            onPress={() => router.replace("/bills-corner/practice-hub")}
+          >
+            <Text style={styles.secondaryButtonText}>Back to Practice</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -186,6 +311,7 @@ export default function PracticeSessionScreen() {
           <Text style={styles.emptyBody}>
             Complete a lesson with a knowledge test first.
           </Text>
+
           <Pressable style={styles.primaryButton} onPress={() => router.back()}>
             <Text style={styles.primaryButtonText}>Go back</Text>
           </Pressable>
@@ -207,7 +333,8 @@ export default function PracticeSessionScreen() {
             You answered {correctAnswers} of {questions.length} correctly.
           </Text>
           <Text style={styles.resultsCoins}>
-            Coins remaining: {coins} of {MAX_PRACTICE_COINS}
+            Coins remaining: {practiceState.coinsRemaining} of{" "}
+            {MAX_PRACTICE_COINS}
           </Text>
 
           <Pressable
@@ -249,7 +376,9 @@ export default function PracticeSessionScreen() {
             />
           </View>
 
-          <Text style={styles.coinCount}>🪙 {coins}</Text>
+          <Text style={styles.coinCount}>
+            🪙 {practiceState.coinsRemaining}
+          </Text>
         </View>
 
         <Text style={styles.lessonLabel}>{currentQuestion.lessonTitle}</Text>
@@ -303,6 +432,7 @@ export default function PracticeSessionScreen() {
             <>
               <View style={styles.orderSelection}>
                 <Text style={styles.orderTitle}>Your order</Text>
+
                 {orderSelection.length === 0 ? (
                   <Text style={styles.orderEmpty}>
                     Tap the steps below in order.
@@ -357,7 +487,8 @@ export default function PracticeSessionScreen() {
 
             {!wasCorrect && (
               <Text style={styles.coinLostText}>
-                One coin was used. You have {coins} remaining.
+                One coin was used. You have {practiceState.coinsRemaining}{" "}
+                remaining.
               </Text>
             )}
           </View>
@@ -585,6 +716,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   primaryButton: {
+    width: "100%",
     backgroundColor: "#4E7D3A",
     borderRadius: 16,
     alignItems: "center",
@@ -597,6 +729,18 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "800",
+  },
+  secondaryButton: {
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    marginTop: 10,
+  },
+  secondaryButtonText: {
+    color: "#AAB4AE",
+    fontSize: 14,
+    fontWeight: "700",
   },
   disabledButton: {
     opacity: 0.4,
@@ -615,6 +759,29 @@ const styles = StyleSheet.create({
     color: "#AAB4AE",
     fontSize: 13,
     marginTop: 10,
+  },
+  outOfCoinsContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 30,
+  },
+  outOfCoinsEmoji: {
+    fontSize: 58,
+  },
+  outOfCoinsTitle: {
+    color: "#FFFFFF",
+    fontSize: 24,
+    fontWeight: "800",
+    textAlign: "center",
+    marginTop: 16,
+  },
+  outOfCoinsText: {
+    color: "#AAB4AE",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+    marginTop: 8,
   },
   emptyContainer: {
     flex: 1,
