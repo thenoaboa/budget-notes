@@ -88,14 +88,62 @@ export default function BillsCornerScreen() {
           </Pressable>
         ))}
 
+        <View style={styles.practiceSectionHeader}>
+          <Text style={styles.sectionTitle}>Practice</Text>
+
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonBadgeText}>COMING SOON</Text>
+          </View>
+        </View>
+
+        <View
+          style={styles.practiceCard}
+          accessibilityRole="summary"
+          accessibilityLabel="Practice with Bill. Coming soon."
+        >
+          <View style={styles.practiceIconContainer}>
+            <Text style={styles.practiceIcon}>🎯</Text>
+          </View>
+
+          <View style={styles.practiceInformation}>
+            <View style={styles.practiceTitleRow}>
+              <Text style={styles.practiceTitle}>Practice with Bill</Text>
+
+              <Text style={styles.lockIcon}>🔒</Text>
+            </View>
+
+            <Text style={styles.practiceDescription}>
+              Review completed lessons and test your knowledge.
+            </Text>
+
+            <View style={styles.practiceFeatures}>
+              <View style={styles.practiceFeature}>
+                <Text style={styles.practiceFeatureIcon}>⭐</Text>
+                <Text style={styles.practiceFeatureText}>Daily challenges</Text>
+              </View>
+
+              <View style={styles.practiceFeature}>
+                <Text style={styles.practiceFeatureIcon}>🧠</Text>
+                <Text style={styles.practiceFeatureText}>Mixed review</Text>
+              </View>
+
+              <View style={styles.practiceFeature}>
+                <Text style={styles.practiceFeatureIcon}>🪙</Text>
+                <Text style={styles.practiceFeatureText}>
+                  Earn and use coins
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.comingSoonCard}>
           <Text style={styles.comingSoonEmoji}>📚</Text>
 
           <Text style={styles.comingSoonTitle}>More lessons coming soon</Text>
 
           <Text style={styles.comingSoonBody}>
-            Future lessons can be added by creating another object inside
-            billLessons.ts.
+            Bill is working on more ways to help you plan before you spend.
           </Text>
         </View>
       </ScrollView>
@@ -174,6 +222,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 12,
+  },
+
+  practiceSectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 18,
     marginBottom: 12,
   },
 
@@ -261,6 +317,96 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 
+  comingSoonBadge: {
+    backgroundColor: "#29352F",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+
+  comingSoonBadgeText: {
+    color: "#7CB55B",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+  },
+
+  practiceCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#171C19",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#3A463F",
+    borderStyle: "dashed",
+    padding: 16,
+    opacity: 0.88,
+  },
+
+  practiceIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#252D29",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+
+  practiceIcon: {
+    fontSize: 25,
+  },
+
+  practiceInformation: {
+    flex: 1,
+  },
+
+  practiceTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  practiceTitle: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+
+  lockIcon: {
+    fontSize: 15,
+    marginLeft: 10,
+  },
+
+  practiceDescription: {
+    color: "#9AA59F",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 5,
+  },
+
+  practiceFeatures: {
+    marginTop: 13,
+    gap: 8,
+  },
+
+  practiceFeature: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  practiceFeatureIcon: {
+    width: 24,
+    fontSize: 14,
+  },
+
+  practiceFeatureText: {
+    color: "#7F8A84",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
   comingSoonCard: {
     alignItems: "center",
     backgroundColor: "#171C19",
@@ -269,7 +415,7 @@ const styles = StyleSheet.create({
     borderColor: "#252D29",
     borderStyle: "dashed",
     padding: 24,
-    marginTop: 12,
+    marginTop: 24,
   },
 
   comingSoonEmoji: {
