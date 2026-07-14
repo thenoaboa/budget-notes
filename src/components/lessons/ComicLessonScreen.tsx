@@ -1,22 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import type {
-    ActionPanel,
-    BillLesson,
-    CalculationPanel,
-    ExpensesPanel,
-    LessonPanel,
-    PrinciplePanel,
-    QuizPanel,
-    StoryPanel,
+  ActionPanel,
+  BillLesson,
+  CalculationPanel,
+  ExpensesPanel,
+  KnowledgeQuestion,
+  KnowledgeTestPanel,
+  LessonPanel,
+  OrderKnowledgeQuestion,
+  PrinciplePanel,
+  QuizPanel,
+  SelectItemKnowledgeQuestion,
+  StoryPanel,
 } from "@/data/billLessons";
 
 type ComicLessonScreenProps = {
@@ -40,7 +44,6 @@ export function ComicLessonScreen({
   const panel = lesson.panels[panelIndex];
   const isFirstPanel = panelIndex === 0;
   const isLastPanel = panelIndex === lesson.panels.length - 1;
-
   const progress = (panelIndex + 1) / lesson.panels.length;
 
   useEffect(() => {
@@ -70,6 +73,8 @@ export function ComicLessonScreen({
   }
 
   const quizNeedsAnswer = panel.type === "quiz" && selectedAnswerIndex === null;
+  const usesOwnNavigation =
+    panel.type === "action" || panel.type === "knowledge-test";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -78,13 +83,20 @@ export function ComicLessonScreen({
           <Pressable
             style={styles.navigationButton}
             onPress={goToPreviousPanel}
+            accessibilityRole="button"
+            accessibilityLabel={isFirstPanel ? "Close lesson" : "Previous step"}
           >
             <Text style={styles.navigationButtonText}>‹</Text>
           </Pressable>
 
           <Text style={styles.lessonLabel}>Lesson {lesson.lessonNumber}</Text>
 
-          <Pressable style={styles.closeButton} onPress={onClose}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close lesson"
+          >
             <Text style={styles.closeButtonText}>×</Text>
           </Pressable>
         </View>
@@ -114,11 +126,12 @@ export function ComicLessonScreen({
             selectedAnswerIndex={selectedAnswerIndex}
             onSelectAnswer={setSelectedAnswerIndex}
             onOpenBudgets={onOpenBudgets}
+            onContinue={goToNextPanel}
             onComplete={onComplete}
           />
         </ScrollView>
 
-        {panel.type !== "action" && (
+        {!usesOwnNavigation && (
           <Pressable
             disabled={quizNeedsAnswer}
             style={({ pressed }) => [
@@ -127,6 +140,8 @@ export function ComicLessonScreen({
               pressed && !quizNeedsAnswer && styles.nextButtonPressed,
             ]}
             onPress={goToNextPanel}
+            accessibilityRole="button"
+            accessibilityLabel={isLastPanel ? "Finish lesson" : "Next step"}
           >
             <Text
               style={[
@@ -148,6 +163,7 @@ type PanelRendererProps = {
   selectedAnswerIndex: number | null;
   onSelectAnswer: (index: number) => void;
   onOpenBudgets: () => void;
+  onContinue: () => void;
   onComplete: () => void;
 };
 
@@ -156,6 +172,7 @@ function PanelRenderer({
   selectedAnswerIndex,
   onSelectAnswer,
   onOpenBudgets,
+  onContinue,
   onComplete,
 }: PanelRendererProps) {
   switch (panel.type) {
@@ -185,9 +202,12 @@ function PanelRenderer({
         <ActionPanelView
           panel={panel}
           onOpenBudgets={onOpenBudgets}
-          onComplete={onComplete}
+          onStartTest={onContinue}
         />
       );
+
+    case "knowledge-test":
+      return <KnowledgeTestPanelView panel={panel} onComplete={onComplete} />;
 
     default:
       return null;
@@ -340,9 +360,7 @@ function QuizPanelView({
       <View style={styles.answerList}>
         {panel.answers.map((answer, index) => {
           const isSelected = selectedAnswerIndex === index;
-
           const showCorrect = hasAnswered && index === panel.correctAnswerIndex;
-
           const showIncorrect = hasAnswered && isSelected && !isCorrect;
 
           return (
@@ -365,7 +383,6 @@ function QuizPanelView({
               <Text style={styles.answerText}>{answer}</Text>
 
               {showCorrect && <Text style={styles.answerIndicator}>✓</Text>}
-
               {showIncorrect && <Text style={styles.answerIndicator}>×</Text>}
             </Pressable>
           );
@@ -373,24 +390,12 @@ function QuizPanelView({
       </View>
 
       {hasAnswered && (
-        <View
-          style={[
-            styles.quizFeedback,
-            isCorrect ? styles.correctFeedback : styles.incorrectFeedback,
-          ]}
-        >
-          <Text style={styles.feedbackEmoji}>{isCorrect ? "🐷" : "🤔"}</Text>
-
-          <View style={styles.feedbackTextContainer}>
-            <Text style={styles.feedbackTitle}>
-              {isCorrect ? "Exactly!" : "Not quite"}
-            </Text>
-
-            <Text style={styles.feedbackBody}>
-              {isCorrect ? panel.correctMessage : panel.incorrectMessage}
-            </Text>
-          </View>
-        </View>
+        <FeedbackCard
+          isCorrect={isCorrect}
+          explanation={
+            isCorrect ? panel.correctMessage : panel.incorrectMessage
+          }
+        />
       )}
     </View>
   );
@@ -399,13 +404,13 @@ function QuizPanelView({
 type ActionPanelViewProps = {
   panel: ActionPanel;
   onOpenBudgets: () => void;
-  onComplete: () => void;
+  onStartTest: () => void;
 };
 
 function ActionPanelView({
   panel,
   onOpenBudgets,
-  onComplete,
+  onStartTest,
 }: ActionPanelViewProps) {
   return (
     <View style={styles.actionPanel}>
@@ -415,11 +420,8 @@ function ActionPanelView({
 
       <View style={styles.clipboard}>
         <Text style={styles.clipboardTitle}>Your Budget</Text>
-
         <Text style={styles.clipboardItem}>✓ Stay on track</Text>
-
         <Text style={styles.clipboardItem}>✓ Make progress</Text>
-
         <Text style={styles.clipboardItem}>✓ Reach your goals</Text>
       </View>
 
@@ -442,11 +444,618 @@ function ActionPanelView({
           styles.actionSecondaryButton,
           pressed && styles.actionButtonPressed,
         ]}
-        onPress={onComplete}
+        onPress={onStartTest}
       >
         <Text style={styles.actionSecondaryButtonText}>
           {panel.secondaryButtonText}
         </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+type KnowledgeTestPanelViewProps = {
+  panel: KnowledgeTestPanel;
+  onComplete: () => void;
+};
+
+function KnowledgeTestPanelView({
+  panel,
+  onComplete,
+}: KnowledgeTestPanelViewProps) {
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [selectedAnswerIndex, setSelectedAnswerIndex] = useState<number | null>(
+    null,
+  );
+  const [selectedBoolean, setSelectedBoolean] = useState<boolean | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [orderedStepIds, setOrderedStepIds] = useState<string[]>([]);
+  const [showResults, setShowResults] = useState(false);
+
+  const question = panel.questions[questionIndex];
+  const questionNumber = questionIndex + 1;
+
+  const explanation = useMemo(() => question.explanation, [question]);
+
+  function recordAnswer(correct: boolean) {
+    if (hasAnswered) return;
+
+    setHasAnswered(true);
+    setIsCorrect(correct);
+
+    if (correct) {
+      setScore((current) => current + 1);
+    }
+  }
+
+  function answerChoice(index: number) {
+    if (question.type !== "multiple-choice" && question.type !== "scenario") {
+      return;
+    }
+
+    setSelectedAnswerIndex(index);
+    recordAnswer(index === question.correctAnswerIndex);
+  }
+
+  function answerTrueFalse(value: boolean) {
+    if (question.type !== "true-false") return;
+
+    setSelectedBoolean(value);
+    recordAnswer(value === question.correctAnswer);
+  }
+
+  function answerItem(itemId: string) {
+    if (question.type !== "select-item") return;
+
+    setSelectedItemId(itemId);
+    recordAnswer(itemId === question.correctItemId);
+  }
+
+  function selectOrderStep(stepId: string) {
+    if (question.type !== "order" || hasAnswered) return;
+
+    setOrderedStepIds((current) => {
+      if (current.includes(stepId)) return current;
+      return [...current, stepId];
+    });
+  }
+
+  function submitOrder() {
+    if (question.type !== "order" || hasAnswered) return;
+    if (orderedStepIds.length !== question.steps.length) return;
+
+    const correct = orderedStepIds.every(
+      (stepId, index) => stepId === question.correctOrder[index],
+    );
+
+    recordAnswer(correct);
+  }
+
+  function resetCurrentQuestionState() {
+    setHasAnswered(false);
+    setIsCorrect(false);
+    setSelectedAnswerIndex(null);
+    setSelectedBoolean(null);
+    setSelectedItemId(null);
+    setOrderedStepIds([]);
+  }
+
+  function goToNextQuestion() {
+    if (!hasAnswered) return;
+
+    if (questionIndex === panel.questions.length - 1) {
+      setShowResults(true);
+      return;
+    }
+
+    setQuestionIndex((current) => current + 1);
+    resetCurrentQuestionState();
+  }
+
+  function retakeTest() {
+    setQuestionIndex(0);
+    setScore(0);
+    setShowResults(false);
+    resetCurrentQuestionState();
+  }
+
+  if (showResults) {
+    return (
+      <KnowledgeResults
+        score={score}
+        total={panel.questions.length}
+        onRetake={retakeTest}
+        onComplete={onComplete}
+      />
+    );
+  }
+
+  return (
+    <View style={styles.knowledgePanel}>
+      <View style={styles.knowledgeHeader}>
+        <Text style={styles.knowledgeEyebrow}>{panel.title}</Text>
+        <Text style={styles.knowledgeCounter}>
+          Question {questionNumber} of {panel.questions.length}
+        </Text>
+      </View>
+
+      <View style={styles.knowledgeProgressTrack}>
+        <View
+          style={[
+            styles.knowledgeProgressFill,
+            { width: `${(questionNumber / panel.questions.length) * 100}%` },
+          ]}
+        />
+      </View>
+
+      {questionIndex === 0 && (
+        <Text style={styles.knowledgeIntro}>{panel.intro}</Text>
+      )}
+
+      <KnowledgeQuestionView
+        question={question}
+        hasAnswered={hasAnswered}
+        isCorrect={isCorrect}
+        selectedAnswerIndex={selectedAnswerIndex}
+        selectedBoolean={selectedBoolean}
+        selectedItemId={selectedItemId}
+        orderedStepIds={orderedStepIds}
+        onAnswerChoice={answerChoice}
+        onAnswerTrueFalse={answerTrueFalse}
+        onAnswerItem={answerItem}
+        onSelectOrderStep={selectOrderStep}
+        onResetOrder={() => setOrderedStepIds([])}
+        onSubmitOrder={submitOrder}
+      />
+
+      {hasAnswered && (
+        <>
+          <FeedbackCard isCorrect={isCorrect} explanation={explanation} />
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.knowledgeNextButton,
+              pressed && styles.actionButtonPressed,
+            ]}
+            onPress={goToNextQuestion}
+          >
+            <Text style={styles.knowledgeNextButtonText}>
+              {questionIndex === panel.questions.length - 1
+                ? "See my results"
+                : "Next question"}
+            </Text>
+          </Pressable>
+        </>
+      )}
+    </View>
+  );
+}
+
+type KnowledgeQuestionViewProps = {
+  question: KnowledgeQuestion;
+  hasAnswered: boolean;
+  isCorrect: boolean;
+  selectedAnswerIndex: number | null;
+  selectedBoolean: boolean | null;
+  selectedItemId: string | null;
+  orderedStepIds: string[];
+  onAnswerChoice: (index: number) => void;
+  onAnswerTrueFalse: (value: boolean) => void;
+  onAnswerItem: (itemId: string) => void;
+  onSelectOrderStep: (stepId: string) => void;
+  onResetOrder: () => void;
+  onSubmitOrder: () => void;
+};
+
+function KnowledgeQuestionView({
+  question,
+  hasAnswered,
+  isCorrect,
+  selectedAnswerIndex,
+  selectedBoolean,
+  selectedItemId,
+  orderedStepIds,
+  onAnswerChoice,
+  onAnswerTrueFalse,
+  onAnswerItem,
+  onSelectOrderStep,
+  onResetOrder,
+  onSubmitOrder,
+}: KnowledgeQuestionViewProps) {
+  switch (question.type) {
+    case "multiple-choice":
+    case "scenario":
+      return (
+        <ChoiceKnowledgeQuestion
+          prompt={question.prompt}
+          answers={question.answers}
+          correctAnswerIndex={question.correctAnswerIndex}
+          selectedAnswerIndex={selectedAnswerIndex}
+          hasAnswered={hasAnswered}
+          isCorrect={isCorrect}
+          onSelect={onAnswerChoice}
+          scenario={question.type === "scenario"}
+        />
+      );
+
+    case "true-false":
+      return (
+        <TrueFalseKnowledgeQuestionView
+          prompt={question.prompt}
+          correctAnswer={question.correctAnswer}
+          selectedBoolean={selectedBoolean}
+          hasAnswered={hasAnswered}
+          onSelect={onAnswerTrueFalse}
+        />
+      );
+
+    case "select-item":
+      return (
+        <SelectItemKnowledgeQuestionView
+          question={question}
+          selectedItemId={selectedItemId}
+          hasAnswered={hasAnswered}
+          onSelect={onAnswerItem}
+        />
+      );
+
+    case "order":
+      return (
+        <OrderKnowledgeQuestionView
+          question={question}
+          orderedStepIds={orderedStepIds}
+          hasAnswered={hasAnswered}
+          onSelectStep={onSelectOrderStep}
+          onReset={onResetOrder}
+          onSubmit={onSubmitOrder}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+type ChoiceKnowledgeQuestionProps = {
+  prompt: string;
+  answers: string[];
+  correctAnswerIndex: number;
+  selectedAnswerIndex: number | null;
+  hasAnswered: boolean;
+  isCorrect: boolean;
+  onSelect: (index: number) => void;
+  scenario: boolean;
+};
+
+function ChoiceKnowledgeQuestion({
+  prompt,
+  answers,
+  correctAnswerIndex,
+  selectedAnswerIndex,
+  hasAnswered,
+  isCorrect,
+  onSelect,
+  scenario,
+}: ChoiceKnowledgeQuestionProps) {
+  return (
+    <View>
+      <View style={styles.knowledgePromptCard}>
+        <Text style={styles.knowledgePromptEmoji}>
+          {scenario ? "🧠" : "🐷"}
+        </Text>
+        <Text style={styles.knowledgePrompt}>{prompt}</Text>
+      </View>
+
+      <View style={styles.answerList}>
+        {answers.map((answer, index) => {
+          const isSelected = selectedAnswerIndex === index;
+          const showCorrect = hasAnswered && index === correctAnswerIndex;
+          const showIncorrect = hasAnswered && isSelected && !isCorrect;
+
+          return (
+            <Pressable
+              key={answer}
+              disabled={hasAnswered}
+              style={[
+                styles.answerButton,
+                showCorrect && styles.correctAnswer,
+                showIncorrect && styles.incorrectAnswer,
+              ]}
+              onPress={() => onSelect(index)}
+            >
+              <View style={styles.answerLetter}>
+                <Text style={styles.answerLetterText}>
+                  {String.fromCharCode(65 + index)}
+                </Text>
+              </View>
+
+              <Text style={styles.answerText}>{answer}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+type TrueFalseKnowledgeQuestionViewProps = {
+  prompt: string;
+  correctAnswer: boolean;
+  selectedBoolean: boolean | null;
+  hasAnswered: boolean;
+  onSelect: (value: boolean) => void;
+};
+
+function TrueFalseKnowledgeQuestionView({
+  prompt,
+  correctAnswer,
+  selectedBoolean,
+  hasAnswered,
+  onSelect,
+}: TrueFalseKnowledgeQuestionViewProps) {
+  return (
+    <View>
+      <View style={styles.knowledgePromptCard}>
+        <Text style={styles.knowledgePromptEmoji}>⚖️</Text>
+        <Text style={styles.knowledgePrompt}>{prompt}</Text>
+      </View>
+
+      <View style={styles.trueFalseRow}>
+        {[true, false].map((value) => {
+          const isSelected = selectedBoolean === value;
+          const showCorrect = hasAnswered && value === correctAnswer;
+          const showIncorrect =
+            hasAnswered && isSelected && value !== correctAnswer;
+
+          return (
+            <Pressable
+              key={String(value)}
+              disabled={hasAnswered}
+              style={[
+                styles.trueFalseButton,
+                showCorrect && styles.correctAnswer,
+                showIncorrect && styles.incorrectAnswer,
+              ]}
+              onPress={() => onSelect(value)}
+            >
+              <Text style={styles.trueFalseEmoji}>{value ? "✓" : "×"}</Text>
+              <Text style={styles.trueFalseText}>
+                {value ? "True" : "False"}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+type SelectItemKnowledgeQuestionViewProps = {
+  question: SelectItemKnowledgeQuestion;
+  selectedItemId: string | null;
+  hasAnswered: boolean;
+  onSelect: (itemId: string) => void;
+};
+
+function SelectItemKnowledgeQuestionView({
+  question,
+  selectedItemId,
+  hasAnswered,
+  onSelect,
+}: SelectItemKnowledgeQuestionViewProps) {
+  const total = question.items.reduce((sum, item) => sum + item.price, 0);
+
+  return (
+    <View>
+      <View style={styles.knowledgePromptCard}>
+        <Text style={styles.knowledgePromptEmoji}>🛒</Text>
+        <Text style={styles.knowledgePrompt}>{question.prompt}</Text>
+      </View>
+
+      <View style={styles.miniBudgetSummary}>
+        <Text style={styles.miniBudgetSummaryText}>
+          Limit: ${question.budgetLimit.toFixed(0)}
+        </Text>
+        <Text style={styles.miniBudgetOverText}>
+          Total: ${total.toFixed(0)}
+        </Text>
+      </View>
+
+      <View style={styles.itemChoiceList}>
+        {question.items.map((item) => {
+          const isSelected = selectedItemId === item.id;
+          const showCorrect = hasAnswered && item.id === question.correctItemId;
+          const showIncorrect = hasAnswered && isSelected && !showCorrect;
+
+          return (
+            <Pressable
+              key={item.id}
+              disabled={hasAnswered}
+              style={[
+                styles.itemChoiceButton,
+                showCorrect && styles.correctAnswer,
+                showIncorrect && styles.incorrectAnswer,
+              ]}
+              onPress={() => onSelect(item.id)}
+            >
+              <Text style={styles.itemChoiceEmoji}>{item.emoji}</Text>
+              <Text style={styles.itemChoiceName}>{item.name}</Text>
+              <Text style={styles.itemChoicePrice}>
+                ${item.price.toFixed(0)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+type OrderKnowledgeQuestionViewProps = {
+  question: OrderKnowledgeQuestion;
+  orderedStepIds: string[];
+  hasAnswered: boolean;
+  onSelectStep: (stepId: string) => void;
+  onReset: () => void;
+  onSubmit: () => void;
+};
+
+function OrderKnowledgeQuestionView({
+  question,
+  orderedStepIds,
+  hasAnswered,
+  onSelectStep,
+  onReset,
+  onSubmit,
+}: OrderKnowledgeQuestionViewProps) {
+  const availableSteps = question.steps.filter(
+    (step) => !orderedStepIds.includes(step.id),
+  );
+
+  return (
+    <View>
+      <View style={styles.knowledgePromptCard}>
+        <Text style={styles.knowledgePromptEmoji}>🔢</Text>
+        <Text style={styles.knowledgePrompt}>{question.prompt}</Text>
+      </View>
+
+      <View style={styles.orderAnswerArea}>
+        {orderedStepIds.length === 0 ? (
+          <Text style={styles.orderPlaceholder}>
+            Your order will appear here.
+          </Text>
+        ) : (
+          orderedStepIds.map((stepId, index) => {
+            const step = question.steps.find(
+              (candidate) => candidate.id === stepId,
+            );
+
+            return (
+              <View key={stepId} style={styles.orderedStepRow}>
+                <View style={styles.orderNumberCircle}>
+                  <Text style={styles.orderNumberText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.orderedStepText}>{step?.text}</Text>
+              </View>
+            );
+          })
+        )}
+      </View>
+
+      {!hasAnswered && (
+        <>
+          <View style={styles.orderChoices}>
+            {availableSteps.map((step) => (
+              <Pressable
+                key={step.id}
+                style={styles.orderChoiceButton}
+                onPress={() => onSelectStep(step.id)}
+              >
+                <Text style={styles.orderChoiceText}>{step.text}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.orderActionRow}>
+            <Pressable style={styles.orderResetButton} onPress={onReset}>
+              <Text style={styles.orderResetButtonText}>Reset</Text>
+            </Pressable>
+
+            <Pressable
+              disabled={orderedStepIds.length !== question.steps.length}
+              style={[
+                styles.orderSubmitButton,
+                orderedStepIds.length !== question.steps.length &&
+                  styles.orderSubmitButtonDisabled,
+              ]}
+              onPress={onSubmit}
+            >
+              <Text style={styles.orderSubmitButtonText}>Check order</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+function FeedbackCard({
+  isCorrect,
+  explanation,
+}: {
+  isCorrect: boolean;
+  explanation: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.quizFeedback,
+        isCorrect ? styles.correctFeedback : styles.incorrectFeedback,
+      ]}
+    >
+      <Text style={styles.feedbackEmoji}>{isCorrect ? "🐷" : "🤔"}</Text>
+
+      <View style={styles.feedbackTextContainer}>
+        <Text style={styles.feedbackTitle}>
+          {isCorrect ? "Correct!" : "Not quite"}
+        </Text>
+        <Text style={styles.feedbackBody}>{explanation}</Text>
+      </View>
+    </View>
+  );
+}
+
+function KnowledgeResults({
+  score,
+  total,
+  onRetake,
+  onComplete,
+}: {
+  score: number;
+  total: number;
+  onRetake: () => void;
+  onComplete: () => void;
+}) {
+  const percent = score / total;
+  const message =
+    percent === 1
+      ? "Perfect score! You understand the full impact of a purchase."
+      : percent >= 0.8
+        ? "Great job. You are ready to apply this to a real budget."
+        : percent >= 0.6
+          ? "Good start. Review the explanations and try it once more."
+          : "This is exactly what practice is for. Retake it and slow down on each decision.";
+
+  return (
+    <View style={styles.resultsPanel}>
+      <Text style={styles.resultsEmoji}>{percent >= 0.8 ? "🎉" : "🐷"}</Text>
+      <Text style={styles.resultsTitle}>Test complete</Text>
+      <Text style={styles.resultsScore}>
+        {score} / {total}
+      </Text>
+      <Text style={styles.resultsMessage}>{message}</Text>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.actionPrimaryButton,
+          pressed && styles.actionButtonPressed,
+        ]}
+        onPress={onComplete}
+      >
+        <Text style={styles.actionPrimaryButtonText}>Finish lesson</Text>
+      </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.actionSecondaryButton,
+          pressed && styles.actionButtonPressed,
+        ]}
+        onPress={onRetake}
+      >
+        <Text style={styles.actionSecondaryButtonText}>Retake test</Text>
       </Pressable>
     </View>
   );
@@ -944,5 +1553,274 @@ const styles = StyleSheet.create({
   },
   nextButtonTextDisabled: {
     color: "#7F8A84",
+  },
+  knowledgePanel: {
+    minHeight: 520,
+    backgroundColor: "#202622",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "#40613A",
+    padding: 18,
+  },
+  knowledgeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  knowledgeEyebrow: {
+    color: "#8AC769",
+    fontSize: 14,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  knowledgeCounter: {
+    color: "#AAB4AE",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  knowledgeProgressTrack: {
+    height: 6,
+    backgroundColor: "#343D38",
+    borderRadius: 999,
+    overflow: "hidden",
+    marginBottom: 14,
+  },
+  knowledgeProgressFill: {
+    height: "100%",
+    backgroundColor: "#72A956",
+    borderRadius: 999,
+  },
+  knowledgeIntro: {
+    color: "#C7D0CA",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  knowledgePromptCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF9EE",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+  },
+  knowledgePromptEmoji: {
+    fontSize: 40,
+    marginRight: 12,
+  },
+  knowledgePrompt: {
+    flex: 1,
+    color: "#171A18",
+    fontSize: 18,
+    lineHeight: 25,
+    fontWeight: "800",
+  },
+  knowledgeNextButton: {
+    minHeight: 54,
+    backgroundColor: "#5D9447",
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 14,
+  },
+  knowledgeNextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  trueFalseRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  trueFalseButton: {
+    flex: 1,
+    minHeight: 130,
+    backgroundColor: "#292F2C",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#3B4540",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  trueFalseEmoji: {
+    color: "#FFFFFF",
+    fontSize: 38,
+    fontWeight: "900",
+  },
+  trueFalseText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+    marginTop: 8,
+  },
+  miniBudgetSummary: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#171C19",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+  },
+  miniBudgetSummaryText: {
+    color: "#8AC769",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  miniBudgetOverText: {
+    color: "#F17870",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  itemChoiceList: {
+    gap: 8,
+  },
+  itemChoiceButton: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#292F2C",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#3B4540",
+    paddingHorizontal: 14,
+  },
+  itemChoiceEmoji: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  itemChoiceName: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  itemChoicePrice: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  orderAnswerArea: {
+    minHeight: 180,
+    backgroundColor: "#171C19",
+    borderRadius: 16,
+    padding: 12,
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  orderPlaceholder: {
+    color: "#7F8A84",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  orderedStepRow: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  orderNumberCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#5D9447",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  orderNumberText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  orderedStepText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  orderChoices: {
+    gap: 8,
+  },
+  orderChoiceButton: {
+    minHeight: 50,
+    backgroundColor: "#292F2C",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#3B4540",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  orderChoiceText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  orderActionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+  },
+  orderResetButton: {
+    minHeight: 48,
+    paddingHorizontal: 20,
+    backgroundColor: "#303733",
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  orderResetButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  orderSubmitButton: {
+    flex: 1,
+    minHeight: 48,
+    backgroundColor: "#5D9447",
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  orderSubmitButtonDisabled: {
+    backgroundColor: "#343C38",
+  },
+  orderSubmitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  resultsPanel: {
+    minHeight: 500,
+    backgroundColor: "#1C2420",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "#40613A",
+    padding: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resultsEmoji: {
+    fontSize: 72,
+    marginBottom: 14,
+  },
+  resultsTitle: {
+    color: "#FFFFFF",
+    fontSize: 28,
+    fontWeight: "900",
+  },
+  resultsScore: {
+    color: "#8AC769",
+    fontSize: 54,
+    fontWeight: "900",
+    marginVertical: 14,
+  },
+  resultsMessage: {
+    color: "#D4DDD7",
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: "center",
+    marginBottom: 24,
   },
 });

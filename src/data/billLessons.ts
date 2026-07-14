@@ -52,13 +52,81 @@ export type ActionPanel = {
   secondaryButtonText: string;
 };
 
+export type MultipleChoiceKnowledgeQuestion = {
+  id: string;
+  type: "multiple-choice";
+  prompt: string;
+  answers: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+};
+
+export type TrueFalseKnowledgeQuestion = {
+  id: string;
+  type: "true-false";
+  prompt: string;
+  correctAnswer: boolean;
+  explanation: string;
+};
+
+export type SelectItemKnowledgeQuestion = {
+  id: string;
+  type: "select-item";
+  prompt: string;
+  budgetLimit: number;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    emoji: string;
+  }[];
+  correctItemId: string;
+  explanation: string;
+};
+
+export type OrderKnowledgeQuestion = {
+  id: string;
+  type: "order";
+  prompt: string;
+  steps: {
+    id: string;
+    text: string;
+  }[];
+  correctOrder: string[];
+  explanation: string;
+};
+
+export type ScenarioKnowledgeQuestion = {
+  id: string;
+  type: "scenario";
+  prompt: string;
+  answers: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+};
+
+export type KnowledgeQuestion =
+  | MultipleChoiceKnowledgeQuestion
+  | TrueFalseKnowledgeQuestion
+  | SelectItemKnowledgeQuestion
+  | OrderKnowledgeQuestion
+  | ScenarioKnowledgeQuestion;
+
+export type KnowledgeTestPanel = {
+  type: "knowledge-test";
+  title: string;
+  intro: string;
+  questions: KnowledgeQuestion[];
+};
+
 export type LessonPanel =
   | StoryPanel
   | ExpensesPanel
   | CalculationPanel
   | PrinciplePanel
   | QuizPanel
-  | ActionPanel;
+  | ActionPanel
+  | KnowledgeTestPanel;
 
 export type BillLesson = {
   id: string;
@@ -76,7 +144,7 @@ export const billLessons: BillLesson[] = [
     title: "Can I Afford This?",
     description:
       "Learn the difference between being able to buy something and truly being able to afford it.",
-    durationMinutes: 3,
+    durationMinutes: 5,
     panels: [
       {
         type: "story",
@@ -171,9 +239,97 @@ export const billLessons: BillLesson[] = [
       {
         type: "action",
         title: "Now check one purchase you are considering.",
-        body: "Open one of your budgets and see what would be left after adding the purchase.",
+        body: "You can open one of your budgets now, or test what you learned first.",
         primaryButtonText: "Open my budgets",
-        secondaryButtonText: "Finish lesson",
+        secondaryButtonText: "Test my knowledge",
+      },
+      {
+        type: "knowledge-test",
+        title: "Test Your Knowledge",
+        intro:
+          "Answer five different question types to practice the lesson in new ways.",
+        questions: [
+          {
+            id: "afford-multiple-choice",
+            type: "multiple-choice",
+            prompt:
+              "What should you compare before deciding whether you can afford something?",
+            answers: [
+              "The price and your available spending money",
+              "The price and the store name",
+              "The color and the brand",
+              "The item and your wishlist",
+            ],
+            correctAnswerIndex: 0,
+            explanation:
+              "A purchase is affordable only when its full cost fits within the money you can actually use.",
+          },
+          {
+            id: "afford-true-false",
+            type: "true-false",
+            prompt:
+              "You have $50 available and your planned purchases total $47. You are currently within your limit.",
+            correctAnswer: true,
+            explanation:
+              "The purchases are $3 below the limit, so the plan currently fits.",
+          },
+          {
+            id: "afford-select-item",
+            type: "select-item",
+            prompt:
+              "Your list is $8 over budget. Which single item could you remove to get back within the limit?",
+            budgetLimit: 40,
+            items: [
+              { id: "snacks", name: "Snacks", price: 6, emoji: "🍿" },
+              { id: "shirt", name: "Shirt", price: 22, emoji: "👕" },
+              {
+                id: "charger",
+                name: "Phone charger",
+                price: 10,
+                emoji: "🔌",
+              },
+              { id: "drink", name: "Drink", price: 4, emoji: "🥤" },
+              {
+                id: "notebook",
+                name: "Notebook",
+                price: 6,
+                emoji: "📓",
+              },
+            ],
+            correctItemId: "charger",
+            explanation:
+              "The list totals $48. Removing the $10 charger lowers the total to $38, which fits the $40 limit.",
+          },
+          {
+            id: "afford-order",
+            type: "order",
+            prompt: "Tap the spending-decision steps in the correct order.",
+            steps: [
+              { id: "review", text: "Review the final total" },
+              { id: "choose", text: "Choose what you want to buy" },
+              { id: "limit", text: "Set how much you can spend" },
+              { id: "adjust", text: "Adjust the list if needed" },
+            ],
+            correctOrder: ["limit", "choose", "review", "adjust"],
+            explanation:
+              "Set the limit first, build the list, review the total, and then make adjustments.",
+          },
+          {
+            id: "afford-scenario",
+            type: "scenario",
+            prompt:
+              "You have $100 available. Your list totals $92, but you forgot about $12 in sales tax. What should you do?",
+            answers: [
+              "Buy everything because the listed prices are below $100",
+              "Remove or reduce something so the full cost fits",
+              "Ignore the tax",
+              "Increase the budget without checking your finances",
+            ],
+            correctAnswerIndex: 1,
+            explanation:
+              "The full cost is $104, so the plan is $4 over the amount available.",
+          },
+        ],
       },
     ],
   },
