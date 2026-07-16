@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const MAX_PRACTICE_COINS = 6;
+export const MAX_PRACTICE_COINS = 3;
 export const PRACTICE_COIN_RECHARGE_MS = 30 * 60 * 1000;
 
 export type BillPracticeState = {
