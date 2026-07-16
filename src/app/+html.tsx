@@ -15,12 +15,12 @@ export default function Root({ children }: { children: ReactNode }) {
         <title>Stretch</title>
 
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/stretch-icon.png" />
-        <link rel="apple-touch-icon" href="/stretch-icon.png" />
+        <link rel="icon" href="/budgetnote-icon.png" />
+        <link rel="apple-touch-icon" href="/budgetnote-icon.png" />
 
         <meta name="theme-color" content="#101820" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="Stretch" />
+        <meta name="apple-mobile-web-app-title" content="BudgetNote" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
