@@ -2,11 +2,11 @@
   "expo": {
     "name": "BudgetNote",
     "slug": "budget-notes",
-    "scheme": "stretch",
+    "scheme": "budgetnote",
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./public/stretch-icon.png"
+      "favicon": "./public/budgetnote-icon.png"
     },
     "plugins": [
       [
