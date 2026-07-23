@@ -126,6 +126,7 @@ export default function BudgetDashboardScreen() {
       hasHandledNamePromptRef.current = true;
       setNamePromptMode("create");
       setBudgetNameDraft("");
+      setShowNamePromptModal(true);
     }
   }, [shouldShowNamePrompt, editor.noteTitle]);
 
