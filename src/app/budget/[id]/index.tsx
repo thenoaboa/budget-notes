@@ -506,6 +506,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             }}
             onImportList={() => {
               setShowMenu(false);
+              setNamePromptFromTutorial(false);
               setNamePromptMode("rename");
               setBudgetNameDraft(editor.noteTitle.trim());
               setShowNamePromptModal(true);

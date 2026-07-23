@@ -159,7 +159,11 @@ export default function HomeScreen() {
 
     const id = Date.now().toString();
 
-    router.push(`/budget/${id}?showNamePrompt=1` as any);
+    router.push(
+      `/budget/${id}?showNamePrompt=1&startTutorial=${
+        shouldStartBudgetTutorial ? "1" : "0"
+      }` as any,
+    );
 
     resetSearchInBackground();
   }
