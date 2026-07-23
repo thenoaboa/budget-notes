@@ -236,11 +236,13 @@ export default function HomeScreen() {
           ]}
           onPress={createNewBudget}
         >
-          <Text style={styles.newButtonText}>+ New Budget</Text>
+          <Text style={styles.newButtonText}>+ New Spending Note</Text>
         </Pressable>
 
         {homeTutorialStep === "highlightNewNote" && (
-          <Text style={styles.highlightText}>Tap + New Budget to continue</Text>
+          <Text style={styles.highlightText}>
+            Tap + New Spending Note to continue
+          </Text>
         )}
 
         {searchVisible && (
