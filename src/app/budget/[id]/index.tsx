@@ -87,6 +87,7 @@ export default function BudgetDashboardScreen() {
   const [showAddItemsChoiceModal, setShowAddItemsChoiceModal] = useState(false);
   const [importText, setImportText] = useState("");
   const [showNamePromptModal, setShowNamePromptModal] = useState(false);
+  const [namePromptFromTutorial, setNamePromptFromTutorial] = useState(false);
   const [budgetNameDraft, setBudgetNameDraft] = useState("");
   const [namePromptMode, setNamePromptMode] = useState<"create" | "rename">(
     "create",
@@ -123,22 +124,6 @@ export default function BudgetDashboardScreen() {
     }, 150);
   }
 
-  useEffect(() => {
-    if (hasHandledNamePromptRef.current) {
-      return;
-    }
-
-    if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
-      hasHandledNamePromptRef.current = true;
-      setNamePromptMode("create");
-      setBudgetNameDraft("");
-
-      if (!shouldStartTutorial) {
-        setShowNamePromptModal(true);
-      }
-    }
-  }, [shouldShowNamePrompt, shouldStartTutorial, editor.noteTitle]);
-
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();
 
@@ -149,34 +134,53 @@ export default function BudgetDashboardScreen() {
 
     setShowNamePromptModal(false);
 
-    if (shouldStartTutorial) {
+    if (namePromptFromTutorial) {
+      setNamePromptFromTutorial(false);
       setTutorialStep("budgetPopup");
     }
   }
 
   useEffect(() => {
     async function loadTutorial() {
+      if (hasHandledNamePromptRef.current) {
+        return;
+      }
+
       const completed = await AsyncStorage.getItem(
         "budget-note-tutorial-complete-v2",
       );
 
       console.log("budget tutorial value:", completed, "budget id:", budgetId);
 
-      if (completed !== "true" && completed !== "skipped") {
+      const needsName =
+        shouldShowNamePrompt === "1" && !editor.noteTitle.trim();
+
+      if (needsName) {
+        hasHandledNamePromptRef.current = true;
+        setNamePromptMode("create");
+        setBudgetNameDraft("");
+      }
+
+      const tutorialIsIncomplete =
+        completed !== "true" && completed !== "skipped";
+
+      if (shouldStartTutorial && tutorialIsIncomplete) {
         capture("tutorial_started", {
           tutorialVersion: "budget_v2",
           source: "budget_screen",
         });
 
-        if (
-          shouldStartTutorial &&
-          shouldShowNamePrompt === "1" &&
-          !editor.noteTitle.trim()
-        ) {
+        if (needsName) {
           setTutorialStep("nameBudget");
-        } else if (shouldStartTutorial) {
+        } else {
           setTutorialStep("budgetPopup");
         }
+
+        return;
+      }
+
+      if (needsName) {
+        setShowNamePromptModal(true);
       }
     }
 
@@ -266,11 +270,7 @@ export default function BudgetDashboardScreen() {
       totalSpent: editor.totalSpent,
     });
 
-    router.push(
-      `/budget/${id}?showNamePrompt=1&startTutorial=${
-        shouldStartTutorial ? "1" : "0"
-      }` as any,
-    );
+    router.push(`/budget/${budgetId}/items` as any);
   }
 
   async function handleAddItemPress() {
@@ -659,6 +659,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               body="Give this budget a name so you can easily find it again later."
               buttonText="Name Budget"
               onNext={() => {
+                setNamePromptFromTutorial(true);
                 setTutorialStep("hidden");
 
                 setTimeout(() => {
@@ -726,7 +727,8 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             onRequestClose={() => {
               setShowNamePromptModal(false);
 
-              if (shouldStartTutorial) {
+              if (namePromptFromTutorial) {
+                setNamePromptFromTutorial(false);
                 setTutorialStep("budgetPopup");
               }
             }}
@@ -768,7 +770,8 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
                     setBudgetNameDraft("");
                     setShowNamePromptModal(false);
 
-                    if (tutorialStep === "nameBudget") {
+                    if (namePromptFromTutorial) {
+                      setNamePromptFromTutorial(false);
                       setTutorialStep("budgetPopup");
                     }
                   }}
