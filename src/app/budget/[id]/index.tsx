@@ -53,12 +53,18 @@ type TutorialStep =
 export default function BudgetDashboardScreen() {
   const router = useRouter();
   const posthog = usePostHog();
-  const { id, showNamePrompt } = useLocalSearchParams();
+  const { id, showNamePrompt, startTutorial } = useLocalSearchParams();
 
   const budgetId = Array.isArray(id) ? id[0] : id;
+
   const shouldShowNamePrompt = Array.isArray(showNamePrompt)
     ? showNamePrompt[0]
     : showNamePrompt;
+
+  const shouldStartTutorial = Array.isArray(startTutorial)
+    ? startTutorial[0] === "1"
+    : startTutorial === "1";
+
   const editor = useBudgetEditor(budgetId);
 
   const exportRef = useRef<View>(null);
@@ -126,9 +132,12 @@ export default function BudgetDashboardScreen() {
       hasHandledNamePromptRef.current = true;
       setNamePromptMode("create");
       setBudgetNameDraft("");
-      setShowNamePromptModal(true);
+
+      if (!shouldStartTutorial) {
+        setShowNamePromptModal(true);
+      }
     }
-  }, [shouldShowNamePrompt, editor.noteTitle]);
+  }, [shouldShowNamePrompt, shouldStartTutorial, editor.noteTitle]);
 
   async function saveBudgetNameFromPrompt() {
     const trimmedName = budgetNameDraft.trim();
@@ -159,16 +168,20 @@ export default function BudgetDashboardScreen() {
           source: "budget_screen",
         });
 
-        if (shouldShowNamePrompt === "1" && !editor.noteTitle.trim()) {
+        if (
+          shouldStartTutorial &&
+          shouldShowNamePrompt === "1" &&
+          !editor.noteTitle.trim()
+        ) {
           setTutorialStep("nameBudget");
-        } else {
+        } else if (shouldStartTutorial) {
           setTutorialStep("budgetPopup");
         }
       }
     }
 
     loadTutorial();
-  }, []);
+  }, [shouldStartTutorial, shouldShowNamePrompt, editor.noteTitle, budgetId]);
 
   async function completeTutorial() {
     tutorialStoppedRef.current = true;
@@ -253,7 +266,11 @@ export default function BudgetDashboardScreen() {
       totalSpent: editor.totalSpent,
     });
 
-    router.push(`/budget/${budgetId}/items` as any);
+    router.push(
+      `/budget/${id}?showNamePrompt=1&startTutorial=${
+        shouldStartTutorial ? "1" : "0"
+      }` as any,
+    );
   }
 
   async function handleAddItemPress() {
