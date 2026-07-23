@@ -149,7 +149,7 @@ export default function BudgetDashboardScreen() {
 
     setShowNamePromptModal(false);
 
-    if (tutorialStep === "nameBudget") {
+    if (shouldStartTutorial) {
       setTutorialStep("budgetPopup");
     }
   }
@@ -658,7 +658,13 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               title="Let’s name your budget"
               body="Give this budget a name so you can easily find it again later."
               buttonText="Name Budget"
-              onNext={() => setShowNamePromptModal(true)}
+              onNext={() => {
+                setTutorialStep("hidden");
+
+                setTimeout(() => {
+                  setShowNamePromptModal(true);
+                }, 150);
+              }}
               onSkip={skipTutorial}
             />
           )}
@@ -720,7 +726,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             onRequestClose={() => {
               setShowNamePromptModal(false);
 
-              if (tutorialStep === "nameBudget") {
+              if (shouldStartTutorial) {
                 setTutorialStep("budgetPopup");
               }
             }}
