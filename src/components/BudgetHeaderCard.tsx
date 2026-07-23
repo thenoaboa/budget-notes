@@ -148,7 +148,10 @@ export function BudgetHeaderCard({
 
             <Pressable
               style={[styles.dropdownButton, { marginLeft: 6 }]}
-              onPress={onShareBudget}
+              onPress={() => {
+                closeMenu();
+                onShareBudget?.();
+              }}
             >
               <Text style={styles.dropdownText}>Share</Text>
             </Pressable>

@@ -50,6 +50,8 @@ type TutorialStep =
   | "savedPopup"
   | "finishPopup";
 
+type ShareOption = "itemsOnly" | "notes" | "links" | "notesAndLinks";
+
 export default function BudgetDashboardScreen() {
   const router = useRouter();
   const posthog = usePostHog();
@@ -85,6 +87,8 @@ export default function BudgetDashboardScreen() {
   const [showCompareCardMenu, setShowCompareCardMenu] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showAddItemsChoiceModal, setShowAddItemsChoiceModal] = useState(false);
+  const [showShareOptionsModal, setShowShareOptionsModal] = useState(false);
+  const [shareOption, setShareOption] = useState<ShareOption>("itemsOnly");
   const [importText, setImportText] = useState("");
   const [showNamePromptModal, setShowNamePromptModal] = useState(false);
   const [namePromptFromTutorial, setNamePromptFromTutorial] = useState(false);
@@ -286,96 +290,140 @@ export default function BudgetDashboardScreen() {
     setShowAddItemsChoiceModal(true);
   }
   function importItemsFromText() {
-    const importedItems = importText
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .filter((line) => {
-        const lowerLine = line.toLowerCase();
+    const lines = importText.split("\n");
+    const importedItems: BudgetItem[] = [];
+    let currentItem: BudgetItem | null = null;
 
-        if (lowerLine === "budget note") return false;
-        if (lowerLine === "items:") return false;
-        if (lowerLine.startsWith("money available:")) return false;
-        if (lowerLine.startsWith("estimated tax:")) return false;
-        if (lowerLine.startsWith("planned total:")) return false;
-        if (lowerLine.startsWith("left after spending:")) return false;
+    function pushCurrentItem() {
+      if (currentItem && currentItem.name.trim().length > 0) {
+        importedItems.push(currentItem);
+      }
 
-        return true;
-      })
-      .map((line) => {
-        const cleanedLine = line.replace(/^[-•*]\s*/, "").trim();
+      currentItem = null;
+    }
 
-        const quantityAtEndMatch = cleanedLine.match(
-          /^(.*?)\s*(?:[:,-]\s*)?\$?(\d+(?:\.\d{1,2})?)\s+x(\d+)$/i,
-        );
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
 
-        if (quantityAtEndMatch) {
-          const totalAmount = parseFloat(quantityAtEndMatch[2]);
-          const quantity = Number(quantityAtEndMatch[3]);
-          const singleAmount = totalAmount / quantity;
+      if (!line) {
+        pushCurrentItem();
+        continue;
+      }
 
-          return {
-            id: Date.now() + Math.random(),
-            name: quantityAtEndMatch[1].trim(),
-            amount: singleAmount.toFixed(2),
-            quantity,
-            included: true,
-            isFood: false,
-            note: "",
-            link: "",
-          };
+      const lowerLine = line.toLowerCase();
+
+      if (
+        lowerLine === "budget note" ||
+        lowerLine === "items:" ||
+        lowerLine.startsWith("money available:") ||
+        lowerLine.startsWith("estimated tax:") ||
+        lowerLine.startsWith("planned total:") ||
+        lowerLine.startsWith("left after spending:")
+      ) {
+        continue;
+      }
+
+      if (lowerLine.startsWith("note:")) {
+        if (currentItem) {
+          currentItem.note = line.replace(/^note:\s*/i, "").trim();
         }
+        continue;
+      }
 
-        const quantityBeforeAmountMatch = cleanedLine.match(
-          /^(.*?)\s+x(\d+)\s*[:,-]\s*\$?(\d+(?:\.\d{1,2})?)$/i,
-        );
-
-        if (quantityBeforeAmountMatch) {
-          const totalAmount = parseFloat(quantityBeforeAmountMatch[3]);
-          const quantity = Number(quantityBeforeAmountMatch[2]);
-          const singleAmount = totalAmount / quantity;
-
-          return {
-            id: Date.now() + Math.random(),
-            name: quantityBeforeAmountMatch[1].trim(),
-            amount: singleAmount.toFixed(2),
-            quantity,
-            included: true,
-            isFood: false,
-            note: "",
-            link: "",
-          };
+      if (lowerLine.startsWith("link:")) {
+        if (currentItem) {
+          currentItem.link = line.replace(/^link:\s*/i, "").trim();
         }
+        continue;
+      }
 
-        const amountMatch = cleanedLine.match(
-          /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
-        );
-
-        if (amountMatch) {
-          return {
-            id: Date.now() + Math.random(),
-            name: amountMatch[1].trim(),
-            amount: amountMatch[2].trim(),
-            quantity: 1,
-            included: true,
-            isFood: false,
-            note: "",
-            link: "",
-          };
+      if (/^https?:\/\//i.test(line)) {
+        if (currentItem) {
+          currentItem.link = line;
         }
+        continue;
+      }
 
-        return {
+      pushCurrentItem();
+
+      const cleanedLine = line.replace(/^[-•*]\s*/, "").trim();
+
+      const quantityAtEndMatch = cleanedLine.match(
+        /^(.*?)\s*(?:[:,-]\s*)?\$?(\d+(?:\.\d{1,2})?)\s+x(\d+)$/i,
+      );
+
+      if (quantityAtEndMatch) {
+        const totalAmount = parseFloat(quantityAtEndMatch[2]);
+        const quantity = Number(quantityAtEndMatch[3]);
+
+        currentItem = {
           id: Date.now() + Math.random(),
-          name: cleanedLine,
-          amount: "",
+          name: quantityAtEndMatch[1].trim(),
+          amount: (totalAmount / quantity).toFixed(2),
+          quantity,
+          included: true,
+          isFood: false,
+          note: "",
+          link: "",
+        };
+
+        continue;
+      }
+
+      const quantityBeforeAmountMatch = cleanedLine.match(
+        /^(.*?)\s+x(\d+)\s*[:,-]\s*\$?(\d+(?:\.\d{1,2})?)$/i,
+      );
+
+      if (quantityBeforeAmountMatch) {
+        const totalAmount = parseFloat(quantityBeforeAmountMatch[3]);
+        const quantity = Number(quantityBeforeAmountMatch[2]);
+
+        currentItem = {
+          id: Date.now() + Math.random(),
+          name: quantityBeforeAmountMatch[1].trim(),
+          amount: (totalAmount / quantity).toFixed(2),
+          quantity,
+          included: true,
+          isFood: false,
+          note: "",
+          link: "",
+        };
+
+        continue;
+      }
+
+      const amountMatch = cleanedLine.match(
+        /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
+      );
+
+      if (amountMatch) {
+        currentItem = {
+          id: Date.now() + Math.random(),
+          name: amountMatch[1].trim(),
+          amount: amountMatch[2].trim(),
           quantity: 1,
           included: true,
           isFood: false,
           note: "",
           link: "",
         };
-      })
-      .filter((item) => item.name.trim().length > 0) as BudgetItem[];
+
+        continue;
+      }
+
+      currentItem = {
+        id: Date.now() + Math.random(),
+        name: cleanedLine,
+        amount: "",
+        quantity: 1,
+        included: true,
+        isFood: false,
+        note: "",
+        link: "",
+      };
+    }
+
+    pushCurrentItem();
 
     if (importedItems.length === 0) return;
 
@@ -385,6 +433,71 @@ export default function BudgetDashboardScreen() {
     setShowImportModal(false);
 
     setToastMessage("Items added");
+    setShowCopiedMessage(true);
+
+    setTimeout(() => {
+      setShowCopiedMessage(false);
+    }, 900);
+  }
+
+  async function copyBudgetWithSelectedOptions() {
+    const visibleItems = receiptItems.filter((item) => item.included);
+
+    const includeNotes =
+      shareOption === "notes" || shareOption === "notesAndLinks";
+
+    const includeLinks =
+      shareOption === "links" || shareOption === "notesAndLinks";
+
+    const itemsText =
+      visibleItems.length > 0
+        ? visibleItems
+            .map((item) => {
+              const amount = (parseFloat(item.amount) || 0) * item.quantity;
+
+              const quantityText =
+                item.quantity > 1 ? ` x${item.quantity}` : "";
+
+              const itemLines = [
+                `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`,
+              ];
+
+              if (includeNotes && item.note?.trim()) {
+                itemLines.push(`Note: ${item.note.trim()}`);
+              }
+
+              if (includeLinks && item.link?.trim()) {
+                itemLines.push(`Link: ${item.link.trim()}`);
+              }
+
+              return itemLines.join("\n");
+            })
+            .join("\n\n")
+        : "- No items added";
+
+    const header = editor.noteTitle.trim() || "Budget Note";
+
+    const hasBudget =
+      editor.startingMoney.trim() !== "" &&
+      !Number.isNaN(parseFloat(editor.startingMoney));
+
+    const summaryText = `${header}
+
+${hasBudget ? `Money available: $${parseFloat(editor.startingMoney).toFixed(2)}\n\n` : ""}Items:
+${itemsText}
+
+${
+  editor.salesTaxEnabled
+    ? `Estimated tax: $${editor.taxAmount.toFixed(2)}
+`
+    : ""
+}Planned total: $${editor.totalSpent.toFixed(2)}
+${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
+
+    await Clipboard.setStringAsync(summaryText);
+
+    setShowShareOptionsModal(false);
+    setToastMessage("Copied to Clipboard");
     setShowCopiedMessage(true);
 
     setTimeout(() => {
@@ -452,57 +565,10 @@ export default function BudgetDashboardScreen() {
                 router.replace(`/budget/${duplicatedBudget.id}` as any);
               }, 900);
             }}
-            onShareBudget={async () => {
+            onShareBudget={() => {
               setShowMenu(false);
-
-              const visibleItems = receiptItems.filter((item) => item.included);
-
-              const itemsText =
-                visibleItems.length > 0
-                  ? visibleItems
-                      .map((item) => {
-                        const amount =
-                          (parseFloat(item.amount) || 0) * item.quantity;
-
-                        const quantityText =
-                          item.quantity > 1 ? ` x${item.quantity}` : "";
-
-                        let text = `- ${item.name || "Unnamed item"}: $${amount.toFixed(2)}${quantityText}`;
-
-                        if (item.link?.trim()) {
-                          text += `\n${item.link.trim()}`;
-                        }
-
-                        return text;
-                      })
-                      .join("\n\n")
-                  : "- No items added";
-              const header = editor.noteTitle.trim() || "Budget Note";
-
-              const hasBudget =
-                editor.startingMoney.trim() !== "" &&
-                !Number.isNaN(parseFloat(editor.startingMoney));
-
-              const summaryText = `${header}
-
-${hasBudget ? `Money available: $${parseFloat(editor.startingMoney).toFixed(2)}\n\n` : ""}Items:
-${itemsText}
-
-${
-  editor.salesTaxEnabled
-    ? `Estimated tax: $${editor.taxAmount.toFixed(2)}
-`
-    : ""
-}Planned total: $${editor.totalSpent.toFixed(2)}
-${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
-
-              await Clipboard.setStringAsync(summaryText);
-
-              setToastMessage("Copied to Clipboard");
-              setShowCopiedMessage(true);
-              setTimeout(() => {
-                setShowCopiedMessage(false);
-              }, 900);
+              setShareOption("itemsOnly");
+              setShowShareOptionsModal(true);
             }}
             onImportList={() => {
               setShowMenu(false);
@@ -785,6 +851,78 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             </View>
           </Modal>
           <Modal
+            visible={showShareOptionsModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowShareOptionsModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <View style={styles.compareModal}>
+                <Text style={styles.modalTitle}>What should be included?</Text>
+
+                {[
+                  {
+                    value: "itemsOnly",
+                    label: "Item names and prices only",
+                  },
+                  {
+                    value: "notes",
+                    label: "Include notes",
+                  },
+                  {
+                    value: "links",
+                    label: "Include links",
+                  },
+                  {
+                    value: "notesAndLinks",
+                    label: "Include notes and links",
+                  },
+                ].map((option) => {
+                  const selected = shareOption === option.value;
+
+                  return (
+                    <Pressable
+                      key={option.value}
+                      style={[
+                        styles.shareOption,
+                        selected && styles.shareOptionSelected,
+                      ]}
+                      onPress={() =>
+                        setShareOption(option.value as ShareOption)
+                      }
+                    >
+                      <View
+                        style={[
+                          styles.radioOuter,
+                          selected && styles.radioOuterSelected,
+                        ]}
+                      >
+                        {selected && <View style={styles.radioInner} />}
+                      </View>
+
+                      <Text style={styles.shareOptionText}>{option.label}</Text>
+                    </Pressable>
+                  );
+                })}
+
+                <Pressable
+                  style={styles.budgetOption}
+                  onPress={copyBudgetWithSelectedOptions}
+                >
+                  <Text style={styles.budgetOptionText}>Copy to Clipboard</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.cancelButton}
+                  onPress={() => setShowShareOptionsModal(false)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
+
+          <Modal
             visible={showAddItemsChoiceModal}
             transparent
             animationType="fade"
@@ -833,7 +971,9 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
                   value={importText}
                   onChangeText={setImportText}
                   multiline
-                  placeholder={"Milk - 4.99\nEggs x2: $7.00\nBread"}
+                  placeholder={
+                    "Milk - 4.99\nNote: Get whole milk\nLink: https://example.com\n\nEggs x2: $7.00"
+                  }
                   placeholderTextColor="#AAB7C4"
                 />
 
@@ -1054,6 +1194,51 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
+  },
+
+  shareOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#182638",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+  },
+
+  shareOptionSelected: {
+    borderColor: "#2ECC71",
+  },
+
+  shareOptionText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  radioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#AAB7C4",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+
+  radioOuterSelected: {
+    borderColor: "#2ECC71",
+  },
+
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#2ECC71",
   },
 
   cancelButton: {
