@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -52,6 +53,173 @@ type TutorialStep =
 
 type ShareOption = "itemsOnly" | "notes" | "links" | "notesAndLinks";
 
+function parseBudgetItemsFromText(text: string): BudgetItem[] {
+  const lines = text.split("\n");
+  const parsedItems: BudgetItem[] = [];
+  let currentItem: BudgetItem | null = null;
+
+  function pushCurrentItem() {
+    if (currentItem && currentItem.name.trim().length > 0) {
+      parsedItems.push(currentItem);
+    }
+
+    currentItem = null;
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      pushCurrentItem();
+      continue;
+    }
+
+    const lowerLine = line.toLowerCase();
+
+    if (
+      lowerLine === "budget note" ||
+      lowerLine === "items:" ||
+      lowerLine.startsWith("money available:") ||
+      lowerLine.startsWith("estimated tax:") ||
+      lowerLine.startsWith("planned total:") ||
+      lowerLine.startsWith("left after spending:")
+    ) {
+      continue;
+    }
+
+    if (lowerLine.startsWith("note:")) {
+      if (currentItem) {
+        currentItem.note = line.replace(/^note:\s*/i, "").trim();
+      }
+
+      continue;
+    }
+
+    if (lowerLine.startsWith("link:")) {
+      if (currentItem) {
+        currentItem.link = line.replace(/^link:\s*/i, "").trim();
+      }
+
+      continue;
+    }
+
+    if (/^https?:\/\//i.test(line)) {
+      if (currentItem) {
+        currentItem.link = line;
+      }
+
+      continue;
+    }
+
+    pushCurrentItem();
+
+    const cleanedLine = line.replace(/^[-•*]\s*/, "").trim();
+
+    const quantityAtEndMatch = cleanedLine.match(
+      /^(.*?)\s*(?:[:,-]\s*)?\$?(\d+(?:\.\d{1,2})?)\s+x(\d+)$/i,
+    );
+
+    if (quantityAtEndMatch) {
+      const totalAmount = parseFloat(quantityAtEndMatch[2]);
+      const quantity = Number(quantityAtEndMatch[3]);
+
+      currentItem = {
+        id: Date.now() + Math.random(),
+        name: quantityAtEndMatch[1].trim(),
+        amount: (totalAmount / quantity).toFixed(2),
+        quantity,
+        included: true,
+        isFood: false,
+        note: "",
+        link: "",
+        inCart: false,
+      };
+
+      continue;
+    }
+
+    const quantityBeforeAmountMatch = cleanedLine.match(
+      /^(.*?)\s+x(\d+)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/i,
+    );
+
+    if (quantityBeforeAmountMatch) {
+      const totalAmount = parseFloat(quantityBeforeAmountMatch[3]);
+      const quantity = Number(quantityBeforeAmountMatch[2]);
+
+      currentItem = {
+        id: Date.now() + Math.random(),
+        name: quantityBeforeAmountMatch[1].trim(),
+        amount: (totalAmount / quantity).toFixed(2),
+        quantity,
+        included: true,
+        isFood: false,
+        note: "",
+        link: "",
+        inCart: false,
+      };
+
+      continue;
+    }
+
+    const amountMatch = cleanedLine.match(
+      /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
+    );
+
+    if (amountMatch) {
+      currentItem = {
+        id: Date.now() + Math.random(),
+        name: amountMatch[1].trim(),
+        amount: amountMatch[2].trim(),
+        quantity: 1,
+        included: true,
+        isFood: false,
+        note: "",
+        link: "",
+        inCart: false,
+      };
+
+      continue;
+    }
+
+    // Price only, such as "4.99" or "$4.99"
+    const priceOnlyMatch = cleanedLine.match(/^\$?(\d+(?:\.\d{1,2})?)$/);
+
+    if (priceOnlyMatch) {
+      currentItem = {
+        id: Date.now() + Math.random(),
+        name: "",
+        amount: priceOnlyMatch[1],
+        quantity: 1,
+        included: true,
+        isFood: false,
+        note: "",
+        link: "",
+        inCart: false,
+      };
+
+      continue;
+    }
+
+    currentItem = {
+      id: Date.now() + Math.random(),
+      name: cleanedLine,
+      amount: "",
+      quantity: 1,
+      included: true,
+      isFood: false,
+      note: "",
+      link: "",
+      inCart: false,
+    };
+  }
+
+  if (currentItem) {
+    parsedItems.push(currentItem);
+  }
+
+  return parsedItems;
+}
+
 export default function BudgetDashboardScreen() {
   const router = useRouter();
   const posthog = usePostHog();
@@ -72,6 +240,7 @@ export default function BudgetDashboardScreen() {
   const exportRef = useRef<View>(null);
   const hasHandledNamePromptRef = useRef(false);
   const namePromptInputRef = useRef<TextInput>(null);
+  const planSearchInputRef = useRef<TextInput>(null);
 
   const [tutorialStep, setTutorialStep] = useState<TutorialStep>("hidden");
   const [tutorialDismissed, setTutorialDismissed] = useState(false);
@@ -97,9 +266,79 @@ export default function BudgetDashboardScreen() {
     "create",
   );
 
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isPlanSearchOpen, setIsPlanSearchOpen] = useState(false);
+  const [planSearchQuery, setPlanSearchQuery] = useState("");
+
   const receiptItems = useMemo(() => {
     return [...editor.items].reverse();
   }, [editor.items]);
+
+  const plannedSearchResults = useMemo(() => {
+    const normalizedQuery = planSearchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return [];
+    }
+
+    let remainingQuery = normalizedQuery;
+
+    // Find quantity anywhere in the search.
+    // Examples:
+    // x2
+    // milk x2
+    // x3 milk 4.89
+    const quantityMatch = remainingQuery.match(/\bx\s*(\d+)\b/i);
+
+    const searchedQuantity = quantityMatch ? Number(quantityMatch[1]) : null;
+
+    if (quantityMatch) {
+      remainingQuery = remainingQuery
+        .replace(quantityMatch[0], " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    // Find a price anywhere that is left.
+    // Examples:
+    // milk 4.99
+    // milk $4.99
+    // milk 5 x2
+    const priceMatch = remainingQuery.match(/\$?(\d+(?:\.\d{1,2})?)/);
+
+    const searchedPrice = priceMatch ? parseFloat(priceMatch[1]) : null;
+
+    if (priceMatch) {
+      remainingQuery = remainingQuery
+        .replace(priceMatch[0], " ")
+        .replace(/[:,-]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    const searchedName = remainingQuery.trim();
+
+    return receiptItems.filter((item) => {
+      if (!item.included) {
+        return false;
+      }
+
+      const itemName = item.name.trim().toLowerCase();
+
+      const itemTotal = (parseFloat(item.amount) || 0) * item.quantity;
+
+      const nameMatches =
+        searchedName === "" || itemName.includes(searchedName);
+
+      const priceMatches =
+        searchedPrice === null || Math.abs(itemTotal - searchedPrice) < 0.005;
+
+      const quantityMatches =
+        searchedQuantity === null || item.quantity === searchedQuantity;
+
+      return nameMatches && priceMatches && quantityMatches;
+    });
+  }, [planSearchQuery, receiptItems]);
 
   const comparisonResults = comparedBudget
     ? compareBudgets(editor.items, comparedBudget)
@@ -110,8 +349,44 @@ export default function BudgetDashboardScreen() {
         decreased: [],
       };
 
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSubscription = Keyboard.addListener(showEvent, () => {
+      setKeyboardVisible(true);
+    });
+
+    const hideSubscription = Keyboard.addListener(hideEvent, () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
+
   function capture(eventName: string, properties?: any) {
     posthog?.capture(eventName, properties);
+  }
+
+  function showToast(message: string) {
+    setToastMessage(message);
+    setShowCopiedMessage(true);
+
+    setTimeout(() => {
+      setShowCopiedMessage(false);
+    }, 900);
+  }
+
+  function moveItemToHidden(itemId: number) {
+    editor.toggleIncluded(itemId);
+    editor.closeReceiptItemOverlay();
+    showToast("Item moved to Hidden");
   }
 
   function advanceTutorialAfterTap(nextStep: TutorialStep) {
@@ -267,12 +542,14 @@ export default function BudgetDashboardScreen() {
     editor.openReceiptItemOverlay(itemId);
   }
 
-  function openReceiptPage() {
+  async function openReceiptPage() {
     trackReceiptEdited(capture, {
       itemCount: editor.items.length,
       salesTaxEnabled: editor.salesTaxEnabled,
       totalSpent: editor.totalSpent,
     });
+
+    await editor.saveBudgetNow();
 
     router.push(`/budget/${budgetId}/items` as any);
   }
@@ -290,154 +567,77 @@ export default function BudgetDashboardScreen() {
     setShowAddItemsChoiceModal(true);
   }
   function importItemsFromText() {
-    const lines = importText.split("\n");
-    const importedItems: BudgetItem[] = [];
-    let currentItem: BudgetItem | null = null;
+    const importedItems = parseBudgetItemsFromText(importText);
 
-    function pushCurrentItem() {
-      if (currentItem && currentItem.name.trim().length > 0) {
-        importedItems.push(currentItem);
-      }
-
-      currentItem = null;
+    if (importedItems.length === 0) {
+      return;
     }
-
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-
-      if (!line) {
-        pushCurrentItem();
-        continue;
-      }
-
-      const lowerLine = line.toLowerCase();
-
-      if (
-        lowerLine === "budget note" ||
-        lowerLine === "items:" ||
-        lowerLine.startsWith("money available:") ||
-        lowerLine.startsWith("estimated tax:") ||
-        lowerLine.startsWith("planned total:") ||
-        lowerLine.startsWith("left after spending:")
-      ) {
-        continue;
-      }
-
-      if (lowerLine.startsWith("note:")) {
-        if (currentItem) {
-          currentItem.note = line.replace(/^note:\s*/i, "").trim();
-        }
-        continue;
-      }
-
-      if (lowerLine.startsWith("link:")) {
-        if (currentItem) {
-          currentItem.link = line.replace(/^link:\s*/i, "").trim();
-        }
-        continue;
-      }
-
-      if (/^https?:\/\//i.test(line)) {
-        if (currentItem) {
-          currentItem.link = line;
-        }
-        continue;
-      }
-
-      pushCurrentItem();
-
-      const cleanedLine = line.replace(/^[-•*]\s*/, "").trim();
-
-      const quantityAtEndMatch = cleanedLine.match(
-        /^(.*?)\s*(?:[:,-]\s*)?\$?(\d+(?:\.\d{1,2})?)\s+x(\d+)$/i,
-      );
-
-      if (quantityAtEndMatch) {
-        const totalAmount = parseFloat(quantityAtEndMatch[2]);
-        const quantity = Number(quantityAtEndMatch[3]);
-
-        currentItem = {
-          id: Date.now() + Math.random(),
-          name: quantityAtEndMatch[1].trim(),
-          amount: (totalAmount / quantity).toFixed(2),
-          quantity,
-          included: true,
-          isFood: false,
-          note: "",
-          link: "",
-        };
-
-        continue;
-      }
-
-      const quantityBeforeAmountMatch = cleanedLine.match(
-        /^(.*?)\s+x(\d+)\s*[:,-]\s*\$?(\d+(?:\.\d{1,2})?)$/i,
-      );
-
-      if (quantityBeforeAmountMatch) {
-        const totalAmount = parseFloat(quantityBeforeAmountMatch[3]);
-        const quantity = Number(quantityBeforeAmountMatch[2]);
-
-        currentItem = {
-          id: Date.now() + Math.random(),
-          name: quantityBeforeAmountMatch[1].trim(),
-          amount: (totalAmount / quantity).toFixed(2),
-          quantity,
-          included: true,
-          isFood: false,
-          note: "",
-          link: "",
-        };
-
-        continue;
-      }
-
-      const amountMatch = cleanedLine.match(
-        /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
-      );
-
-      if (amountMatch) {
-        currentItem = {
-          id: Date.now() + Math.random(),
-          name: amountMatch[1].trim(),
-          amount: amountMatch[2].trim(),
-          quantity: 1,
-          included: true,
-          isFood: false,
-          note: "",
-          link: "",
-        };
-
-        continue;
-      }
-
-      currentItem = {
-        id: Date.now() + Math.random(),
-        name: cleanedLine,
-        amount: "",
-        quantity: 1,
-        included: true,
-        isFood: false,
-        note: "",
-        link: "",
-      };
-    }
-
-    pushCurrentItem();
-
-    if (importedItems.length === 0) return;
 
     editor.setItems((currentItems) => [...importedItems, ...currentItems]);
 
     setImportText("");
     setShowImportModal(false);
 
-    setToastMessage("Items added");
-    setShowCopiedMessage(true);
+    showToast("Items added");
+  }
+
+  function togglePlanSearch() {
+    setIsPlanSearchOpen((previous) => {
+      const nextValue = !previous;
+
+      if (!nextValue) {
+        setPlanSearchQuery("");
+        Keyboard.dismiss();
+      }
+
+      capture("plan_search_toggled", {
+        open: nextValue,
+        itemCount: editor.items.length,
+      });
+
+      return nextValue;
+    });
+  }
+
+  function openMatchedPlannedItem(itemId: number) {
+    capture("plan_search_result_opened", {
+      query: planSearchQuery.trim(),
+      itemId,
+    });
+
+    openReceiptItemOverlayWithAnalytics(itemId);
+  }
+
+  function addSearchedItem() {
+    const searchedValue = planSearchQuery.trim();
+
+    const parsedItems = parseBudgetItemsFromText(searchedValue);
+
+    const parsedItem = parsedItems[0];
+
+    capture("plan_search_add_item_pressed", {
+      query: searchedValue,
+      parsedName: parsedItem?.name ?? "",
+      parsedAmount: parsedItem?.amount ?? "",
+      parsedQuantity: parsedItem?.quantity ?? 1,
+    });
+
+    setIsPlanSearchOpen(false);
+    setPlanSearchQuery("");
+    Keyboard.dismiss();
+
+    editor.openAddItemOverlay();
 
     setTimeout(() => {
-      setShowCopiedMessage(false);
-    }, 900);
+      editor.setDraftItem((currentDraft) => ({
+        ...currentDraft,
+        name: parsedItem?.name ?? searchedValue,
+        amount: parsedItem?.amount ?? "",
+        quantity: parsedItem?.quantity ?? 1,
+        note: parsedItem?.note ?? "",
+        link: parsedItem?.link ?? "",
+      }));
+    }, 50);
   }
 
   async function copyBudgetWithSelectedOptions() {
@@ -497,12 +697,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
     await Clipboard.setStringAsync(summaryText);
 
     setShowShareOptionsModal(false);
-    setToastMessage("Copied to Clipboard");
-    setShowCopiedMessage(true);
-
-    setTimeout(() => {
-      setShowCopiedMessage(false);
-    }, 900);
+    showToast("Copied to Clipboard");
   }
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -557,11 +752,9 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
                 return;
               }
 
-              setToastMessage("Budget Copied");
-              setShowCopiedMessage(true);
+              showToast("Budget Copied");
 
               setTimeout(() => {
-                setShowCopiedMessage(false);
                 router.replace(`/budget/${duplicatedBudget.id}` as any);
               }, 900);
             }}
@@ -683,6 +876,139 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               </View>
             )}
 
+            <View style={styles.planSearchSection}>
+              <Pressable
+                style={[
+                  styles.planSearchToggle,
+                  isPlanSearchOpen && styles.planSearchToggleOpen,
+                ]}
+                onPress={togglePlanSearch}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isPlanSearchOpen
+                    ? "Close Check Before You Spend"
+                    : "Open Check Before You Spend"
+                }
+              >
+                <Text style={styles.planSearchTogglePig}>🐷</Text>
+
+                <Text style={styles.planSearchToggleText}>Quick Check</Text>
+
+                <Text
+                  style={[
+                    styles.planSearchToggleArrow,
+                    isPlanSearchOpen
+                      ? styles.planSearchToggleArrowOpen
+                      : styles.planSearchToggleArrowClosed,
+                  ]}
+                >
+                  {isPlanSearchOpen ? "⌃" : "⌄"}
+                </Text>
+              </Pressable>
+
+              {isPlanSearchOpen && (
+                <View style={styles.planSearchPanel}>
+                  <View style={styles.planSearchInputRow}>
+                    <Text style={styles.planSearchIcon}>⌕</Text>
+
+                    <TextInput
+                      ref={planSearchInputRef}
+                      style={styles.planSearchInput}
+                      value={planSearchQuery}
+                      onChangeText={setPlanSearchQuery}
+                      placeholder="Search this note..."
+                      placeholderTextColor="#7F8E9E"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="search"
+                    />
+
+                    {planSearchQuery.length > 0 && (
+                      <Pressable
+                        style={styles.planSearchClearButton}
+                        onPress={() => setPlanSearchQuery("")}
+                        accessibilityRole="button"
+                        accessibilityLabel="Clear search"
+                      >
+                        <Text style={styles.planSearchClearText}>×</Text>
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {planSearchQuery.trim().length === 0 ? (
+                    <Text style={styles.planSearchHint}>
+                      See if it's already in your plan.
+                    </Text>
+                  ) : plannedSearchResults.length > 0 ? (
+                    <View style={styles.planSearchResults}>
+                      <View style={styles.planSearchMessageRow}>
+                        <Text style={styles.planSearchStatusIcon}>✓</Text>
+                        <Text style={styles.planSearchPlannedText}>
+                          Planned in this note
+                        </Text>
+                      </View>
+
+                      {plannedSearchResults.map((item) => {
+                        const itemTotal =
+                          (parseFloat(item.amount) || 0) * item.quantity;
+
+                        return (
+                          <Pressable
+                            key={item.id}
+                            style={styles.planSearchResultCard}
+                            onPress={() => openMatchedPlannedItem(item.id)}
+                          >
+                            <View style={styles.planSearchResultDetails}>
+                              <Text
+                                style={styles.planSearchResultName}
+                                numberOfLines={1}
+                              >
+                                {item.name || "Unnamed item"}
+                              </Text>
+
+                              {item.quantity > 1 && (
+                                <Text style={styles.planSearchResultQuantity}>
+                                  Quantity: {item.quantity}
+                                </Text>
+                              )}
+                            </View>
+
+                            <Text style={styles.planSearchResultAmount}>
+                              ${itemTotal.toFixed(2)}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    <View style={styles.planSearchNotPlanned}>
+                      <View style={styles.planSearchMessageRow}>
+                        <Text style={styles.planSearchNotPlannedIcon}>×</Text>
+                        <View style={styles.planSearchMessageText}>
+                          <Text style={styles.planSearchNotPlannedTitle}>
+                            Not planned
+                          </Text>
+                          <Text style={styles.planSearchNotPlannedBody}>
+                            I couldn’t find “{planSearchQuery.trim()}” in this
+                            note.
+                          </Text>
+                        </View>
+                      </View>
+
+                      <Pressable
+                        style={styles.planSearchAddButton}
+                        onPress={addSearchedItem}
+                      >
+                        <Text style={styles.planSearchAddButtonText}>
+                          + Add Item
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+
             <View id="receipt-export" ref={exportRef}>
               <BudgetSummaryBox
                 items={receiptItems}
@@ -702,6 +1028,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
                 onAddItem={handleAddItemPress}
                 onPressItem={openReceiptItemOverlayWithAnalytics}
                 onDeleteItem={deleteItemWithAnalytics}
+                onToggleInCart={editor.toggleInCart}
               />
             </View>
 
@@ -715,6 +1042,18 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
               setReceiptNote={editor.setReceiptNote}
             />
           </ScrollView>
+
+          {/*
+{!keyboardVisible && (
+  <View style={styles.bannerContainer}>
+    <View style={styles.bannerPlaceholder}>
+      <Text style={styles.bannerLabel}>ADVERTISEMENT</Text>
+      <Text style={styles.bannerText}>Banner ad goes here</Text>
+    </View>
+  </View>
+)}
+*/}
+
           {showCopiedMessage && (
             <View style={styles.copiedToast}>
               <Text style={styles.copiedToastText}>{toastMessage}</Text>
@@ -1048,7 +1387,7 @@ ${hasBudget ? `Left after spending: $${editor.safeToSpend.toFixed(2)}` : ""}`;
             updateItem={editor.updateItem}
             increaseQuantity={editor.increaseQuantity}
             resetQuantity={editor.resetQuantity}
-            toggleIncluded={editor.toggleIncluded}
+            toggleIncluded={moveItemToHidden}
             deleteItem={deleteItemWithAnalytics}
             focusNextItemOrAddCurrent={editor.focusNextItemOrAddCurrent}
             onClose={editor.closeReceiptItemOverlay}
@@ -1081,8 +1420,223 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingBottom: 80,
+    paddingBottom: 16,
     backgroundColor: "#101820",
+  },
+
+  planSearchSection: {
+    marginBottom: 12,
+  },
+
+  planSearchToggle: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1B2633",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#344657",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+
+  planSearchToggleOpen: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderBottomWidth: 0,
+  },
+
+  planSearchTogglePig: {
+    fontSize: 19,
+    marginRight: 9,
+  },
+
+  planSearchToggleText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  planSearchToggleArrow: {
+    color: "#AAB7C4",
+    fontSize: 20,
+    fontWeight: "900",
+    marginLeft: 10,
+  },
+
+  planSearchToggleArrowClosed: {
+    transform: [{ translateY: -5 }],
+  },
+
+  planSearchToggleArrowOpen: {
+    transform: [{ translateY: 0 }],
+  },
+
+  planSearchPanel: {
+    backgroundColor: "#1B2633",
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: "#344657",
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+  },
+
+  planSearchInputRow: {
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#101820",
+    borderWidth: 1,
+    borderColor: "#344657",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+  },
+
+  planSearchIcon: {
+    color: "#AAB7C4",
+    fontSize: 22,
+    fontWeight: "900",
+    marginRight: 8,
+    transform: [{ rotate: "-20deg" }],
+  },
+
+  planSearchInput: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    paddingVertical: 11,
+  },
+
+  planSearchClearButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  planSearchClearText: {
+    color: "#AAB7C4",
+    fontSize: 24,
+    lineHeight: 26,
+    fontWeight: "600",
+  },
+
+  planSearchHint: {
+    color: "#AAB7C4",
+    fontSize: 13,
+    fontWeight: "600",
+    paddingHorizontal: 4,
+    paddingTop: 10,
+  },
+
+  planSearchResults: {
+    paddingTop: 10,
+  },
+
+  planSearchMessageRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+
+  planSearchStatusIcon: {
+    width: 24,
+    color: "#2ECC71",
+    fontSize: 19,
+    fontWeight: "900",
+  },
+
+  planSearchPlannedText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+    paddingTop: 2,
+  },
+
+  planSearchResultCard: {
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#101820",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+
+  planSearchResultDetails: {
+    flex: 1,
+    paddingRight: 10,
+  },
+
+  planSearchResultName: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  planSearchResultQuantity: {
+    color: "#AAB7C4",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+
+  planSearchResultAmount: {
+    color: "#2ECC71",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  planSearchNotPlanned: {
+    paddingTop: 10,
+  },
+
+  planSearchNotPlannedIcon: {
+    width: 24,
+    color: "#FF7A7A",
+    fontSize: 20,
+    fontWeight: "900",
+  },
+
+  planSearchMessageText: {
+    flex: 1,
+  },
+
+  planSearchNotPlannedTitle: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  planSearchNotPlannedBody: {
+    color: "#AAB7C4",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 18,
+    marginTop: 2,
+  },
+
+  planSearchAddButton: {
+    alignSelf: "flex-start",
+    backgroundColor: "#2ECC71",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: 10,
+    marginLeft: 24,
+  },
+
+  planSearchAddButtonText: {
+    color: "#101820",
+    fontSize: 14,
+    fontWeight: "900",
   },
 
   compareCard: {
@@ -1251,6 +1805,38 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
+
+  bannerContainer: {
+    backgroundColor: "#101820",
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 6,
+  },
+
+  bannerPlaceholder: {
+    height: 52,
+    backgroundColor: "#1B2633",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#344657",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  bannerLabel: {
+    color: "#738191",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+
+  bannerText: {
+    color: "#CAD3DD",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
   copiedToast: {
     position: "absolute",
     top: "45%",

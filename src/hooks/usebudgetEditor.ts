@@ -31,6 +31,7 @@ function createEmptyItem(): BudgetItem {
     isFood: false,
     note: "",
     link: "",
+    inCart: false,
   };
 }
 
@@ -98,6 +99,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
               isFood: item.isFood ?? false,
               note: item.note ?? "",
               link: item.link ?? "",
+              inCart: item.inCart ?? false,
             }),
           ),
         );
@@ -227,6 +229,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
         isFood: draftItem.isFood ?? false,
         note: draftItem.note ?? "",
         link: draftItem.link ?? "",
+        inCart: draftItem.inCart ?? false,
       },
       ...prev,
     ]);
@@ -293,6 +296,19 @@ export function useBudgetEditor(budgetId: string | undefined) {
           ? {
               ...item,
               included: !item.included,
+            }
+          : item,
+      ),
+    );
+  }
+
+  function toggleInCart(id: number) {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              inCart: !item.inCart,
             }
           : item,
       ),
@@ -470,6 +486,7 @@ export function useBudgetEditor(budgetId: string | undefined) {
     increaseQuantity,
     resetQuantity,
     toggleIncluded,
+    toggleInCart,
     reorderItems,
     deleteItem,
     focusNextItemOrAddCurrent,

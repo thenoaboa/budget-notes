@@ -1,25 +1,20 @@
-import mobileAds, {
-  AdEventType,
-  RewardedAd,
-  RewardedAdEventType,
-  TestIds,
-} from "react-native-google-mobile-ads";
-
-let initializationPromise: Promise<unknown> | null = null;
-
-async function initializeAds(): Promise<void> {
-  if (!initializationPromise) {
-    initializationPromise = mobileAds().initialize();
-  }
-
-  await initializationPromise;
-}
+const ADS_ENABLED = false;
 
 export async function showBillRewardedAd(): Promise<boolean> {
-  await initializeAds();
+  if (!ADS_ENABLED) {
+    return false;
+  }
 
-  // Keep Google's rewarded test unit while developing.
-  // Replace this with your own rewarded ad-unit ID before release.
+  const {
+    default: mobileAds,
+    AdEventType,
+    RewardedAd,
+    RewardedAdEventType,
+    TestIds,
+  } = await import("react-native-google-mobile-ads");
+
+  await mobileAds().initialize();
+
   const rewardedAd = RewardedAd.createForAdRequest(TestIds.REWARDED, {
     requestNonPersonalizedAdsOnly: true,
   });

@@ -1,33 +1,33 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import {
-    PracticeQuestion,
-    getMixedReviewQuestions,
-    getPracticeQuestionsForLesson,
-    shufflePracticeQuestions,
+  PracticeQuestion,
+  getMixedReviewQuestions,
+  getPracticeQuestionsForLesson,
+  shufflePracticeQuestions,
 } from "@/data/billLessons";
 import { showBillRewardedAd } from "@/services/billRewardedAd";
 import { recordBillPracticeResult } from "@/storage/billLessonProgress";
 import {
-    BillPracticeState,
-    EMPTY_PRACTICE_STATE,
-    MAX_PRACTICE_COINS,
-    addBillPracticeCoin,
-    getBillPracticeState,
-    spendBillPracticeCoin,
+  BillPracticeState,
+  EMPTY_PRACTICE_STATE,
+  MAX_PRACTICE_COINS,
+  addBillPracticeCoin,
+  getBillPracticeState,
+  spendBillPracticeCoin,
 } from "@/storage/billPracticeState";
 
 const SESSION_LENGTH = 5;

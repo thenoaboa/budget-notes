@@ -7,6 +7,7 @@ export type BudgetItem = {
   isFood?: boolean;
   note?: string;
   link?: string;
+  inCart?: boolean;
 };
 
 export type StoredSpendingItem = {
@@ -18,6 +19,7 @@ export type StoredSpendingItem = {
   isFood?: boolean;
   note?: string;
   link?: string;
+  inCart?: boolean;
 };
 
 export type StoredBudget = {

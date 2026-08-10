@@ -13,11 +13,10 @@ import {
   View,
 } from "react-native";
 
-import { BillsCornerModal } from "../components/BillsCornerModal";
-import { NoteCard } from "../components/NoteCard";
-import { TutorialOverlay } from "../components/TutorialOverlay";
-import { useBudgetNotes } from "../hooks/useBudgetNotes";
-import { loadDeletedBudgets } from "../storage/budgetStorage";
+import { NoteCard } from "../../components/NoteCard";
+import { TutorialOverlay } from "../../components/TutorialOverlay";
+import { useBudgetNotes } from "../../hooks/useBudgetNotes";
+import { loadDeletedBudgets } from "../../storage/budgetStorage";
 
 type HomeTutorialStep =
   | "hidden"
@@ -26,18 +25,15 @@ type HomeTutorialStep =
   | "popup"
   | "highlightNewNote";
 
+const SHOW_LEGACY_HELP_BUTTON = false;
+
 export default function SpendingScreen() {
   const router = useRouter();
   const posthog = usePostHog();
 
   const [homeTutorialStep, setHomeTutorialStep] =
     useState<HomeTutorialStep>("hidden");
-
   const [deletedCount, setDeletedCount] = useState(0);
-  const [showBillsCornerModal, setShowBillsCornerModal] = useState(false);
-  const [showCopiedMessage, setShowCopiedMessage] = useState(false);
-  const [welcomeTutorialCompleted, setWelcomeTutorialCompleted] =
-    useState(false);
 
   const {
     visibleBudgets,
@@ -56,27 +52,22 @@ export default function SpendingScreen() {
         "budget-note-welcome-tutorial-complete",
       );
 
-      const isCompleted = completed === "true";
-
-      setWelcomeTutorialCompleted(isCompleted);
-
       if (!completed) {
         setHomeTutorialStep("billIntro");
       }
     }
 
-    void loadWelcomeTutorial();
+    loadWelcomeTutorial();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       async function refreshDeletedCount() {
         const deletedBudgets = await loadDeletedBudgets();
-
         setDeletedCount(deletedBudgets.length);
       }
 
-      void refreshDeletedCount();
+      refreshDeletedCount();
     }, []),
   );
 
@@ -88,8 +79,20 @@ export default function SpendingScreen() {
 
     await AsyncStorage.setItem("budget-note-welcome-tutorial-complete", "true");
 
-    setWelcomeTutorialCompleted(true);
     setHomeTutorialStep("hidden");
+  }
+
+  function replayWelcomeTutorial() {
+    setHomeTutorialStep("billIntro");
+    posthog?.capture("welcome_tutorial_replayed");
+  }
+
+  function goHome() {
+    posthog?.capture("home_opened", {
+      source: "spending_header_bill",
+    });
+
+    router.replace("/home" as any);
   }
 
   function resetSearchInBackground() {
@@ -133,18 +136,7 @@ export default function SpendingScreen() {
     });
 
     router.push(`/budget/${id}` as any);
-
     resetSearchInBackground();
-  }
-
-  async function copyBudget(id: string) {
-    await duplicateBudget(id);
-
-    setShowCopiedMessage(true);
-
-    setTimeout(() => {
-      setShowCopiedMessage(false);
-    }, 900);
   }
 
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -169,26 +161,39 @@ export default function SpendingScreen() {
         alwaysBounceVertical
       >
         <View style={styles.simpleHeader}>
-          <Text style={styles.simpleTitle}>BudgetNote</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.simpleTitle}>Spending</Text>
 
-          <View style={styles.subtitleRow}>
-            <Text style={styles.simpleSubtitle}>
-              Plan today, spend confidently.
-            </Text>
+              <Text style={styles.simpleSubtitle} numberOfLines={1}>
+                Plan before you spend.
+              </Text>
+            </View>
 
             <Pressable
               style={({ pressed }) => [
                 styles.billHomeButton,
                 pressed && styles.pressedButton,
               ]}
-              onPress={() => setShowBillsCornerModal(true)}
+              onPress={goHome}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Open Bill's Corner"
+              accessibilityLabel="Go to Budget Note home"
             >
               <Text style={styles.billIcon}>🐷</Text>
             </Pressable>
           </View>
+
+          {SHOW_LEGACY_HELP_BUTTON && (
+            <Pressable
+              style={styles.helpButton}
+              onPress={replayWelcomeTutorial}
+              accessibilityRole="button"
+              accessibilityLabel="Replay welcome tutorial"
+            >
+              <Text style={styles.helpButtonText}>?</Text>
+            </Pressable>
+          )}
         </View>
 
         <Pressable
@@ -199,7 +204,7 @@ export default function SpendingScreen() {
           ]}
           onPress={createNewBudget}
         >
-          <Text style={styles.newButtonText}>+ New Budget</Text>
+          <Text style={styles.newButtonText}>+ New Spend Note</Text>
         </Pressable>
 
         {homeTutorialStep === "highlightNewNote" && (
@@ -241,7 +246,7 @@ export default function SpendingScreen() {
             onPress={() => openBudgetNote(budget.id)}
             onDelete={() => confirmDeleteBudget(budget.id)}
             onRename={(newTitle) => renameBudget(budget.id, newTitle)}
-            onDuplicate={() => copyBudget(budget.id)}
+            onDuplicate={() => duplicateBudget(budget.id)}
           />
         ))}
 
@@ -256,50 +261,6 @@ export default function SpendingScreen() {
           </Text>
         </Pressable>
       </ScrollView>
-
-      {/*
-<View style={styles.bannerContainer}>
-  <View style={styles.bannerPlaceholder}>
-    <Text style={styles.bannerLabel}>ADVERTISEMENT</Text>
-
-    <Text style={styles.bannerText}>Banner ad goes here</Text>
-  </View>
-</View>
-*/}
-
-      {showCopiedMessage && (
-        <View style={styles.copiedToast}>
-          <Text style={styles.copiedToastText}>Budget Copied</Text>
-        </View>
-      )}
-
-      <BillsCornerModal
-        visible={showBillsCornerModal}
-        lessonOneCompleted={welcomeTutorialCompleted}
-        onClose={() => setShowBillsCornerModal(false)}
-        onStartTutorial={() => {
-          setShowBillsCornerModal(false);
-          setHomeTutorialStep("billIntro");
-
-          posthog?.capture("welcome_tutorial_replayed");
-        }}
-        onOpenAbout={() => {
-          setShowBillsCornerModal(false);
-          router.push("/about" as any);
-        }}
-        onOpenContact={() => {
-          setShowBillsCornerModal(false);
-          router.push("/contact" as any);
-        }}
-        onOpenPrivacy={() => {
-          setShowBillsCornerModal(false);
-          router.push("/privacy" as any);
-        }}
-        onOpenTerms={() => {
-          setShowBillsCornerModal(false);
-          router.push("/terms" as any);
-        }}
-      />
 
       {homeTutorialStep === "billIntro" && (
         <TutorialOverlay
@@ -384,7 +345,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     paddingTop: 58,
-    paddingBottom: 32,
+    paddingBottom: 120,
     backgroundColor: "#101820",
   },
 
@@ -393,10 +354,15 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
 
-  subtitleRow: {
+  headerRow: {
     flexDirection: "row",
-    alignItems: "center",
-    marginTop: 6,
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+
+  headerText: {
+    flex: 1,
+    paddingRight: 14,
   },
 
   simpleTitle: {
@@ -410,18 +376,20 @@ const styles = StyleSheet.create({
     color: "#8A98A8",
     fontSize: 15,
     fontWeight: "700",
+    lineHeight: 20,
+    marginTop: 6,
   },
 
   billHomeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: "#182638",
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: "#1B2633",
     borderWidth: 1,
     borderColor: "#344657",
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 3.5,
+    marginTop: 2,
   },
 
   pressedButton: {
@@ -429,7 +397,7 @@ const styles = StyleSheet.create({
   },
 
   billIcon: {
-    fontSize: 20,
+    fontSize: 27,
   },
 
   helpButton: {
@@ -506,7 +474,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#2ECC71",
+    borderColor: "#2ecc71",
     marginBottom: 14,
   },
 
@@ -522,54 +490,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 21,
-  },
-
-  bannerContainer: {
-    backgroundColor: "#101820",
-    paddingHorizontal: 10,
-    paddingTop: 6,
-    paddingBottom: 6,
-  },
-
-  bannerPlaceholder: {
-    height: 52,
-    backgroundColor: "#1B2633",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#344657",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  bannerLabel: {
-    color: "#738191",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-
-  bannerText: {
-    color: "#CAD3DD",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  copiedToast: {
-    position: "absolute",
-    top: "45%",
-    alignSelf: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    paddingHorizontal: 26,
-    paddingVertical: 14,
-    borderRadius: 18,
-    zIndex: 999,
-  },
-
-  copiedToastText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "900",
   },
 
   deletedButton: {

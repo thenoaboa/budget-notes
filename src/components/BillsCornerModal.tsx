@@ -13,17 +13,57 @@ type BillsCornerModalProps = {
   lessonOneCompleted: boolean;
   onClose: () => void;
   onStartTutorial: () => void;
-  onOpenLessons: () => void;
-  showLessons?: boolean;
+  onOpenAbout: () => void;
+  onOpenContact: () => void;
+  onOpenPrivacy: () => void;
+  onOpenTerms: () => void;
 };
+
+type MenuRowProps = {
+  icon: string;
+  label: string;
+  accessibilityLabel: string;
+  onPress: () => void;
+  isLast?: boolean;
+};
+
+function MenuRow({
+  icon,
+  label,
+  accessibilityLabel,
+  onPress,
+  isLast = false,
+}: MenuRowProps) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.menuRow,
+        !isLast && styles.menuRowBorder,
+        pressed && styles.buttonPressed,
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      <View style={styles.menuRowLeft}>
+        <Text style={styles.menuIcon}>{icon}</Text>
+        <Text style={styles.menuLabel}>{label}</Text>
+      </View>
+
+      <Text style={styles.chevron}>›</Text>
+    </Pressable>
+  );
+}
 
 export function BillsCornerModal({
   visible,
   lessonOneCompleted,
   onClose,
   onStartTutorial,
-  onOpenLessons,
-  showLessons = true,
+  onOpenAbout,
+  onOpenContact,
+  onOpenPrivacy,
+  onOpenTerms,
 }: BillsCornerModalProps) {
   const scrollRef = useRef<ScrollView>(null);
   const [scrollKey, setScrollKey] = useState(0);
@@ -34,9 +74,9 @@ export function BillsCornerModal({
     setScrollKey((current) => current + 1);
   }, [visible]);
 
-  function handleOpenLessons() {
+  function handleStartTutorial() {
     onClose();
-    onOpenLessons();
+    onStartTutorial();
   }
 
   return (
@@ -54,161 +94,72 @@ export function BillsCornerModal({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {!lessonOneCompleted ? (
-              <>
-                <Text style={styles.pig}>🐷</Text>
+            <Text style={styles.pig}>🐷</Text>
 
-                <Text style={styles.title}>Hi, I’m Bill.</Text>
+            <Text style={styles.title}>Hi, I’m Bill.</Text>
 
-                <Text style={styles.body}>
-                  I’m here to help you answer one simple question:
-                </Text>
+            <Text style={styles.body}>
+              I’m here to help you answer one simple question:
+            </Text>
 
-                <Text style={styles.question}>Can I afford this?</Text>
+            <Text style={styles.question}>Can I afford this?</Text>
 
-                <Text style={styles.body}>
-                  Let’s build your first budget together and see what happens
-                  before you spend.
-                </Text>
+            <View style={styles.divider} />
 
-                <View style={styles.lessonBox}>
-                  <Text style={styles.lessonLabel}>Lesson 1</Text>
+            <Text style={styles.sectionTitle}>Learn</Text>
 
-                  <Text style={styles.lessonTitle}>
-                    Build your first budget
-                  </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleStartTutorial}
+              accessibilityRole="button"
+              accessibilityLabel={
+                lessonOneCompleted ? "Replay tutorial" : "Start tutorial"
+              }
+            >
+              <Text style={styles.primaryButtonIcon}>▶</Text>
 
-                  <Text style={styles.lessonText}>
-                    Learn how to name a budget, set your spending limit, add
-                    purchases, and track what’s left.
-                  </Text>
-                </View>
+              <Text style={styles.primaryButtonText}>
+                {lessonOneCompleted ? "Replay Tutorial" : "Start Tutorial"}
+              </Text>
+            </Pressable>
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.primaryButton,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={onStartTutorial}
-                  accessibilityRole="button"
-                  accessibilityLabel="Start Lesson 1"
-                >
-                  <Text style={styles.primaryButtonText}>Start Lesson 1</Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={styles.pig}>🐷</Text>
+            <View style={styles.divider} />
 
-                <Text style={styles.title}>Bill’s Corner</Text>
+            <Text style={styles.sectionTitle}>Support</Text>
 
-                <Text style={styles.body}>
-                  Keep learning how to plan before you spend.
-                </Text>
+            <View style={styles.menuCard}>
+              <MenuRow
+                icon="ℹ"
+                label="About Budget Note"
+                accessibilityLabel="Open About Budget Note"
+                onPress={onOpenAbout}
+              />
 
-                <Text style={styles.sectionTitle}>Lessons</Text>
+              <MenuRow
+                icon="✉"
+                label="Contact Support"
+                accessibilityLabel="Open Contact Support"
+                onPress={onOpenContact}
+              />
 
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.activeLessonCard,
-                    pressed && styles.buttonPressed,
-                  ]}
-                  onPress={onStartTutorial}
-                  accessibilityRole="button"
-                  accessibilityLabel="Replay Lesson 1"
-                >
-                  <View style={styles.lessonHeader}>
-                    <Text style={styles.lessonNumber}>Lesson 1</Text>
+              <MenuRow
+                icon="🔒"
+                label="Privacy Policy"
+                accessibilityLabel="Open Privacy Policy"
+                onPress={onOpenPrivacy}
+              />
 
-                    <View style={styles.completedBadge}>
-                      <Text style={styles.completedBadgeText}>Completed</Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.activeLessonTitle}>
-                    Build your first budget
-                  </Text>
-
-                  <Text style={styles.activeLessonText}>
-                    Name a budget, set your spending limit, add purchases, and
-                    track what’s left.
-                  </Text>
-
-                  <Text style={styles.replayText}>Replay Lesson →</Text>
-                </Pressable>
-
-                {showLessons && (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.availableLessonCard,
-                      pressed && styles.buttonPressed,
-                    ]}
-                    onPress={handleOpenLessons}
-                    accessibilityRole="button"
-                    accessibilityLabel="Open Lesson 2 Can I Afford This"
-                  >
-                    <View style={styles.lessonHeader}>
-                      <Text style={styles.lessonNumber}>Lesson 2</Text>
-
-                      <View style={styles.availableBadge}>
-                        <Text style={styles.availableBadgeText}>Available</Text>
-                      </View>
-                    </View>
-
-                    <Text style={styles.activeLessonTitle}>
-                      Can I Afford This?
-                    </Text>
-
-                    <Text style={styles.activeLessonText}>
-                      Learn the difference between being able to buy something
-                      and truly being able to afford it.
-                    </Text>
-
-                    <Text style={styles.startLessonText}>Start Lesson →</Text>
-                  </Pressable>
-                )}
-
-                <View style={styles.lockedLessonCard}>
-                  <View style={styles.lessonHeader}>
-                    <Text style={styles.lockedLessonNumber}>Lesson 3</Text>
-
-                    <Text style={styles.comingSoon}>Coming soon</Text>
-                  </View>
-
-                  <Text style={styles.lockedLessonTitle}>Needs vs. Wants</Text>
-
-                  <Text style={styles.lockedLessonText}>
-                    Learn how to separate what matters now from what can wait.
-                  </Text>
-                </View>
-
-                <View style={styles.lockedLessonCard}>
-                  <View style={styles.lessonHeader}>
-                    <Text style={styles.lockedLessonNumber}>Lesson 4</Text>
-
-                    <Text style={styles.comingSoon}>Coming soon</Text>
-                  </View>
-
-                  <Text style={styles.lockedLessonTitle}>
-                    Planning before buying
-                  </Text>
-
-                  <Text style={styles.lockedLessonText}>
-                    Create space between wanting something and spending money on
-                    it.
-                  </Text>
-                </View>
-
-                <View style={styles.tipCard}>
-                  <Text style={styles.tipLabel}>Bill’s Quick Tip</Text>
-
-                  <Text style={styles.tipText}>
-                    A budget doesn’t tell you “no.” It helps you see what
-                    happens if you say “yes.”
-                  </Text>
-                </View>
-              </>
-            )}
+              <MenuRow
+                icon="📄"
+                label="Terms of Service"
+                accessibilityLabel="Open Terms of Service"
+                onPress={onOpenTerms}
+                isLast
+              />
+            </View>
 
             <Pressable
               style={({ pressed }) => [
@@ -219,9 +170,7 @@ export function BillsCornerModal({
               accessibilityRole="button"
               accessibilityLabel="Close Bill's Corner"
             >
-              <Text style={styles.secondaryButtonText}>
-                {lessonOneCompleted ? "Close" : "Not now"}
-              </Text>
+              <Text style={styles.secondaryButtonText}>Close</Text>
             </Pressable>
           </ScrollView>
         </View>
@@ -233,7 +182,7 @@ export function BillsCornerModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -262,7 +211,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "900",
     color: "#FFFFFF",
     marginBottom: 10,
@@ -283,7 +232,14 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#2ECC71",
     textAlign: "center",
-    marginBottom: 14,
+    marginBottom: 4,
+  },
+
+  divider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#2D4562",
+    marginVertical: 20,
   },
 
   sectionTitle: {
@@ -291,207 +247,25 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "900",
-    marginTop: 10,
     marginBottom: 10,
-  },
-
-  lessonBox: {
-    width: "100%",
-    backgroundColor: "#182638",
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 6,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  lessonLabel: {
-    fontSize: 13,
-    fontWeight: "900",
-    color: "#2ECC71",
-    marginBottom: 6,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-
-  lessonTitle: {
-    fontSize: 17,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    marginBottom: 6,
-  },
-
-  lessonText: {
-    fontSize: 15,
-    color: "#CAD3DD",
-    lineHeight: 22,
-    fontWeight: "600",
-  },
-
-  activeLessonCard: {
-    width: "100%",
-    backgroundColor: "#182638",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2ECC71",
-  },
-
-  availableLessonCard: {
-    width: "100%",
-    backgroundColor: "#1A2D2A",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2ECC71",
-  },
-
-  lessonHeader: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-
-  lessonNumber: {
-    color: "#2ECC71",
-    fontSize: 13,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-
-  completedBadge: {
-    backgroundColor: "rgba(46, 204, 113, 0.16)",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-
-  completedBadgeText: {
-    color: "#2ECC71",
-    fontSize: 12,
-    fontWeight: "900",
-  },
-
-  availableBadge: {
-    backgroundColor: "#2ECC71",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-
-  availableBadgeText: {
-    color: "#101820",
-    fontSize: 12,
-    fontWeight: "900",
-  },
-
-  activeLessonTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 6,
-  },
-
-  activeLessonText: {
-    color: "#CAD3DD",
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: "600",
-  },
-
-  replayText: {
-    color: "#2ECC71",
-    fontSize: 14,
-    fontWeight: "900",
-    marginTop: 12,
-  },
-
-  startLessonText: {
-    color: "#2ECC71",
-    fontSize: 14,
-    fontWeight: "900",
-    marginTop: 12,
-  },
-
-  lockedLessonCard: {
-    width: "100%",
-    backgroundColor: "#182638",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-    opacity: 0.78,
-  },
-
-  lockedLessonNumber: {
-    color: "#93A4B4",
-    fontSize: 13,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-
-  lockedLessonTitle: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "900",
-    marginBottom: 6,
-  },
-
-  lockedLessonText: {
-    color: "#AAB7C4",
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: "600",
-  },
-
-  comingSoon: {
-    color: "#93A4B4",
-    fontSize: 12,
-    fontWeight: "900",
-  },
-
-  tipCard: {
-    width: "100%",
-    backgroundColor: "#101820",
-    borderRadius: 18,
-    padding: 16,
-    marginTop: 4,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "#2D4562",
-  },
-
-  tipLabel: {
-    color: "#2ECC71",
-    fontSize: 13,
-    fontWeight: "900",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-  },
-
-  tipText: {
-    color: "#CAD3DD",
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: "600",
   },
 
   primaryButton: {
     width: "100%",
     backgroundColor: "#2ECC71",
-    borderRadius: 999,
-    paddingVertical: 14,
+    borderRadius: 18,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    justifyContent: "center",
+    gap: 10,
+  },
+
+  primaryButtonIcon: {
+    color: "#101820",
+    fontSize: 14,
+    fontWeight: "900",
   },
 
   primaryButtonText: {
@@ -500,8 +274,61 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
+  menuCard: {
+    width: "100%",
+    backgroundColor: "#182638",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#2D4562",
+    overflow: "hidden",
+  },
+
+  menuRow: {
+    minHeight: 58,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  menuRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#2D4562",
+  },
+
+  menuRowLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  menuIcon: {
+    width: 24,
+    color: "#2ECC71",
+    fontSize: 18,
+    textAlign: "center",
+  },
+
+  menuLabel: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  chevron: {
+    color: "#93A4B4",
+    fontSize: 26,
+    lineHeight: 26,
+    marginLeft: 12,
+  },
+
   secondaryButton: {
-    paddingVertical: 8,
+    marginTop: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
 
   secondaryButtonText: {

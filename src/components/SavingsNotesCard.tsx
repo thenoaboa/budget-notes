@@ -1,3 +1,5 @@
+// Save as: src/components/SavingsNoteCard.tsx
+
 import { useMemo, useRef, useState } from "react";
 import {
   Dimensions,
@@ -11,33 +13,15 @@ import {
 } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
-import type { Budget, StoredBudgetItem } from "../types/budget";
+import type { SavingsNote } from "../types/savingsNote";
 
 type Props = {
-  budget: Budget;
+  note: SavingsNote;
   onPress: () => void;
   onDelete: () => void;
-  onRename: (newTitle: string) => void;
+  onRename: (newName: string) => void;
   onDuplicate: () => void;
 };
-
-type BudgetCardStats = {
-  title: string;
-  hasTitle: boolean;
-  budgetAmount: number;
-  spentAmount: number;
-  remainingAmount: number;
-  usedPercent: number;
-  barPercent: number;
-  hasBudget: boolean;
-  isEmpty: boolean;
-  isPlanning: boolean;
-  isLowBudget: boolean;
-  isOverBudget: boolean;
-  isComplete: boolean;
-};
-
-const STRIPES = Array.from({ length: 200 });
 
 function parseMoney(value?: string) {
   const cleanedValue = (value || "").replace(/[^0-9.-]/g, "");
@@ -47,90 +31,14 @@ function parseMoney(value?: string) {
 }
 
 function formatMoney(value: number) {
-  const absoluteValue = Math.abs(value);
-  const formattedValue = absoluteValue.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
   });
-
-  return value < 0 ? `-$${formattedValue}` : `$${formattedValue}`;
 }
 
-function getItemTotal(item: StoredBudgetItem) {
-  if (item.included === false) return 0;
-
-  const amount = parseMoney(item.amount);
-  const quantity = item.quantity || 1;
-
-  return amount * quantity;
-}
-
-function getMeaningfulTitle(title?: string) {
-  const cleanedTitle = (title || "").trim();
-
-  if (
-    !cleanedTitle ||
-    cleanedTitle === "Untitled" ||
-    cleanedTitle === "Untitled Note" ||
-    cleanedTitle === "Untitled Budget"
-  ) {
-    return "";
-  }
-
-  return cleanedTitle;
-}
-
-function getBudgetStats(budget: Budget): BudgetCardStats {
-  const title = getMeaningfulTitle(budget.budgetName);
-  const budgetAmount = parseMoney(budget.amount);
-
-  const subtotal = (budget.spendingItems || []).reduce(
-    (sum, item) => sum + getItemTotal(item),
-    0,
-  );
-
-  const taxRate = parseMoney(budget.taxRate);
-  const taxAmount = budget.salesTaxEnabled ? subtotal * (taxRate / 100) : 0;
-  const spentAmount = subtotal + taxAmount;
-  const remainingAmount = budgetAmount - spentAmount;
-
-  const hasBudget = budgetAmount > 0;
-  const hasItems = (budget.spendingItems || []).length > 0;
-  const isEmpty = !hasBudget && !hasItems;
-  const isPlanning = !hasBudget && hasItems;
-  const isOverBudget = hasBudget && remainingAmount < 0;
-  const isLowBudget =
-    hasBudget && remainingAmount > 0 && remainingAmount <= budgetAmount * 0.2;
-
-  const usedPercent = hasBudget
-    ? (spentAmount / budgetAmount) * 100
-    : isPlanning
-      ? 100
-      : 0;
-
-  const roundedUsedPercent = Math.round(usedPercent);
-
-  const isComplete = hasBudget && !isOverBudget && remainingAmount === 0;
-
-  return {
-    title,
-    hasTitle: title.length > 0,
-    budgetAmount,
-    spentAmount,
-    remainingAmount,
-    usedPercent: roundedUsedPercent > 100 ? 100 : roundedUsedPercent,
-    barPercent: Math.min(Math.max(usedPercent, 0), 100),
-    hasBudget,
-    isEmpty,
-    isPlanning,
-    isLowBudget,
-    isOverBudget,
-    isComplete,
-  };
-}
-
-export function NoteCard({
-  budget,
+export function SavingsNotesCard({
+  note,
   onPress,
   onDelete,
   onRename,
@@ -138,22 +46,32 @@ export function NoteCard({
 }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
-  const stats = useMemo(() => getBudgetStats(budget), [budget]);
-
   const [isEditing, setIsEditing] = useState(false);
-  const [deleteHovered, setDeleteHovered] = useState(false);
-  const [draftTitle, setDraftTitle] = useState("");
+  const [draftName, setDraftName] = useState(note.name || "");
   const [showMenu, setShowMenu] = useState(false);
   const [showCopyConfirm, setShowCopyConfirm] = useState(false);
-  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [deleteHovered, setDeleteHovered] = useState(false);
+
+  const stats = useMemo(() => {
+    const targetAmount = parseMoney(note.targetAmount);
+    const savedAmount = parseMoney(note.savedAmount);
+    const remainingAmount = Math.max(targetAmount - savedAmount, 0);
+
+    const rawPercent =
+      targetAmount > 0 ? (savedAmount / targetAmount) * 100 : 0;
+
+    return {
+      targetAmount,
+      savedAmount,
+      remainingAmount,
+      progressPercent: Math.round(rawPercent),
+      barPercent: Math.min(Math.max(rawPercent, 0), 100),
+      isComplete: targetAmount > 0 && savedAmount >= targetAmount,
+    };
+  }, [note.savedAmount, note.targetAmount]);
 
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
-
-  function handleDelete() {
-    swipeableRef.current?.close();
-    onDelete();
-  }
 
   function handlePress() {
     if (isEditing) return;
@@ -162,38 +80,27 @@ export function NoteCard({
     onPress();
   }
 
+  function handleDelete() {
+    swipeableRef.current?.close();
+    onDelete();
+  }
+
   function startEditing() {
     swipeableRef.current?.close();
-    setDraftTitle(budget.budgetName ?? "");
+    setDraftName(note.name || "");
     setIsEditing(true);
   }
 
-  function handleCopyFromMenu() {
-    setShowMenu(false);
-    setShowCopyConfirm(true);
-  }
+  function saveName() {
+    const cleanedName = draftName.trim();
+    const currentName = (note.name || "").trim();
 
-  function confirmDuplicate() {
-    setShowCopyConfirm(false);
-    onDuplicate();
-
-    setShowCopiedToast(true);
-
-    setTimeout(() => {
-      setShowCopiedToast(false);
-    }, 1200);
-  }
-
-  function saveTitle() {
-    const cleanedTitle = draftTitle.trim();
-    const currentTitle = (budget.budgetName ?? "").trim();
-
-    setDraftTitle(cleanedTitle);
+    setDraftName(cleanedName);
     setIsEditing(false);
 
-    if (cleanedTitle === currentTitle) return;
+    if (cleanedName === currentName) return;
 
-    onRename(cleanedTitle);
+    onRename(cleanedName);
   }
 
   function renderModals() {
@@ -215,9 +122,22 @@ export function NoteCard({
             >
               <Pressable
                 style={styles.menuModalItem}
-                onPress={handleCopyFromMenu}
+                onPress={() => {
+                  setShowMenu(false);
+                  startEditing();
+                }}
               >
-                <Text style={styles.menuModalText}>Copy</Text>
+                <Text style={styles.menuModalText}>Rename</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.menuModalItem}
+                onPress={() => {
+                  setShowMenu(false);
+                  setShowCopyConfirm(true);
+                }}
+              >
+                <Text style={styles.menuModalText}>Duplicate</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -237,10 +157,10 @@ export function NoteCard({
               style={styles.copyModal}
               onPress={(event) => event.stopPropagation?.()}
             >
-              <Text style={styles.copyConfirmTitle}>Copy budget?</Text>
+              <Text style={styles.copyConfirmTitle}>Copy savings note?</Text>
 
               <Text style={styles.copyConfirmText}>
-                Are you sure you want to copy this budget?
+                This creates another savings goal with the same progress.
               </Text>
 
               <View style={styles.copyConfirmButtons}>
@@ -248,7 +168,12 @@ export function NoteCard({
                   <Text style={styles.copyCancelText}>Cancel</Text>
                 </Pressable>
 
-                <Pressable onPress={confirmDuplicate}>
+                <Pressable
+                  onPress={() => {
+                    setShowCopyConfirm(false);
+                    onDuplicate();
+                  }}
+                >
                   <Text style={styles.copyConfirmButtonText}>Copy</Text>
                 </Pressable>
               </View>
@@ -259,29 +184,7 @@ export function NoteCard({
     );
   }
 
-  function renderCopiedToast() {
-    if (!showCopiedToast) return null;
-
-    return (
-      <View style={styles.toast} pointerEvents="none">
-        <Text style={styles.toastText}>Budget copied</Text>
-      </View>
-    );
-  }
-
   function renderCardContent() {
-    const amountText = stats.isPlanning
-      ? formatMoney(stats.spentAmount)
-      : formatMoney(Math.abs(stats.remainingAmount));
-
-    const amountLabel = stats.isEmpty
-      ? "ready to plan"
-      : stats.isPlanning
-        ? "needed"
-        : stats.isOverBudget
-          ? "over budget"
-          : "remaining";
-
     return (
       <Pressable style={styles.card} onPress={handlePress}>
         <View style={styles.topRow}>
@@ -289,22 +192,23 @@ export function NoteCard({
             {isEditing ? (
               <TextInput
                 style={styles.cardTitleInput}
-                value={draftTitle}
-                onChangeText={setDraftTitle}
-                onBlur={saveTitle}
-                onSubmitEditing={saveTitle}
+                value={draftName}
+                onChangeText={setDraftName}
+                onBlur={saveName}
+                onSubmitEditing={saveName}
                 selectTextOnFocus
                 returnKeyType="done"
-                placeholder="Add title"
-                placeholderTextColor="#5F6E7E"
+                placeholder="Add goal name"
+                placeholderTextColor="#6F89A6"
+                autoFocus
               />
             ) : (
               <Text
                 style={styles.cardTitle}
                 numberOfLines={1}
-                onPress={() => startEditing()}
+                onPress={startEditing}
               >
-                {stats.hasTitle ? stats.title : "Untitled"}
+                {(note.name || "").trim() || "Untitled Savings Goal"}
               </Text>
             )}
           </View>
@@ -320,78 +224,46 @@ export function NoteCard({
           </Pressable>
         </View>
 
-        <View
-          style={[styles.amountRow, !stats.hasTitle && styles.noTitleAmountRow]}
-        >
-          <View style={styles.remainingColumn}>
+        <View style={styles.amountRow}>
+          <View style={styles.savedColumn}>
             <Text
-              style={[
-                styles.remainingAmount,
-                stats.isLowBudget && styles.lowAmount,
-                stats.isOverBudget && styles.negativeAmount,
-              ]}
+              style={styles.savedAmount}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.65}
             >
-              {amountText}
+              {formatMoney(stats.savedAmount)}
             </Text>
 
-            <Text style={styles.remainingLabel}>{amountLabel}</Text>
+            <Text style={styles.savedLabel}>saved</Text>
           </View>
 
           <View style={styles.totalColumn}>
             <Text style={styles.totalText}>
               <Text style={styles.totalMuted}>of </Text>
-              {formatMoney(stats.budgetAmount)}
+              {formatMoney(stats.targetAmount)}
             </Text>
 
-            <Text style={styles.totalLabel}>total</Text>
+            <Text style={styles.totalLabel}>goal</Text>
           </View>
         </View>
 
         <View style={styles.progressTrack}>
           <View
-            style={[
-              styles.progressFill,
-              { width: `${stats.barPercent}%` },
-              stats.isLowBudget && styles.lowProgressFill,
-              stats.isOverBudget && styles.negativeProgressFill,
-            ]}
-          >
-            {stats.isPlanning &&
-              STRIPES.map((_, index) => (
-                <View
-                  key={index}
-                  style={[styles.progressStripe, { left: index * 18 }]}
-                />
-              ))}
-          </View>
+            style={[styles.progressFill, { width: `${stats.barPercent}%` }]}
+          />
         </View>
 
         <View style={styles.footerRow}>
-          {stats.isEmpty || stats.isPlanning ? (
-            <>
-              <Text style={styles.completeText}>No budget set</Text>
+          <Text style={styles.footerText}>{stats.progressPercent}% saved</Text>
 
-              <Text style={styles.footerText}>
-                {formatMoney(stats.spentAmount)} planned
-              </Text>
-            </>
-          ) : stats.isComplete ? (
-            <>
-              <Text style={styles.footerText}>{stats.usedPercent}% used</Text>
-              <Text style={styles.completeText}>✓ Budget complete</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.footerText}>{stats.usedPercent}% used</Text>
-
-              <Text style={styles.footerText}>
-                {formatMoney(stats.spentAmount)} planned
-              </Text>
-            </>
-          )}
+          <Text
+            style={stats.isComplete ? styles.completeText : styles.footerText}
+          >
+            {stats.isComplete
+              ? "✓ Goal reached"
+              : `${formatMoney(stats.remainingAmount)} left`}
+          </Text>
         </View>
       </Pressable>
     );
@@ -423,7 +295,6 @@ export function NoteCard({
           </Pressable>
         </View>
 
-        {renderCopiedToast()}
         {renderModals()}
       </>
     );
@@ -445,7 +316,6 @@ export function NoteCard({
         {renderCardContent()}
       </Swipeable>
 
-      {renderCopiedToast()}
       {renderModals()}
     </>
   );
@@ -484,12 +354,11 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    position: "relative",
-    backgroundColor: "#1B2633",
+    backgroundColor: "#1C2A3F",
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#26394C",
+    borderColor: "#2E5F8F",
     marginBottom: 14,
   },
 
@@ -528,7 +397,7 @@ const styles = StyleSheet.create({
   },
 
   menuButtonText: {
-    color: "#8A98A8",
+    color: "#A9D3FF",
     fontSize: 24,
     fontWeight: "900",
     lineHeight: 24,
@@ -542,34 +411,21 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  noTitleAmountRow: {
-    marginTop: 8,
-  },
-
-  remainingColumn: {
+  savedColumn: {
     flex: 1,
     minWidth: 0,
-    justifyContent: "flex-start",
   },
 
-  remainingAmount: {
-    color: "#2ECC71",
+  savedAmount: {
+    color: "#4EA8FF",
     fontSize: 25,
     fontWeight: "900",
     letterSpacing: -0.7,
     lineHeight: 29,
   },
 
-  lowAmount: {
-    color: "#F1C40F",
-  },
-
-  negativeAmount: {
-    color: "#FF5A52",
-  },
-
-  remainingLabel: {
-    color: "#CAD3DD",
+  savedLabel: {
+    color: "#D7EBFF",
     fontSize: 16,
     fontWeight: "800",
     marginTop: 2,
@@ -588,13 +444,13 @@ const styles = StyleSheet.create({
   },
 
   totalMuted: {
-    color: "#CAD3DD",
+    color: "#D7EBFF",
     fontSize: 15,
     fontWeight: "800",
   },
 
   totalLabel: {
-    color: "#CAD3DD",
+    color: "#D7EBFF",
     fontSize: 14,
     fontWeight: "800",
     marginTop: 1,
@@ -603,7 +459,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 7,
     borderRadius: 999,
-    backgroundColor: "#2C3945",
+    backgroundColor: "#31445D",
     overflow: "hidden",
     marginTop: 14,
   },
@@ -611,26 +467,7 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     borderRadius: 999,
-    backgroundColor: "#2ECC71",
-    overflow: "hidden",
-    position: "relative",
-  },
-
-  progressStripe: {
-    position: "absolute",
-    top: -8,
-    width: 8,
-    height: 24,
-    backgroundColor: "#7FFFB0",
-    transform: [{ rotate: "35deg" as const }],
-  },
-
-  lowProgressFill: {
-    backgroundColor: "#F1C40F",
-  },
-
-  negativeProgressFill: {
-    backgroundColor: "#FF5A52",
+    backgroundColor: "#4EA8FF",
   },
 
   footerRow: {
@@ -642,13 +479,13 @@ const styles = StyleSheet.create({
   },
 
   footerText: {
-    color: "#CAD3DD",
+    color: "#D7EBFF",
     fontSize: 13,
     fontWeight: "700",
   },
 
   completeText: {
-    color: "#2ECC71",
+    color: "#4EA8FF",
     fontSize: 14,
     fontWeight: "900",
   },
@@ -695,6 +532,8 @@ const styles = StyleSheet.create({
   menuModalItem: {
     paddingVertical: 18,
     paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#3B4D5F",
   },
 
   menuModalText: {
@@ -742,26 +581,8 @@ const styles = StyleSheet.create({
   },
 
   copyConfirmButtonText: {
-    color: "#2ECC71",
+    color: "#4EA8FF",
     fontSize: 16,
-    fontWeight: "900",
-  },
-
-  toast: {
-    position: "absolute",
-    top: "45%",
-    alignSelf: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    paddingHorizontal: 26,
-    paddingVertical: 14,
-    borderRadius: 18,
-    zIndex: 999,
-    elevation: 999,
-  },
-
-  toastText: {
-    color: "#FFFFFF",
-    fontSize: 18,
     fontWeight: "900",
   },
 });

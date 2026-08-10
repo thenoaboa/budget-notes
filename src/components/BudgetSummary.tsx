@@ -26,6 +26,7 @@ type SummaryItem = {
   isFood?: boolean;
   note?: string;
   link?: string;
+  inCart?: boolean;
 };
 
 type Props = {
@@ -48,6 +49,7 @@ type Props = {
   onAddItem?: () => void;
   onPressItem?: (itemId: number) => void;
   onDeleteItem?: (itemId: number) => void;
+  onToggleInCart?: (itemId: number) => void;
 };
 
 function parseMoney(value: unknown) {
@@ -99,8 +101,10 @@ export function BudgetSummaryBox({
   onAddItem,
   onPressItem,
   onDeleteItem,
+  onToggleInCart,
 }: Props) {
   const [hoveredDeleteId, setHoveredDeleteId] = useState<number | null>(null);
+  const [hoveredCartId, setHoveredCartId] = useState<number | null>(null);
 
   const [expandedAccessory, setExpandedAccessory] = useState<{
     itemId: number;
@@ -128,6 +132,22 @@ export function BudgetSummaryBox({
 
   function handleDeleteItem(itemId: number) {
     onDeleteItem?.(itemId);
+  }
+
+  function handleToggleInCart(itemId: number) {
+    onToggleInCart?.(itemId);
+  }
+
+  function renderLeftActions(itemId: number, inCart: boolean) {
+    return (
+      <View style={[styles.cartAction, inCart && styles.cartActionUndo]}>
+        <Text
+          style={[styles.cartActionText, inCart && styles.cartActionTextUndo]}
+        >
+          {inCart ? "Undo" : "Got It"}
+        </Text>
+      </View>
+    );
   }
 
   function renderRightActions(itemId: number) {
@@ -210,6 +230,7 @@ export function BudgetSummaryBox({
     isFood?: boolean,
     note?: string,
     link?: string,
+    inCart?: boolean,
   ) {
     const shouldHighlightFoodAmount = salesTaxEnabled && isFood;
 
@@ -262,6 +283,7 @@ export function BudgetSummaryBox({
           style={[
             styles.itemAmount,
             shouldHighlightFoodAmount && styles.foodItemAmount,
+            inCart && styles.itemAmountInCart,
           ]}
         >
           {formatMoney(lineTotal)}
@@ -321,11 +343,32 @@ export function BudgetSummaryBox({
                       item.isFood,
                       item.note,
                       item.link,
+                      item.inCart,
                     )}
 
                     {renderNoteDropdown(item)}
                     {renderLinkDropdown(item)}
                   </View>
+
+                  <Pressable
+                    style={[
+                      styles.webCartButton,
+                      item.inCart && styles.webCartButtonActive,
+                      hoveredCartId === item.id && styles.webCartButtonHovered,
+                    ]}
+                    onHoverIn={() => setHoveredCartId(item.id)}
+                    onHoverOut={() => setHoveredCartId(null)}
+                    onPress={() => handleToggleInCart(item.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.webCartText,
+                        item.inCart && styles.webCartTextActive,
+                      ]}
+                    >
+                      {item.inCart ? "Undo" : "Got It"}
+                    </Text>
+                  </Pressable>
 
                   <Pressable
                     style={[
@@ -351,8 +394,17 @@ export function BudgetSummaryBox({
 
             return (
               <Swipeable
-                key={`${item.id}-${item.included}`}
+                key={`${item.id}-${item.included}-${item.inCart ?? false}`}
+                renderLeftActions={() =>
+                  renderLeftActions(item.id, item.inCart ?? false)
+                }
                 renderRightActions={() => renderRightActions(item.id)}
+                onSwipeableOpen={(direction) => {
+                  if (direction === "left") {
+                    handleToggleInCart(item.id);
+                  }
+                }}
+                overshootLeft={false}
                 overshootRight={false}
               >
                 <View>
@@ -364,6 +416,7 @@ export function BudgetSummaryBox({
                     item.isFood,
                     item.note,
                     item.link,
+                    item.inCart,
                   )}
 
                   {renderNoteDropdown(item)}
@@ -479,6 +532,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  webCartButton: {
+    marginLeft: 8,
+    backgroundColor: "#173326",
+    borderColor: "#2ECC71",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+
+  webCartButtonActive: {
+    backgroundColor: "#243342",
+    borderColor: "#66788A",
+  },
+
+  webCartButtonHovered: {
+    opacity: 0.8,
+  },
+
+  webCartText: {
+    color: "#2ECC71",
+    fontWeight: "900",
+  },
+
+  webCartTextActive: {
+    color: "#AAB7C4",
+  },
+
   webDeleteButton: {
     marginLeft: 8,
     backgroundColor: "#243342",
@@ -584,6 +665,37 @@ const styles = StyleSheet.create({
 
   foodItemAmount: {
     color: "#2ECC71",
+  },
+
+  itemAmountInCart: {
+    color: "#8A98A8",
+    textDecorationLine: "line-through",
+    opacity: 0.55,
+  },
+
+  cartAction: {
+    backgroundColor: "#173326",
+    borderColor: "#2ECC71",
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    width: 90,
+    borderRadius: 12,
+    marginVertical: 2,
+  },
+
+  cartActionText: {
+    color: "#2ECC71",
+    fontWeight: "900",
+  },
+
+  cartActionUndo: {
+    backgroundColor: "#3A3218",
+    borderColor: "#F4C542",
+  },
+
+  cartActionTextUndo: {
+    color: "#F4C542",
   },
 
   deleteAction: {
