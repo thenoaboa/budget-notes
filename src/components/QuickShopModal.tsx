@@ -43,12 +43,10 @@ export function QuickShopModal({
   const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
   const [draftReady, setDraftReady] = useState(false);
-  const [showWebKeypad, setShowWebKeypad] = useState(false);
 
   useEffect(() => {
     if (!visible) {
       setDraftReady(false);
-      setShowWebKeypad(false);
       return;
     }
 
@@ -88,10 +86,6 @@ export function QuickShopModal({
 
   useEffect(() => {
     if (!visible || !draftReady) {
-      return;
-    }
-
-    if (Platform.OS === "web") {
       return;
     }
 
@@ -157,9 +151,7 @@ export function QuickShopModal({
     setCurrentDigits("");
 
     requestAnimationFrame(() => {
-      if (Platform.OS !== "web") {
-        inputRef.current?.focus();
-      }
+      inputRef.current?.focus();
 
       scrollRef.current?.scrollToEnd({
         animated: true,
@@ -170,21 +162,15 @@ export function QuickShopModal({
   function removeLastPrice() {
     if (currentDigits) {
       setCurrentDigits("");
-
-      if (Platform.OS !== "web") {
-        inputRef.current?.focus();
-      }
-
+      inputRef.current?.focus();
       return;
     }
 
     setItems((current) => current.slice(0, -1));
 
-    if (Platform.OS !== "web") {
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
-    }
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   }
 
   function toggleItemInCart(itemId: string) {
@@ -256,20 +242,6 @@ export function QuickShopModal({
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
     );
-  }
-
-  function handleKeypadDigit(digit: string) {
-    setCurrentDigits((current) => {
-      if (current.length >= 9) {
-        return current;
-      }
-
-      return `${current}${digit}`;
-    });
-  }
-
-  function handleKeypadBackspace() {
-    setCurrentDigits((current) => current.slice(0, -1));
   }
 
   async function handleSave() {
@@ -364,16 +336,7 @@ export function QuickShopModal({
           onPress={Keyboard.dismiss}
         />
 
-        <Pressable
-          style={styles.modalCard}
-          onPress={() => {
-            Keyboard.dismiss();
-
-            if (Platform.OS === "web") {
-              setShowWebKeypad(false);
-            }
-          }}
-        >
+        <Pressable style={styles.modalCard} onPress={Keyboard.dismiss}>
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>Quick Shop</Text>
@@ -393,10 +356,7 @@ export function QuickShopModal({
             </Pressable>
           </View>
 
-          <Pressable
-            style={styles.receipt}
-            onPress={(event) => event.stopPropagation?.()}
-          >
+          <View style={styles.receipt}>
             <Text style={styles.receiptTitle}>RECEIPT</Text>
 
             <View style={styles.receiptDivider} />
@@ -441,21 +401,7 @@ export function QuickShopModal({
 
             <Pressable
               style={styles.activePriceRow}
-              onPress={(event) => {
-                event.stopPropagation?.();
-
-                if (Platform.OS === "web") {
-                  setShowWebKeypad(true);
-
-                  requestAnimationFrame(() => {
-                    scrollRef.current?.scrollToEnd({ animated: true });
-                  });
-
-                  return;
-                }
-
-                inputRef.current?.focus();
-              }}
+              onPress={() => inputRef.current?.focus()}
             >
               <Text style={styles.activeIndicator}>›</Text>
 
@@ -471,12 +417,7 @@ export function QuickShopModal({
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>TOTAL</Text>
 
-              <Text
-                style={styles.totalAmount}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.58}
-              >
+              <Text style={styles.totalAmount}>
                 {formatMoney(
                   (total + (currentDigits ? Number(currentAmount) : 0)).toFixed(
                     2,
@@ -484,7 +425,7 @@ export function QuickShopModal({
                 )}
               </Text>
             </View>
-          </Pressable>
+          </View>
 
           <View style={styles.helperRow}>
             <Text style={styles.helperText}>Type 489 for $4.89</Text>
@@ -498,96 +439,6 @@ export function QuickShopModal({
               </Pressable>
             ) : null}
           </View>
-
-          {Platform.OS === "web" && showWebKeypad ? (
-            <Pressable
-              style={styles.webKeypad}
-              onPress={(event) => event.stopPropagation?.()}
-            >
-              {[
-                ["1", "2", "3"],
-                ["4", "5", "6"],
-                ["7", "8", "9"],
-              ].map((row) => (
-                <View style={styles.webKeypadRow} key={row.join("-")}>
-                  {row.map((digit) => (
-                    <Pressable
-                      key={digit}
-                      style={({ pressed }) => [
-                        styles.webKey,
-                        pressed && styles.webKeyPressed,
-                      ]}
-                      onPress={() => handleKeypadDigit(digit)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Enter ${digit}`}
-                    >
-                      <Text style={styles.webKeyText}>{digit}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ))}
-
-              <View style={styles.webKeypadRow}>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.webKey,
-                    pressed && styles.webKeyPressed,
-                  ]}
-                  onPress={handleKeypadBackspace}
-                  accessibilityRole="button"
-                  accessibilityLabel="Delete last digit"
-                >
-                  <Text style={styles.webBackspaceText}>⌫</Text>
-                </Pressable>
-
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.webKey,
-                    pressed && styles.webKeyPressed,
-                  ]}
-                  onPress={() => handleKeypadDigit("0")}
-                  accessibilityRole="button"
-                  accessibilityLabel="Enter 0"
-                >
-                  <Text style={styles.webKeyText}>0</Text>
-                </Pressable>
-
-                <Pressable
-                  disabled={!currentDigits}
-                  style={({ pressed }) => [
-                    styles.webKey,
-                    styles.webNextKey,
-                    !currentDigits && styles.webNextKeyDisabled,
-                    pressed &&
-                      currentDigits.length > 0 &&
-                      styles.webNextKeyPressed,
-                  ]}
-                  onPress={addCurrentPrice}
-                  accessibilityRole="button"
-                  accessibilityLabel="Add price and enter next price"
-                >
-                  <Text style={styles.webNextKeyText}>↵</Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          ) : Platform.OS !== "web" ? (
-            <TextInput
-              ref={inputRef}
-              value={currentDigits}
-              onChangeText={handleChangeText}
-              keyboardType="number-pad"
-              returnKeyType="next"
-              blurOnSubmit={false}
-              onSubmitEditing={addCurrentPrice}
-              inputAccessoryViewID={
-                Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
-              }
-              style={styles.hiddenInput}
-              caretHidden
-              contextMenuHidden
-              maxLength={9}
-            />
-          ) : null}
 
           <View style={styles.actionRow}>
             <Pressable
@@ -622,6 +473,34 @@ export function QuickShopModal({
               <Text style={styles.saveButtonText}>Save as Budget</Text>
             </Pressable>
           </View>
+
+          <TextInput
+            ref={inputRef}
+            value={currentDigits}
+            onChangeText={handleChangeText}
+            keyboardType={Platform.OS === "web" ? "default" : "number-pad"}
+            inputMode={Platform.OS === "web" ? "numeric" : undefined}
+            returnKeyType="next"
+            enterKeyHint="next"
+            blurOnSubmit={false}
+            onSubmitEditing={addCurrentPrice}
+            onBlur={() => {
+              if (Platform.OS === "web" && currentDigits) {
+                addCurrentPrice();
+
+                setTimeout(() => {
+                  inputRef.current?.focus();
+                }, 50);
+              }
+            }}
+            inputAccessoryViewID={
+              Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
+            }
+            style={styles.hiddenInput}
+            caretHidden
+            contextMenuHidden
+            maxLength={9}
+          />
         </Pressable>
 
         {Platform.OS === "ios" && (
@@ -668,9 +547,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#344657",
     padding: 18,
-    maxHeight: "92%",
+    maxHeight: "88%",
     minHeight: 0,
-    overflow: "hidden",
   },
 
   header: {
@@ -715,10 +593,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4F4",
     borderRadius: 18,
     paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 14,
+    paddingTop: 18,
+    paddingBottom: 16,
     flexShrink: 1,
-    minHeight: 180,
+    minHeight: 220,
   },
 
   receiptTitle: {
@@ -739,8 +617,7 @@ const styles = StyleSheet.create({
   receiptScroll: {
     flexGrow: 1,
     flexShrink: 1,
-    minHeight: 52,
-    maxHeight: 170,
+    minHeight: 70,
   },
 
   receiptContent: {
@@ -820,10 +697,10 @@ const styles = StyleSheet.create({
   },
 
   activePriceRow: {
-    minHeight: 38,
+    minHeight: 42,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
+    marginTop: 4,
     flexShrink: 0,
   },
 
@@ -852,8 +729,8 @@ const styles = StyleSheet.create({
   totalDivider: {
     height: 1,
     backgroundColor: "#AAA2B2",
-    marginTop: 4,
-    marginBottom: 10,
+    marginTop: 6,
+    marginBottom: 14,
   },
 
   totalRow: {
@@ -870,12 +747,9 @@ const styles = StyleSheet.create({
   },
 
   totalAmount: {
-    flexShrink: 1,
-    maxWidth: "70%",
     color: "#6F35B5",
     fontSize: 26,
     fontWeight: "900",
-    textAlign: "right",
     fontVariant: ["tabular-nums"],
   },
 
@@ -883,10 +757,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 8,
-    marginBottom: 10,
+    marginTop: 12,
+    marginBottom: 14,
     paddingHorizontal: 2,
-    flexShrink: 0,
   },
 
   helperText: {
@@ -904,8 +777,6 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 10,
-    flexShrink: 0,
-    marginTop: 10,
   },
 
   discardButton: {
@@ -914,7 +785,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 1,
     borderColor: "#3B4D5F",
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -933,7 +804,7 @@ const styles = StyleSheet.create({
     flex: 1.2,
     backgroundColor: "#2ECC71",
     borderRadius: 15,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -946,65 +817,6 @@ const styles = StyleSheet.create({
     color: "#101820",
     fontSize: 14,
     fontWeight: "900",
-  },
-
-  webKeypad: {
-    marginTop: 10,
-    gap: 6,
-    flexShrink: 0,
-  },
-
-  webKeypadRow: {
-    flexDirection: "row",
-    gap: 6,
-  },
-
-  webKey: {
-    flex: 1,
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: "#243342",
-    borderWidth: 1,
-    borderColor: "#3B4D5F",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  webKeyPressed: {
-    backgroundColor: "#30445A",
-  },
-
-  webKeyText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "900",
-    fontVariant: ["tabular-nums"],
-  },
-
-  webBackspaceText: {
-    color: "#CAD3DD",
-    fontSize: 21,
-    fontWeight: "900",
-  },
-
-  webNextKey: {
-    backgroundColor: "#9B5DE5",
-    borderColor: "#B784F4",
-  },
-
-  webNextKeyDisabled: {
-    opacity: 0.35,
-  },
-
-  webNextKeyPressed: {
-    backgroundColor: "#8445D1",
-  },
-
-  webNextKeyText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "900",
-    lineHeight: 25,
   },
 
   hiddenInput: {
