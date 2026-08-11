@@ -59,7 +59,11 @@ function parseBudgetItemsFromText(text: string): BudgetItem[] {
   let currentItem: BudgetItem | null = null;
 
   function pushCurrentItem() {
-    if (currentItem && currentItem.name.trim().length > 0) {
+    if (
+      currentItem &&
+      (currentItem.name.trim().length > 0 ||
+        currentItem.amount.trim().length > 0)
+    ) {
       parsedItems.push(currentItem);
     }
 
@@ -161,15 +165,15 @@ function parseBudgetItemsFromText(text: string): BudgetItem[] {
       continue;
     }
 
-    const amountMatch = cleanedLine.match(
-      /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
-    );
+    // Check price-only entries before "name + price".
+    // Otherwise a value like "12.34" can be split into name "1" and price "2.34".
+    const priceOnlyMatch = cleanedLine.match(/^\$?(\d+(?:\.\d{1,2})?)$/);
 
-    if (amountMatch) {
+    if (priceOnlyMatch) {
       currentItem = {
         id: Date.now() + Math.random(),
-        name: amountMatch[1].trim(),
-        amount: amountMatch[2].trim(),
+        name: "",
+        amount: priceOnlyMatch[1],
         quantity: 1,
         included: true,
         isFood: false,
@@ -181,14 +185,15 @@ function parseBudgetItemsFromText(text: string): BudgetItem[] {
       continue;
     }
 
-    // Price only, such as "4.99" or "$4.99"
-    const priceOnlyMatch = cleanedLine.match(/^\$?(\d+(?:\.\d{1,2})?)$/);
+    const amountMatch = cleanedLine.match(
+      /^(.+?)\s*[:,-]?\s*\$?(\d+(?:\.\d{1,2})?)$/,
+    );
 
-    if (priceOnlyMatch) {
+    if (amountMatch) {
       currentItem = {
         id: Date.now() + Math.random(),
-        name: "",
-        amount: priceOnlyMatch[1],
+        name: amountMatch[1].trim(),
+        amount: amountMatch[2].trim(),
         quantity: 1,
         included: true,
         isFood: false,
@@ -1624,13 +1629,14 @@ const styles = StyleSheet.create({
   },
 
   planSearchAddButton: {
-    alignSelf: "flex-start",
+    alignSelf: "center",
+    width: "72%",
     backgroundColor: "#2ECC71",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginTop: 10,
-    marginLeft: 24,
+    alignItems: "center",
   },
 
   planSearchAddButtonText: {
