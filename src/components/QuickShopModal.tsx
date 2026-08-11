@@ -297,20 +297,20 @@ export function QuickShopModal({
                   <Text style={styles.priceText}>{formatMoney(price)}</Text>
                 </View>
               ))}
-
-              <Pressable
-                style={styles.activePriceRow}
-                onPress={() => inputRef.current?.focus()}
-              >
-                <Text style={styles.activeIndicator}>›</Text>
-
-                <Text style={styles.activePrice}>
-                  {currentDigits ? formatMoney(currentAmount) : "$0.00"}
-                </Text>
-
-                <View style={styles.cursor} />
-              </Pressable>
             </ScrollView>
+
+            <Pressable
+              style={styles.activePriceRow}
+              onPress={() => inputRef.current?.focus()}
+            >
+              <Text style={styles.activeIndicator}>›</Text>
+
+              <Text style={styles.activePrice}>
+                {currentDigits ? formatMoney(currentAmount) : "$0.00"}
+              </Text>
+
+              <View style={styles.cursor} />
+            </Pressable>
 
             <View style={styles.totalDivider} />
 
@@ -447,7 +447,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#344657",
     padding: 18,
-    maxHeight: "80%",
+    maxHeight: "88%",
+    minHeight: 0,
   },
 
   header: {
@@ -494,8 +495,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 18,
     paddingBottom: 16,
-    minHeight: 300,
-    maxHeight: 390,
+    flexShrink: 1,
+    minHeight: 220,
   },
 
   receiptTitle: {
@@ -514,13 +515,15 @@ const styles = StyleSheet.create({
   },
 
   receiptScroll: {
-    flexGrow: 0,
-    minHeight: 175,
-    maxHeight: 250,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 70,
   },
 
   receiptContent: {
     paddingVertical: 5,
+    flexGrow: 1,
+    justifyContent: "flex-end",
   },
 
   priceRow: {
@@ -547,7 +550,8 @@ const styles = StyleSheet.create({
     minHeight: 42,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
+    marginTop: 4,
+    flexShrink: 0,
   },
 
   activeIndicator: {
