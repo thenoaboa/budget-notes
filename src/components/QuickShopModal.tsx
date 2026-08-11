@@ -384,6 +384,11 @@ export function QuickShopModal({
             enterKeyHint="next"
             blurOnSubmit={false}
             onSubmitEditing={addCurrentPrice}
+            onBlur={() => {
+              if (Platform.OS === "web" && currentDigits) {
+                addCurrentPrice();
+              }
+            }}
             inputAccessoryViewID={
               Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
             }
