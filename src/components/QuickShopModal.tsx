@@ -979,7 +979,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginLeft: 20,
+    marginLeft: 10,
   },
 
   historyButton: {
