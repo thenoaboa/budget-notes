@@ -191,12 +191,11 @@ export function QuickShopModal({
       return;
     }
 
+    // On iPhone Safari/PWA, focus must happen directly from the user's tap.
+    inputRef.current?.focus();
+
     setEditingItemId(item.id);
     setCurrentDigits(String(cents));
-
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
   }
 
   function removeLastPrice() {
