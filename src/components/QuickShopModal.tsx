@@ -1286,6 +1286,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     flexShrink: 1,
     minHeight: 220,
+    maxHeight: 390,
   },
 
   receiptTitle: {
@@ -1307,6 +1308,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     minHeight: 70,
+    maxHeight: 250,
   },
 
   receiptContent: {
