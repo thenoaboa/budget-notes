@@ -614,11 +614,11 @@ const styles = StyleSheet.create({
   },
 
   emptyCard: {
-    backgroundColor: "#18261D",
+    backgroundColor: "#1b2738",
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#2ECC71",
+    borderColor: "#34495E",
     marginBottom: 14,
   },
 

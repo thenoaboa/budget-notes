@@ -42,11 +42,13 @@ export function QuickShopModal({
 
   const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
     if (!visible) {
       setDraftReady(false);
+      setEditingItemId(null);
       return;
     }
 
@@ -140,6 +142,28 @@ export function QuickShopModal({
 
     const amount = digitsToAmount(currentDigits);
 
+    if (editingItemId) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === editingItemId
+            ? {
+                ...item,
+                amount,
+              }
+            : item,
+        ),
+      );
+
+      setEditingItemId(null);
+      setCurrentDigits("");
+
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+
+      return;
+    }
+
     setItems((current) => [
       ...current,
       {
@@ -148,6 +172,7 @@ export function QuickShopModal({
         inCart: false,
       },
     ]);
+
     setCurrentDigits("");
 
     requestAnimationFrame(() => {
@@ -159,9 +184,25 @@ export function QuickShopModal({
     });
   }
 
+  function startEditingItem(item: QuickShopItem) {
+    const cents = Math.round(Number(item.amount) * 100);
+
+    if (!Number.isFinite(cents)) {
+      return;
+    }
+
+    setEditingItemId(item.id);
+    setCurrentDigits(String(cents));
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }
+
   function removeLastPrice() {
     if (currentDigits) {
       setCurrentDigits("");
+      setEditingItemId(null);
       inputRef.current?.focus();
       return;
     }
@@ -189,6 +230,11 @@ export function QuickShopModal({
   function confirmDeleteItem(itemId: string) {
     const deleteConfirmedItem = () => {
       setItems((current) => current.filter((item) => item.id !== itemId));
+
+      if (editingItemId === itemId) {
+        setEditingItemId(null);
+        setCurrentDigits("");
+      }
     };
 
     if (Platform.OS === "web") {
@@ -246,7 +292,7 @@ export function QuickShopModal({
 
   async function handleSave() {
     const finalPrices =
-      currentDigits.length > 0
+      currentDigits.length > 0 && !editingItemId
         ? [...items.map((item) => item.amount), digitsToAmount(currentDigits)]
         : items.map((item) => item.amount);
 
@@ -262,6 +308,7 @@ export function QuickShopModal({
 
       setItems([]);
       setCurrentDigits("");
+      setEditingItemId(null);
     }
 
     if (Platform.OS === "web") {
@@ -296,7 +343,7 @@ export function QuickShopModal({
 
   async function handleDiscard() {
     const finalPrices =
-      currentDigits.length > 0
+      currentDigits.length > 0 && !editingItemId
         ? [...items.map((item) => item.amount), digitsToAmount(currentDigits)]
         : items.map((item) => item.amount);
 
@@ -311,6 +358,7 @@ export function QuickShopModal({
 
     setItems([]);
     setCurrentDigits("");
+    setEditingItemId(null);
   }
 
   function handleClose() {
@@ -381,7 +429,16 @@ export function QuickShopModal({
                   overshootLeft={false}
                   overshootRight={false}
                 >
-                  <View style={styles.priceRow}>
+                  <Pressable
+                    style={[
+                      styles.priceRow,
+                      editingItemId === item.id && styles.priceRowEditing,
+                    ]}
+                    onPress={(event) => {
+                      event.stopPropagation?.();
+                      startEditingItem(item);
+                    }}
+                  >
                     <Text style={styles.priceNumber}>
                       {String(index + 1).padStart(2, "0")}
                     </Text>
@@ -390,11 +447,14 @@ export function QuickShopModal({
                       style={[
                         styles.priceText,
                         item.inCart && styles.priceTextInCart,
+                        editingItemId === item.id && styles.priceTextEditing,
                       ]}
                     >
-                      {formatMoney(item.amount)}
+                      {editingItemId === item.id && currentDigits
+                        ? formatMoney(digitsToAmount(currentDigits))
+                        : formatMoney(item.amount)}
                     </Text>
-                  </View>
+                  </Pressable>
                 </Swipeable>
               ))}
             </ScrollView>
@@ -403,7 +463,9 @@ export function QuickShopModal({
               style={styles.activePriceRow}
               onPress={() => inputRef.current?.focus()}
             >
-              <Text style={styles.activeIndicator}>›</Text>
+              <Text style={styles.activeIndicator}>
+                {editingItemId ? "✎" : "›"}
+              </Text>
 
               <Text style={styles.activePrice}>
                 {currentDigits ? formatMoney(currentAmount) : "$0.00"}
@@ -651,6 +713,15 @@ const styles = StyleSheet.create({
     color: "#8A98A8",
     textDecorationLine: "line-through",
     opacity: 0.55,
+  },
+
+  priceRowEditing: {
+    backgroundColor: "rgba(155, 93, 229, 0.10)",
+    borderRadius: 10,
+  },
+
+  priceTextEditing: {
+    color: "#6F35B5",
   },
 
   cartAction: {
