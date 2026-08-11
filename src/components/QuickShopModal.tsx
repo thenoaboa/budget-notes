@@ -374,26 +374,14 @@ export function QuickShopModal({
             </Pressable>
           </View>
 
-          {Platform.OS === "web" && (
-            <Pressable
-              style={({ pressed }) => [
-                styles.webNextButton,
-                !currentDigits && styles.returnButtonDisabled,
-                pressed && currentDigits.length > 0 && styles.pressed,
-              ]}
-              disabled={!currentDigits}
-              onPress={addCurrentPrice}
-            >
-              <Text style={styles.webNextButtonText}>Next price ↵</Text>
-            </Pressable>
-          )}
-
           <TextInput
             ref={inputRef}
             value={currentDigits}
             onChangeText={handleChangeText}
-            keyboardType="number-pad"
+            keyboardType={Platform.OS === "web" ? "default" : "number-pad"}
+            inputMode={Platform.OS === "web" ? "numeric" : undefined}
             returnKeyType="next"
+            enterKeyHint="next"
             blurOnSubmit={false}
             onSubmitEditing={addCurrentPrice}
             inputAccessoryViewID={
@@ -716,20 +704,5 @@ const styles = StyleSheet.create({
 
   pressed: {
     opacity: 0.7,
-  },
-
-  webNextButton: {
-    backgroundColor: "#9B5DE5",
-    borderRadius: 15,
-    paddingVertical: 13,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
-
-  webNextButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
   },
 });
