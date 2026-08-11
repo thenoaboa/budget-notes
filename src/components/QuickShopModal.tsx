@@ -89,6 +89,10 @@ export function QuickShopModal({
       return;
     }
 
+    if (Platform.OS === "web") {
+      return;
+    }
+
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 300);
@@ -151,7 +155,9 @@ export function QuickShopModal({
     setCurrentDigits("");
 
     requestAnimationFrame(() => {
-      inputRef.current?.focus();
+      if (Platform.OS !== "web") {
+        inputRef.current?.focus();
+      }
 
       scrollRef.current?.scrollToEnd({
         animated: true,
@@ -162,15 +168,21 @@ export function QuickShopModal({
   function removeLastPrice() {
     if (currentDigits) {
       setCurrentDigits("");
-      inputRef.current?.focus();
+
+      if (Platform.OS !== "web") {
+        inputRef.current?.focus();
+      }
+
       return;
     }
 
     setItems((current) => current.slice(0, -1));
 
-    requestAnimationFrame(() => {
-      inputRef.current?.focus();
-    });
+    if (Platform.OS !== "web") {
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
   }
 
   function toggleItemInCart(itemId: string) {
@@ -242,6 +254,20 @@ export function QuickShopModal({
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
     );
+  }
+
+  function handleKeypadDigit(digit: string) {
+    setCurrentDigits((current) => {
+      if (current.length >= 9) {
+        return current;
+      }
+
+      return `${current}${digit}`;
+    });
+  }
+
+  function handleKeypadBackspace() {
+    setCurrentDigits((current) => current.slice(0, -1));
   }
 
   async function handleSave() {
@@ -401,7 +427,11 @@ export function QuickShopModal({
 
             <Pressable
               style={styles.activePriceRow}
-              onPress={() => inputRef.current?.focus()}
+              onPress={() => {
+                if (Platform.OS !== "web") {
+                  inputRef.current?.focus();
+                }
+              }}
             >
               <Text style={styles.activeIndicator}>›</Text>
 
@@ -474,33 +504,92 @@ export function QuickShopModal({
             </Pressable>
           </View>
 
-          <TextInput
-            ref={inputRef}
-            value={currentDigits}
-            onChangeText={handleChangeText}
-            keyboardType={Platform.OS === "web" ? "default" : "number-pad"}
-            inputMode={Platform.OS === "web" ? "numeric" : undefined}
-            returnKeyType="next"
-            enterKeyHint="next"
-            blurOnSubmit={false}
-            onSubmitEditing={addCurrentPrice}
-            onBlur={() => {
-              if (Platform.OS === "web" && currentDigits) {
-                addCurrentPrice();
+          {Platform.OS === "web" ? (
+            <View style={styles.webKeypad}>
+              {[
+                ["1", "2", "3"],
+                ["4", "5", "6"],
+                ["7", "8", "9"],
+              ].map((row) => (
+                <View style={styles.webKeypadRow} key={row.join("-")}>
+                  {row.map((digit) => (
+                    <Pressable
+                      key={digit}
+                      style={({ pressed }) => [
+                        styles.webKey,
+                        pressed && styles.webKeyPressed,
+                      ]}
+                      onPress={() => handleKeypadDigit(digit)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Enter ${digit}`}
+                    >
+                      <Text style={styles.webKeyText}>{digit}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ))}
 
-                setTimeout(() => {
-                  inputRef.current?.focus();
-                }, 50);
+              <View style={styles.webKeypadRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.webKey,
+                    pressed && styles.webKeyPressed,
+                  ]}
+                  onPress={handleKeypadBackspace}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete last digit"
+                >
+                  <Text style={styles.webBackspaceText}>⌫</Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.webKey,
+                    pressed && styles.webKeyPressed,
+                  ]}
+                  onPress={() => handleKeypadDigit("0")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enter 0"
+                >
+                  <Text style={styles.webKeyText}>0</Text>
+                </Pressable>
+
+                <Pressable
+                  disabled={!currentDigits}
+                  style={({ pressed }) => [
+                    styles.webKey,
+                    styles.webNextKey,
+                    !currentDigits && styles.webNextKeyDisabled,
+                    pressed &&
+                      currentDigits.length > 0 &&
+                      styles.webNextKeyPressed,
+                  ]}
+                  onPress={addCurrentPrice}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add price and enter next price"
+                >
+                  <Text style={styles.webNextKeyText}>↵</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <TextInput
+              ref={inputRef}
+              value={currentDigits}
+              onChangeText={handleChangeText}
+              keyboardType="number-pad"
+              returnKeyType="next"
+              blurOnSubmit={false}
+              onSubmitEditing={addCurrentPrice}
+              inputAccessoryViewID={
+                Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
               }
-            }}
-            inputAccessoryViewID={
-              Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
-            }
-            style={styles.hiddenInput}
-            caretHidden
-            contextMenuHidden
-            maxLength={9}
-          />
+              style={styles.hiddenInput}
+              caretHidden
+              contextMenuHidden
+              maxLength={9}
+            />
+          )}
         </Pressable>
 
         {Platform.OS === "ios" && (
@@ -817,6 +906,64 @@ const styles = StyleSheet.create({
     color: "#101820",
     fontSize: 14,
     fontWeight: "900",
+  },
+
+  webKeypad: {
+    marginTop: 14,
+    gap: 8,
+  },
+
+  webKeypadRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  webKey: {
+    flex: 1,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: "#243342",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  webKeyPressed: {
+    backgroundColor: "#30445A",
+  },
+
+  webKeyText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "900",
+    fontVariant: ["tabular-nums"],
+  },
+
+  webBackspaceText: {
+    color: "#CAD3DD",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+
+  webNextKey: {
+    backgroundColor: "#9B5DE5",
+    borderColor: "#B784F4",
+  },
+
+  webNextKeyDisabled: {
+    opacity: 0.35,
+  },
+
+  webNextKeyPressed: {
+    backgroundColor: "#8445D1",
+  },
+
+  webNextKeyText: {
+    color: "#FFFFFF",
+    fontSize: 25,
+    fontWeight: "900",
+    lineHeight: 27,
   },
 
   hiddenInput: {
