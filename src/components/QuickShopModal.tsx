@@ -927,6 +927,14 @@ export function QuickShopModal({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                 >
+                  {items.length === 0 && (
+                    <View style={styles.emptyReceiptLines}>
+                      <View style={[styles.emptyReceiptLine, { width: 38 }]} />
+                      <View style={[styles.emptyReceiptLine, { width: 52 }]} />
+                      <View style={[styles.emptyReceiptLine, { width: 30 }]} />
+                    </View>
+                  )}
+
                   {items.map((item, index) => (
                     <Swipeable
                       key={`${item.id}-${item.inCart ?? false}`}
@@ -1798,5 +1806,19 @@ const styles = StyleSheet.create({
 
   pressed: {
     opacity: 0.7,
+  },
+
+  emptyReceiptLines: {
+    flex: 1,
+    justifyContent: "center",
+    paddingLeft: 32,
+    gap: 12,
+  },
+
+  emptyReceiptLine: {
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#312A38",
+    opacity: 0.8,
   },
 });
