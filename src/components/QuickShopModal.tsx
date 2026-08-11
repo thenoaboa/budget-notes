@@ -14,10 +14,12 @@ import {
     View,
 } from "react-native";
 
+import { Swipeable } from "react-native-gesture-handler";
 import {
     clearQuickShopDraft,
     loadQuickShopDraft,
     saveQuickShopDraft,
+    type QuickShopItem,
 } from "../storage/budgetStorage";
 
 type QuickShopModalProps = {
@@ -38,7 +40,7 @@ export function QuickShopModal({
   const inputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  const [prices, setPrices] = useState<string[]>([]);
+  const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
   const [draftReady, setDraftReady] = useState(false);
 
@@ -59,7 +61,7 @@ export function QuickShopModal({
         return;
       }
 
-      setPrices(savedDraft.prices);
+      setItems(savedDraft.items);
       setCurrentDigits(savedDraft.currentDigits);
       setDraftReady(true);
     }
@@ -77,10 +79,10 @@ export function QuickShopModal({
     }
 
     void saveQuickShopDraft({
-      prices,
+      items,
       currentDigits,
     });
-  }, [prices, currentDigits, visible, draftReady]);
+  }, [items, currentDigits, visible, draftReady]);
 
   useEffect(() => {
     if (!visible || !draftReady) {
@@ -119,8 +121,8 @@ export function QuickShopModal({
 
   const currentAmount = digitsToAmount(currentDigits);
 
-  const total = prices.reduce((sum, price) => {
-    const value = Number(price);
+  const total = items.reduce((sum, item) => {
+    const value = Number(item.amount);
 
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
@@ -138,7 +140,14 @@ export function QuickShopModal({
 
     const amount = digitsToAmount(currentDigits);
 
-    setPrices((current) => [...current, amount]);
+    setItems((current) => [
+      ...current,
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        amount,
+        inCart: false,
+      },
+    ]);
     setCurrentDigits("");
 
     requestAnimationFrame(() => {
@@ -157,18 +166,61 @@ export function QuickShopModal({
       return;
     }
 
-    setPrices((current) => current.slice(0, -1));
+    setItems((current) => current.slice(0, -1));
 
     requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
   }
 
+  function toggleItemInCart(itemId: string) {
+    setItems((current) =>
+      current.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              inCart: !item.inCart,
+            }
+          : item,
+      ),
+    );
+  }
+
+  function deleteItem(itemId: string) {
+    setItems((current) => current.filter((item) => item.id !== itemId));
+  }
+
+  function renderLeftActions(item: QuickShopItem) {
+    return (
+      <View style={[styles.cartAction, item.inCart && styles.cartActionUndo]}>
+        <Text
+          style={[
+            styles.cartActionText,
+            item.inCart && styles.cartActionTextUndo,
+          ]}
+        >
+          {item.inCart ? "Undo" : "Got It"}
+        </Text>
+      </View>
+    );
+  }
+
+  function renderRightActions(itemId: string) {
+    return (
+      <Pressable
+        style={styles.deleteAction}
+        onPressIn={() => deleteItem(itemId)}
+      >
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
+    );
+  }
+
   async function handleSave() {
     const finalPrices =
       currentDigits.length > 0
-        ? [...prices, digitsToAmount(currentDigits)]
-        : prices;
+        ? [...items.map((item) => item.amount), digitsToAmount(currentDigits)]
+        : items.map((item) => item.amount);
 
     if (finalPrices.length === 0) {
       return;
@@ -180,7 +232,7 @@ export function QuickShopModal({
       await onSave(finalPrices);
       await clearQuickShopDraft();
 
-      setPrices([]);
+      setItems([]);
       setCurrentDigits("");
     }
 
@@ -217,8 +269,8 @@ export function QuickShopModal({
   async function handleDiscard() {
     const finalPrices =
       currentDigits.length > 0
-        ? [...prices, digitsToAmount(currentDigits)]
-        : prices;
+        ? [...items.map((item) => item.amount), digitsToAmount(currentDigits)]
+        : items.map((item) => item.amount);
 
     if (finalPrices.length === 0) {
       return;
@@ -229,7 +281,7 @@ export function QuickShopModal({
     await onDiscard(finalPrices);
     await clearQuickShopDraft();
 
-    setPrices([]);
+    setItems([]);
     setCurrentDigits("");
   }
 
@@ -288,14 +340,34 @@ export function QuickShopModal({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {prices.map((price, index) => (
-                <View style={styles.priceRow} key={`${price}-${index}`}>
-                  <Text style={styles.priceNumber}>
-                    {String(index + 1).padStart(2, "0")}
-                  </Text>
+              {items.map((item, index) => (
+                <Swipeable
+                  key={`${item.id}-${item.inCart ?? false}`}
+                  renderLeftActions={() => renderLeftActions(item)}
+                  renderRightActions={() => renderRightActions(item.id)}
+                  onSwipeableOpen={(direction) => {
+                    if (direction === "left") {
+                      toggleItemInCart(item.id);
+                    }
+                  }}
+                  overshootLeft={false}
+                  overshootRight={false}
+                >
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceNumber}>
+                      {String(index + 1).padStart(2, "0")}
+                    </Text>
 
-                  <Text style={styles.priceText}>{formatMoney(price)}</Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.priceText,
+                        item.inCart && styles.priceTextInCart,
+                      ]}
+                    >
+                      {formatMoney(item.amount)}
+                    </Text>
+                  </View>
+                </Swipeable>
               ))}
             </ScrollView>
 
@@ -330,7 +402,7 @@ export function QuickShopModal({
           <View style={styles.helperRow}>
             <Text style={styles.helperText}>Type 489 for $4.89</Text>
 
-            {prices.length > 0 || currentDigits ? (
+            {items.length > 0 || currentDigits ? (
               <Pressable
                 onPress={removeLastPrice}
                 style={({ pressed }) => pressed && styles.pressed}
@@ -342,14 +414,14 @@ export function QuickShopModal({
 
           <View style={styles.actionRow}>
             <Pressable
-              disabled={prices.length === 0 && !currentDigits}
+              disabled={items.length === 0 && !currentDigits}
               style={({ pressed }) => [
                 styles.discardButton,
-                prices.length === 0 &&
+                items.length === 0 &&
                   !currentDigits &&
                   styles.discardButtonDisabled,
                 pressed &&
-                  (prices.length > 0 || currentDigits) &&
+                  (items.length > 0 || currentDigits) &&
                   styles.pressed,
               ]}
               onPress={handleDiscard}
@@ -358,14 +430,14 @@ export function QuickShopModal({
             </Pressable>
 
             <Pressable
-              disabled={prices.length === 0 && !currentDigits}
+              disabled={items.length === 0 && !currentDigits}
               style={({ pressed }) => [
                 styles.saveButton,
-                prices.length === 0 &&
+                items.length === 0 &&
                   !currentDigits &&
                   styles.saveButtonDisabled,
                 pressed &&
-                  (prices.length > 0 || currentDigits) &&
+                  (items.length > 0 || currentDigits) &&
                   styles.pressed,
               ]}
               onPress={handleSave}
@@ -540,10 +612,60 @@ const styles = StyleSheet.create({
   },
 
   priceText: {
+    flex: 1,
     color: "#312A38",
     fontSize: 20,
     fontWeight: "800",
     fontVariant: ["tabular-nums"],
+  },
+
+  priceTextInCart: {
+    color: "#8A98A8",
+    textDecorationLine: "line-through",
+    opacity: 0.55,
+  },
+
+  cartAction: {
+    width: 90,
+    minHeight: 35,
+    backgroundColor: "#173326",
+    borderColor: "#2ECC71",
+    borderWidth: 1,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 2,
+  },
+
+  cartActionText: {
+    color: "#2ECC71",
+    fontWeight: "900",
+  },
+
+  cartActionUndo: {
+    backgroundColor: "#3A3218",
+    borderColor: "#F4C542",
+  },
+
+  cartActionTextUndo: {
+    color: "#F4C542",
+  },
+
+  deleteAction: {
+    width: 90,
+    minHeight: 35,
+    backgroundColor: "#3A1C1C",
+    borderColor: "#FF6B6B",
+    borderWidth: 1,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginVertical: 2,
+  },
+
+  deleteActionText: {
+    color: "#FF6B6B",
+    fontWeight: "900",
   },
 
   activePriceRow: {

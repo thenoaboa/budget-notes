@@ -7,8 +7,14 @@ const DELETED_BUDGETS_STORAGE_KEY = "deletedBudgets";
 export const QUICK_SHOP_DRAFT_KEY = "quick-shop-draft";
 const QUICK_SHOP_OPEN_ON_HOME_KEY = "quick-shop-open-on-home";
 
+export type QuickShopItem = {
+  id: string;
+  amount: string;
+  inCart?: boolean;
+};
+
 export type QuickShopDraft = {
-  prices: string[];
+  items: QuickShopItem[];
   currentDigits: string;
 };
 
@@ -47,7 +53,10 @@ function digitsToAmount(digits: string) {
 }
 
 function quickShopDraftToPrices(draft: QuickShopDraft) {
-  const prices = Array.isArray(draft.prices) ? [...draft.prices] : [];
+  const prices = Array.isArray(draft.items)
+    ? draft.items.map((item) => item.amount)
+    : [];
+
   const currentAmount = digitsToAmount(draft.currentDigits);
 
   if (currentAmount) {
@@ -55,6 +64,16 @@ function quickShopDraftToPrices(draft: QuickShopDraft) {
   }
 
   return prices;
+}
+
+function pricesToQuickShopItems(prices: string[]): QuickShopItem[] {
+  const baseId = Date.now();
+
+  return prices.map((amount, index) => ({
+    id: `${baseId}-${index}-${Math.random().toString(36).slice(2, 7)}`,
+    amount,
+    inCart: false,
+  }));
 }
 
 function buildQuickShopDeletedBudget(
@@ -117,7 +136,7 @@ export async function loadQuickShopDraft(): Promise<QuickShopDraft> {
 
   if (!savedDraft) {
     return {
-      prices: [],
+      items: [],
       currentDigits: "",
     };
   }
@@ -125,8 +144,32 @@ export async function loadQuickShopDraft(): Promise<QuickShopDraft> {
   try {
     const parsedDraft = JSON.parse(savedDraft);
 
+    const items: QuickShopItem[] = Array.isArray(parsedDraft.items)
+      ? parsedDraft.items
+          .filter(
+            (item: unknown) =>
+              typeof item === "object" &&
+              item !== null &&
+              typeof (item as QuickShopItem).amount === "string",
+          )
+          .map((item: QuickShopItem, index: number) => ({
+            id:
+              typeof item.id === "string" && item.id.length > 0
+                ? item.id
+                : `${Date.now()}-${index}`,
+            amount: item.amount,
+            inCart: item.inCart === true,
+          }))
+      : Array.isArray(parsedDraft.prices)
+        ? pricesToQuickShopItems(
+            parsedDraft.prices.filter(
+              (price: unknown): price is string => typeof price === "string",
+            ),
+          )
+        : [];
+
     return {
-      prices: Array.isArray(parsedDraft.prices) ? parsedDraft.prices : [],
+      items,
       currentDigits:
         typeof parsedDraft.currentDigits === "string"
           ? parsedDraft.currentDigits
@@ -136,7 +179,7 @@ export async function loadQuickShopDraft(): Promise<QuickShopDraft> {
     await AsyncStorage.removeItem(QUICK_SHOP_DRAFT_KEY);
 
     return {
-      prices: [],
+      items: [],
       currentDigits: "",
     };
   }
@@ -284,7 +327,7 @@ export async function restoreDeletedQuickShopById(
     .filter((amount) => typeof amount === "string" && amount.length > 0);
 
   await saveQuickShopDraft({
-    prices: restoredPrices,
+    items: pricesToQuickShopItems(restoredPrices),
     currentDigits: "",
   });
 
@@ -357,7 +400,7 @@ export async function returnBudgetToQuickShopById(
   }
 
   await saveQuickShopDraft({
-    prices: returnedPrices,
+    items: pricesToQuickShopItems(returnedPrices),
     currentDigits: "",
   });
 
