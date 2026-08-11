@@ -13,12 +13,15 @@ import {
 import {
   loadDeletedBudgets,
   permanentlyDeleteBudgetById,
+  quickShopDraftHasData,
   restoreDeletedBudgetById,
+  restoreDeletedQuickShopById,
 } from "../storage/budgetStorage";
 import type { Budget } from "../types/budget";
 
 type DeletedBudget = Budget & {
   deletedAt?: string;
+  source?: "quickShop";
 };
 
 export default function DeletedBudgetsScreen() {
@@ -32,13 +35,76 @@ export default function DeletedBudgetsScreen() {
         setDeletedBudgets(loadedDeletedBudgets);
       }
 
-      refreshDeletedBudgets();
+      void refreshDeletedBudgets();
     }, []),
   );
 
-  async function restoreBudget(budgetId: string) {
+  async function restoreNormalBudget(budgetId: string) {
     const result = await restoreDeletedBudgetById(budgetId);
     setDeletedBudgets(result.deletedBudgets);
+  }
+
+  async function finishQuickShopRestore(
+    budgetId: string,
+    discardCurrentDraft: boolean,
+  ) {
+    const result = await restoreDeletedQuickShopById(
+      budgetId,
+      discardCurrentDraft,
+    );
+
+    if (!result.restored) {
+      return;
+    }
+
+    setDeletedBudgets(result.deletedBudgets);
+
+    router.replace("/" as any);
+  }
+
+  async function restoreQuickShop(budgetId: string) {
+    const hasCurrentDraft = await quickShopDraftHasData();
+
+    if (!hasCurrentDraft) {
+      await finishQuickShopRestore(budgetId, false);
+      return;
+    }
+
+    const title = "Replace current Quick Shop?";
+    const message =
+      "You already have a Quick Shop in progress. Restoring this one will move your current Quick Shop to Recently Deleted.";
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(`${title}\n\n${message}`);
+
+      if (confirmed) {
+        await finishQuickShopRestore(budgetId, true);
+      }
+
+      return;
+    }
+
+    Alert.alert(title, message, [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Replace & Restore",
+        onPress: () => {
+          void finishQuickShopRestore(budgetId, true);
+        },
+      },
+    ]);
+  }
+
+  async function restoreBudget(budget: DeletedBudget) {
+    if (budget.source === "quickShop") {
+      await restoreQuickShop(budget.id);
+      return;
+    }
+
+    await restoreNormalBudget(budget.id);
   }
 
   async function deleteForever(budgetId: string) {
@@ -51,7 +117,7 @@ export default function DeletedBudgetsScreen() {
       const confirmed = window.confirm("Delete this budget forever?");
 
       if (confirmed) {
-        deleteForever(budgetId);
+        void deleteForever(budgetId);
       }
 
       return;
@@ -62,7 +128,9 @@ export default function DeletedBudgetsScreen() {
       {
         text: "Delete Forever",
         style: "destructive",
-        onPress: () => deleteForever(budgetId),
+        onPress: () => {
+          void deleteForever(budgetId);
+        },
       },
     ]);
   }
@@ -83,40 +151,68 @@ export default function DeletedBudgetsScreen() {
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Nothing deleted.</Text>
             <Text style={styles.emptyText}>
-              Deleted budgets will show up here.
+              Deleted budgets and Quick Shops will show up here.
             </Text>
           </View>
         )}
 
-        {deletedBudgets.map((budget) => (
-          <View key={budget.id} style={styles.card}>
-            <Text style={styles.cardTitle}>
-              {budget.budgetName || "Untitled Budget"}
-            </Text>
+        {deletedBudgets.map((budget) => {
+          const isQuickShop = budget.source === "quickShop";
 
-            <Text style={styles.deletedDate}>
-              {budget.deletedAt
-                ? `Deleted ${new Date(budget.deletedAt).toLocaleDateString()}`
-                : "Deleted recently"}
-            </Text>
+          return (
+            <View key={budget.id} style={styles.card}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardTitle}>
+                  {isQuickShop
+                    ? "Quick Shop"
+                    : budget.budgetName || "Untitled Budget"}
+                </Text>
 
-            <View style={styles.buttonRow}>
-              <Pressable
-                style={[styles.actionButton, styles.restoreButton]}
-                onPress={() => restoreBudget(budget.id)}
-              >
-                <Text style={styles.restoreButtonText}>Restore</Text>
-              </Pressable>
+                {isQuickShop && (
+                  <View style={styles.quickShopBadge}>
+                    <Text style={styles.quickShopBadgeText}>QUICK SHOP</Text>
+                  </View>
+                )}
+              </View>
 
-              <Pressable
-                style={[styles.actionButton, styles.deleteButton]}
-                onPress={() => confirmDeleteForever(budget.id)}
-              >
-                <Text style={styles.deleteButtonText}>Delete Forever</Text>
-              </Pressable>
+              <Text style={styles.deletedDate}>
+                {budget.deletedAt
+                  ? `Deleted ${new Date(budget.deletedAt).toLocaleDateString()}`
+                  : "Deleted recently"}
+              </Text>
+
+              <View style={styles.buttonRow}>
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    isQuickShop
+                      ? styles.quickShopRestoreButton
+                      : styles.restoreButton,
+                  ]}
+                  onPress={() => {
+                    void restoreBudget(budget);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.restoreButtonText,
+                      isQuickShop && styles.quickShopRestoreButtonText,
+                    ]}
+                  >
+                    Restore
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.actionButton, styles.deleteButton]}
+                  onPress={() => confirmDeleteForever(budget.id)}
+                >
+                  <Text style={styles.deleteButtonText}>Delete Forever</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -186,11 +282,34 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  cardTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 6,
+  },
+
   cardTitle: {
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "900",
-    marginBottom: 6,
+  },
+
+  quickShopBadge: {
+    backgroundColor: "#342347",
+    borderWidth: 1,
+    borderColor: "#6F35B5",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+
+  quickShopBadgeText: {
+    color: "#B56CFF",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.6,
   },
 
   deletedDate: {
@@ -216,10 +335,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#2ECC71",
   },
 
+  quickShopRestoreButton: {
+    backgroundColor: "#9B5DE5",
+  },
+
   restoreButtonText: {
     color: "#101820",
     fontSize: 14,
     fontWeight: "900",
+  },
+
+  quickShopRestoreButtonText: {
+    color: "#FFFFFF",
   },
 
   deleteButton: {

@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
@@ -15,9 +16,15 @@ import {
 
 import { BillsCornerModal } from "../components/BillsCornerModal";
 import { NoteCard } from "../components/NoteCard";
+import { QuickShopModal } from "../components/QuickShopModal";
 import { TutorialOverlay } from "../components/TutorialOverlay";
 import { useBudgetNotes } from "../hooks/useBudgetNotes";
-import { loadDeletedBudgets } from "../storage/budgetStorage";
+import {
+  consumeQuickShopOpenRequest,
+  createBudgetFromQuickShop,
+  discardQuickShop,
+  loadDeletedBudgets,
+} from "../storage/budgetStorage";
 
 type HomeTutorialStep =
   | "hidden"
@@ -35,6 +42,7 @@ export default function SpendingScreen() {
 
   const [deletedCount, setDeletedCount] = useState(0);
   const [showBillsCornerModal, setShowBillsCornerModal] = useState(false);
+  const [showQuickShopModal, setShowQuickShopModal] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
   const [welcomeTutorialCompleted, setWelcomeTutorialCompleted] =
     useState(false);
@@ -70,13 +78,18 @@ export default function SpendingScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      async function refreshDeletedCount() {
+      async function refreshHome() {
         const deletedBudgets = await loadDeletedBudgets();
-
         setDeletedCount(deletedBudgets.length);
+
+        const shouldOpenQuickShop = await consumeQuickShopOpenRequest();
+
+        if (shouldOpenQuickShop) {
+          setShowQuickShopModal(true);
+        }
       }
 
-      void refreshDeletedCount();
+      void refreshHome();
     }, []),
   );
 
@@ -221,9 +234,7 @@ export default function SpendingScreen() {
         {visibleBudgets.length === 0 && (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>
-              {searchQuery.trim()
-                ? "No matches found."
-                : "No spending notes yet."}
+              {searchQuery.trim() ? "No matches found." : "No budgets yet."}
             </Text>
 
             <Text style={styles.emptyText}>
@@ -257,21 +268,59 @@ export default function SpendingScreen() {
         </Pressable>
       </ScrollView>
 
-      {/*
-<View style={styles.bannerContainer}>
-  <View style={styles.bannerPlaceholder}>
-    <Text style={styles.bannerLabel}>ADVERTISEMENT</Text>
+      <Pressable
+        style={({ pressed }) => [
+          styles.quickShopButton,
+          pressed && styles.pressedButton,
+        ]}
+        onPress={() => setShowQuickShopModal(true)}
+        accessibilityRole="button"
+        accessibilityLabel="Open Quick Shop"
+      >
+        <View style={styles.quickShopIconRow}>
+          <Text style={styles.quickShopWind}>≋</Text>
 
-    <Text style={styles.bannerText}>Banner ad goes here</Text>
-  </View>
-</View>
-*/}
+          <Ionicons name="cart-outline" size={32} color="#B56CFF" />
+        </View>
+      </Pressable>
 
       {showCopiedMessage && (
         <View style={styles.copiedToast}>
           <Text style={styles.copiedToastText}>Budget Copied</Text>
         </View>
       )}
+
+      <QuickShopModal
+        visible={showQuickShopModal}
+        onClose={() => setShowQuickShopModal(false)}
+        onSave={async (prices) => {
+          const newBudget = await createBudgetFromQuickShop(prices);
+
+          setShowQuickShopModal(false);
+
+          if (newBudget) {
+            posthog?.capture("quick_shop_saved", {
+              itemCount: prices.length,
+            });
+
+            router.push(`/budget/${newBudget.id}` as any);
+          }
+        }}
+        onDiscard={async (prices) => {
+          const discardedBudget = await discardQuickShop(prices);
+
+          setShowQuickShopModal(false);
+
+          if (discardedBudget) {
+            posthog?.capture("quick_shop_discarded", {
+              itemCount: prices.length,
+            });
+
+            const deletedBudgets = await loadDeletedBudgets();
+            setDeletedCount(deletedBudgets.length);
+          }
+        }}
+      />
 
       <BillsCornerModal
         visible={showBillsCornerModal}
@@ -524,37 +573,6 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  bannerContainer: {
-    backgroundColor: "#101820",
-    paddingHorizontal: 10,
-    paddingTop: 6,
-    paddingBottom: 6,
-  },
-
-  bannerPlaceholder: {
-    height: 52,
-    backgroundColor: "#1B2633",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#344657",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  bannerLabel: {
-    color: "#738191",
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-
-  bannerText: {
-    color: "#CAD3DD",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
   copiedToast: {
     position: "absolute",
     top: "45%",
@@ -570,6 +588,44 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "900",
+  },
+
+  quickShopButton: {
+    position: "absolute",
+    right: 18,
+    bottom: 60,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#243342",
+    borderWidth: 2,
+    borderColor: "#3B4D5F",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 100,
+    elevation: 12,
+    shadowColor: "#000000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+  },
+
+  quickShopIconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: -5,
+  },
+
+  quickShopWind: {
+    color: "#B56CFF",
+    fontSize: 28,
+    fontWeight: "900",
+    marginRight: -4,
+    marginTop: -2,
   },
 
   deletedButton: {
