@@ -446,6 +446,11 @@ export function QuickShopModal({
 
                 if (Platform.OS === "web") {
                   setShowWebKeypad(true);
+
+                  requestAnimationFrame(() => {
+                    scrollRef.current?.scrollToEnd({ animated: true });
+                  });
+
                   return;
                 }
 
@@ -466,7 +471,12 @@ export function QuickShopModal({
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>TOTAL</Text>
 
-              <Text style={styles.totalAmount}>
+              <Text
+                style={styles.totalAmount}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.58}
+              >
                 {formatMoney(
                   (total + (currentDigits ? Number(currentAmount) : 0)).toFixed(
                     2,
@@ -658,8 +668,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#344657",
     padding: 18,
-    maxHeight: "88%",
+    maxHeight: "92%",
     minHeight: 0,
+    overflow: "hidden",
   },
 
   header: {
@@ -704,10 +715,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#F4F4F4",
     borderRadius: 18,
     paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
     flexShrink: 1,
-    minHeight: 220,
+    minHeight: 180,
   },
 
   receiptTitle: {
@@ -728,7 +739,8 @@ const styles = StyleSheet.create({
   receiptScroll: {
     flexGrow: 1,
     flexShrink: 1,
-    minHeight: 70,
+    minHeight: 52,
+    maxHeight: 170,
   },
 
   receiptContent: {
@@ -808,10 +820,10 @@ const styles = StyleSheet.create({
   },
 
   activePriceRow: {
-    minHeight: 42,
+    minHeight: 38,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 2,
     flexShrink: 0,
   },
 
@@ -840,8 +852,8 @@ const styles = StyleSheet.create({
   totalDivider: {
     height: 1,
     backgroundColor: "#AAA2B2",
-    marginTop: 6,
-    marginBottom: 14,
+    marginTop: 4,
+    marginBottom: 10,
   },
 
   totalRow: {
@@ -858,9 +870,12 @@ const styles = StyleSheet.create({
   },
 
   totalAmount: {
+    flexShrink: 1,
+    maxWidth: "70%",
     color: "#6F35B5",
     fontSize: 26,
     fontWeight: "900",
+    textAlign: "right",
     fontVariant: ["tabular-nums"],
   },
 
@@ -868,9 +883,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
-    marginBottom: 14,
+    marginTop: 8,
+    marginBottom: 10,
     paddingHorizontal: 2,
+    flexShrink: 0,
   },
 
   helperText: {
@@ -888,6 +904,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 10,
+    flexShrink: 0,
   },
 
   discardButton: {
@@ -896,7 +913,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 1,
     borderColor: "#3B4D5F",
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -915,7 +932,7 @@ const styles = StyleSheet.create({
     flex: 1.2,
     backgroundColor: "#2ECC71",
     borderRadius: 15,
-    paddingVertical: 14,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -931,19 +948,20 @@ const styles = StyleSheet.create({
   },
 
   webKeypad: {
-    marginTop: 14,
-    gap: 8,
+    marginTop: 10,
+    gap: 6,
+    flexShrink: 0,
   },
 
   webKeypadRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
 
   webKey: {
     flex: 1,
-    height: 52,
-    borderRadius: 14,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: "#243342",
     borderWidth: 1,
     borderColor: "#3B4D5F",
@@ -957,14 +975,14 @@ const styles = StyleSheet.create({
 
   webKeyText: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "900",
     fontVariant: ["tabular-nums"],
   },
 
   webBackspaceText: {
     color: "#CAD3DD",
-    fontSize: 22,
+    fontSize: 21,
     fontWeight: "900",
   },
 
@@ -983,9 +1001,9 @@ const styles = StyleSheet.create({
 
   webNextKeyText: {
     color: "#FFFFFF",
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: "900",
-    lineHeight: 27,
+    lineHeight: 25,
   },
 
   hiddenInput: {
