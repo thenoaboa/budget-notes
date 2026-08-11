@@ -32,11 +32,15 @@ type QuickShopModalProps = {
 
 const INPUT_ACCESSORY_ID = "quick-shop-number-pad";
 const QUICK_SHOP_HISTORY_KEY = "quick-shop-history-v1";
+const QUICK_SHOP_TAX_KEY = "quick-shop-tax-v1";
 
 type QuickShopHistoryEntry = {
   id: string;
   createdAt: string;
   items: QuickShopItem[];
+  subtotal?: number;
+  taxEnabled?: boolean;
+  taxRate?: number;
   total: number;
 };
 
@@ -71,6 +75,10 @@ export function QuickShopModal({
     null,
   );
 
+  const [taxEnabled, setTaxEnabled] = useState(true);
+  const [taxRate, setTaxRate] = useState("8.25");
+  const [showTaxEditor, setShowTaxEditor] = useState(false);
+
   async function loadHistory() {
     try {
       const raw = await AsyncStorage.getItem(QUICK_SHOP_HISTORY_KEY);
@@ -79,6 +87,44 @@ export function QuickShopModal({
     } catch {
       setHistory([]);
     }
+  }
+
+  async function loadTaxSettings() {
+    try {
+      const raw = await AsyncStorage.getItem(QUICK_SHOP_TAX_KEY);
+
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+
+      if (typeof parsed?.enabled === "boolean") {
+        setTaxEnabled(parsed.enabled);
+      }
+
+      if (
+        typeof parsed?.rate === "number" &&
+        Number.isFinite(parsed.rate) &&
+        parsed.rate >= 0
+      ) {
+        setTaxRate(String(parsed.rate));
+      }
+    } catch {
+      // Keep the defaults if saved tax settings cannot be read.
+    }
+  }
+
+  async function saveTaxSettings(enabled: boolean, rateText: string) {
+    const parsedRate = Number(rateText);
+
+    await AsyncStorage.setItem(
+      QUICK_SHOP_TAX_KEY,
+      JSON.stringify({
+        enabled,
+        rate: Number.isFinite(parsedRate) && parsedRate >= 0 ? parsedRate : 0,
+      }),
+    );
   }
 
   async function writeHistory(nextHistory: QuickShopHistoryEntry[]) {
@@ -92,16 +138,28 @@ export function QuickShopModal({
   async function addToHistory(historyItems: QuickShopItem[]) {
     if (historyItems.length === 0) return;
 
-    const historyTotal = historyItems.reduce((sum, item) => {
+    const historySubtotal = historyItems.reduce((sum, item) => {
       const value = Number(item.amount);
       return sum + (Number.isFinite(value) ? value : 0);
     }, 0);
+
+    const numericTaxRate = Number(taxRate);
+    const safeTaxRate =
+      Number.isFinite(numericTaxRate) && numericTaxRate >= 0
+        ? numericTaxRate
+        : 0;
+    const historyTaxAmount = taxEnabled
+      ? historySubtotal * (safeTaxRate / 100)
+      : 0;
 
     const entry: QuickShopHistoryEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       createdAt: new Date().toISOString(),
       items: historyItems,
-      total: historyTotal,
+      subtotal: historySubtotal,
+      taxEnabled,
+      taxRate: safeTaxRate,
+      total: historySubtotal + historyTaxAmount,
     };
 
     await writeHistory([entry, ...history]);
@@ -149,7 +207,8 @@ export function QuickShopModal({
       setDraftReady(false);
       setShowHistory(false);
       setSelectedHistoryId(null);
-      await loadHistory();
+      setShowTaxEditor(false);
+      await Promise.all([loadHistory(), loadTaxSettings()]);
 
       const savedDraft = await loadQuickShopDraft();
 
@@ -222,6 +281,18 @@ export function QuickShopModal({
 
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
+
+  const activeAmount =
+    currentDigits && !editingItemId ? Number(currentAmount) : 0;
+
+  const subtotal = total + (Number.isFinite(activeAmount) ? activeAmount : 0);
+
+  const numericTaxRate = Number(taxRate);
+  const safeTaxRate =
+    Number.isFinite(numericTaxRate) && numericTaxRate >= 0 ? numericTaxRate : 0;
+
+  const taxAmount = taxEnabled ? subtotal * (safeTaxRate / 100) : 0;
+  const grandTotal = subtotal + taxAmount;
 
   function handleChangeText(value: string) {
     const digitsOnly = value.replace(/\D/g, "");
@@ -583,6 +654,18 @@ export function QuickShopModal({
       setItems(restoredItems);
       setCurrentDigits("");
       setEditingItemId(null);
+
+      if (typeof entry.taxEnabled === "boolean") {
+        setTaxEnabled(entry.taxEnabled);
+      }
+
+      if (
+        typeof entry.taxRate === "number" &&
+        Number.isFinite(entry.taxRate) &&
+        entry.taxRate >= 0
+      ) {
+        setTaxRate(String(entry.taxRate));
+      }
       setLastEdit(null);
       setLastDeleted(null);
       setReplaceOnNextDigit(false);
@@ -908,14 +991,87 @@ export function QuickShopModal({
                 <View style={styles.totalRow}>
                   <Text style={styles.totalLabel}>TOTAL</Text>
 
-                  <Text style={styles.totalAmount}>
-                    {formatMoney(
-                      (
-                        total + (currentDigits ? Number(currentAmount) : 0)
-                      ).toFixed(2),
-                    )}
-                  </Text>
+                  <View style={styles.totalValueBlock}>
+                    <Text style={styles.totalAmount}>
+                      {formatMoney(grandTotal.toFixed(2))}
+                    </Text>
+
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation?.();
+                        setShowTaxEditor((current) => !current);
+                      }}
+                      style={({ pressed }) => pressed && styles.pressed}
+                      accessibilityRole="button"
+                      accessibilityLabel="Edit Quick Shop tax"
+                    >
+                      <Text style={styles.taxSummaryText}>
+                        {taxEnabled
+                          ? `incl. ${safeTaxRate.toFixed(2)}% tax`
+                          : "tax off"}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
+
+                {showTaxEditor ? (
+                  <View style={styles.taxEditor}>
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation?.();
+                        const nextEnabled = !taxEnabled;
+                        setTaxEnabled(nextEnabled);
+                        void saveTaxSettings(nextEnabled, taxRate);
+                      }}
+                      style={({ pressed }) => [
+                        styles.taxToggle,
+                        taxEnabled && styles.taxToggleEnabled,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.taxToggleText,
+                          taxEnabled && styles.taxToggleTextEnabled,
+                        ]}
+                      >
+                        {taxEnabled ? "Tax On" : "Tax Off"}
+                      </Text>
+                    </Pressable>
+
+                    <View style={styles.taxRateWrap}>
+                      <TextInput
+                        value={taxRate}
+                        onChangeText={(value) => {
+                          const cleaned = value
+                            .replace(/[^0-9.]/g, "")
+                            .replace(/(\..*)\./g, "$1");
+
+                          setTaxRate(cleaned);
+                        }}
+                        onBlur={() => {
+                          const parsedRate = Number(taxRate);
+                          const normalized =
+                            Number.isFinite(parsedRate) && parsedRate >= 0
+                              ? parsedRate.toFixed(2)
+                              : "0.00";
+
+                          setTaxRate(normalized);
+                          void saveTaxSettings(taxEnabled, normalized);
+                        }}
+                        keyboardType={
+                          Platform.OS === "ios" ? "decimal-pad" : "numeric"
+                        }
+                        inputMode="decimal"
+                        selectTextOnFocus
+                        style={styles.taxRateInput}
+                        maxLength={6}
+                        accessibilityLabel="Quick Shop tax rate"
+                      />
+                      <Text style={styles.taxPercent}>%</Text>
+                    </View>
+                  </View>
+                ) : null}
               </View>
 
               <View style={styles.helperRow}>
@@ -1446,11 +1602,86 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
+  totalValueBlock: {
+    alignItems: "flex-end",
+  },
+
   totalAmount: {
     color: "#6F35B5",
     fontSize: 26,
     fontWeight: "900",
     fontVariant: ["tabular-nums"],
+  },
+
+  taxSummaryText: {
+    color: "#8A8190",
+    fontSize: 10,
+    fontWeight: "800",
+    marginTop: 2,
+  },
+
+  taxEditor: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#DED8E3",
+  },
+
+  taxToggle: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#AAA2B2",
+    backgroundColor: "#ECE9EF",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+
+  taxToggleEnabled: {
+    borderColor: "#6F35B5",
+    backgroundColor: "rgba(111, 53, 181, 0.10)",
+  },
+
+  taxToggleText: {
+    color: "#8A8190",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+
+  taxToggleTextEnabled: {
+    color: "#6F35B5",
+  },
+
+  taxRateWrap: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#CFC7D8",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 8,
+    marginLeft: 2,
+  },
+
+  taxRateInput: {
+    flex: 1,
+    color: "#312A38",
+    fontSize: 13,
+    fontWeight: "900",
+    textAlign: "right",
+    paddingVertical: 6,
+    minWidth: 46,
+  },
+
+  taxPercent: {
+    color: "#8A8190",
+    fontSize: 12,
+    fontWeight: "900",
+    marginLeft: 2,
   },
 
   helperRow: {
