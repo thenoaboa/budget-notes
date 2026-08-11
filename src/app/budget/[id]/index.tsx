@@ -1629,13 +1629,13 @@ const styles = StyleSheet.create({
   },
 
   planSearchAddButton: {
-    alignSelf: "center",
-    width: "72%",
+    alignSelf: "stretch",
     backgroundColor: "#2ECC71",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginTop: 10,
+    marginHorizontal: 0,
     alignItems: "center",
   },
 
