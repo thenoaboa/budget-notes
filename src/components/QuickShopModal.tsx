@@ -186,8 +186,36 @@ export function QuickShopModal({
     );
   }
 
-  function deleteItem(itemId: string) {
-    setItems((current) => current.filter((item) => item.id !== itemId));
+  function confirmDeleteItem(itemId: string) {
+    const deleteConfirmedItem = () => {
+      setItems((current) => current.filter((item) => item.id !== itemId));
+    };
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Delete this price?");
+
+      if (confirmed) {
+        deleteConfirmedItem();
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      "Delete price?",
+      "Are you sure you want to remove this price from Quick Shop?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: deleteConfirmedItem,
+        },
+      ],
+    );
   }
 
   function renderLeftActions(item: QuickShopItem) {
@@ -209,7 +237,7 @@ export function QuickShopModal({
     return (
       <Pressable
         style={styles.deleteAction}
-        onPressIn={() => deleteItem(itemId)}
+        onPress={() => confirmDeleteItem(itemId)}
       >
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
