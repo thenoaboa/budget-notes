@@ -43,10 +43,12 @@ export function QuickShopModal({
   const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
   const [draftReady, setDraftReady] = useState(false);
+  const [showWebKeypad, setShowWebKeypad] = useState(false);
 
   useEffect(() => {
     if (!visible) {
       setDraftReady(false);
+      setShowWebKeypad(false);
       return;
     }
 
@@ -362,7 +364,16 @@ export function QuickShopModal({
           onPress={Keyboard.dismiss}
         />
 
-        <Pressable style={styles.modalCard} onPress={Keyboard.dismiss}>
+        <Pressable
+          style={styles.modalCard}
+          onPress={() => {
+            Keyboard.dismiss();
+
+            if (Platform.OS === "web") {
+              setShowWebKeypad(false);
+            }
+          }}
+        >
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>Quick Shop</Text>
@@ -382,7 +393,10 @@ export function QuickShopModal({
             </Pressable>
           </View>
 
-          <View style={styles.receipt}>
+          <Pressable
+            style={styles.receipt}
+            onPress={(event) => event.stopPropagation?.()}
+          >
             <Text style={styles.receiptTitle}>RECEIPT</Text>
 
             <View style={styles.receiptDivider} />
@@ -427,10 +441,15 @@ export function QuickShopModal({
 
             <Pressable
               style={styles.activePriceRow}
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  inputRef.current?.focus();
+              onPress={(event) => {
+                event.stopPropagation?.();
+
+                if (Platform.OS === "web") {
+                  setShowWebKeypad(true);
+                  return;
                 }
+
+                inputRef.current?.focus();
               }}
             >
               <Text style={styles.activeIndicator}>›</Text>
@@ -455,7 +474,7 @@ export function QuickShopModal({
                 )}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           <View style={styles.helperRow}>
             <Text style={styles.helperText}>Type 489 for $4.89</Text>
@@ -504,8 +523,11 @@ export function QuickShopModal({
             </Pressable>
           </View>
 
-          {Platform.OS === "web" ? (
-            <View style={styles.webKeypad}>
+          {Platform.OS === "web" && showWebKeypad ? (
+            <Pressable
+              style={styles.webKeypad}
+              onPress={(event) => event.stopPropagation?.()}
+            >
               {[
                 ["1", "2", "3"],
                 ["4", "5", "6"],
@@ -571,8 +593,8 @@ export function QuickShopModal({
                   <Text style={styles.webNextKeyText}>↵</Text>
                 </Pressable>
               </View>
-            </View>
-          ) : (
+            </Pressable>
+          ) : Platform.OS !== "web" ? (
             <TextInput
               ref={inputRef}
               value={currentDigits}
@@ -589,7 +611,7 @@ export function QuickShopModal({
               contextMenuHidden
               maxLength={9}
             />
-          )}
+          ) : null}
         </Pressable>
 
         {Platform.OS === "ios" && (
