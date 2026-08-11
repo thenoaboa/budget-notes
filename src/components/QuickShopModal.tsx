@@ -387,6 +387,10 @@ export function QuickShopModal({
             onBlur={() => {
               if (Platform.OS === "web" && currentDigits) {
                 addCurrentPrice();
+
+                setTimeout(() => {
+                  inputRef.current?.focus();
+                }, 50);
               }
             }}
             inputAccessoryViewID={
