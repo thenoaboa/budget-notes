@@ -298,7 +298,7 @@ export default function SpendingScreen() {
             <Text style={styles.emptyText}>
               {searchQuery.trim()
                 ? "Try searching by title, item, amount, or total."
-                : "Create a spending note when you want a clearer picture before spending."}
+                : "Create a budget note when you want a clearer picture before spending."}
             </Text>
           </View>
         )}
