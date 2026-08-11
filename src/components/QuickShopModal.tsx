@@ -14,6 +14,7 @@ import {
     View,
 } from "react-native";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Swipeable } from "react-native-gesture-handler";
 import {
     clearQuickShopDraft,
@@ -30,6 +31,14 @@ type QuickShopModalProps = {
 };
 
 const INPUT_ACCESSORY_ID = "quick-shop-number-pad";
+const QUICK_SHOP_HISTORY_KEY = "quick-shop-history-v1";
+
+type QuickShopHistoryEntry = {
+  id: string;
+  createdAt: string;
+  items: QuickShopItem[];
+  total: number;
+};
 
 export function QuickShopModal({
   visible,
@@ -49,8 +58,83 @@ export function QuickShopModal({
     previousAmount: string;
   } | null>(null);
 
+  const [lastDeleted, setLastDeleted] = useState<{
+    item: QuickShopItem;
+    index: number;
+  } | null>(null);
+
   const [replaceOnNextDigit, setReplaceOnNextDigit] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<QuickShopHistoryEntry[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(
+    null,
+  );
+
+  async function loadHistory() {
+    try {
+      const raw = await AsyncStorage.getItem(QUICK_SHOP_HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      setHistory(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      setHistory([]);
+    }
+  }
+
+  async function writeHistory(nextHistory: QuickShopHistoryEntry[]) {
+    setHistory(nextHistory);
+    await AsyncStorage.setItem(
+      QUICK_SHOP_HISTORY_KEY,
+      JSON.stringify(nextHistory),
+    );
+  }
+
+  async function addToHistory(historyItems: QuickShopItem[]) {
+    if (historyItems.length === 0) return;
+
+    const historyTotal = historyItems.reduce((sum, item) => {
+      const value = Number(item.amount);
+      return sum + (Number.isFinite(value) ? value : 0);
+    }, 0);
+
+    const entry: QuickShopHistoryEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      createdAt: new Date().toISOString(),
+      items: historyItems,
+      total: historyTotal,
+    };
+
+    await writeHistory([entry, ...history]);
+  }
+
+  async function deleteHistoryEntry(entryId: string) {
+    const nextHistory = history.filter((entry) => entry.id !== entryId);
+    await writeHistory(nextHistory);
+
+    if (selectedHistoryId === entryId) {
+      setSelectedHistoryId(null);
+    }
+  }
+
+  function formatHistoryDate(isoDate: string) {
+    const date = new Date(isoDate);
+    const now = new Date();
+    const sameDay = date.toDateString() === now.toDateString();
+
+    if (sameDay) {
+      return `Today · ${date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })}`;
+    }
+
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
 
   useEffect(() => {
     if (!visible) {
@@ -63,6 +147,9 @@ export function QuickShopModal({
 
     async function loadDraft() {
       setDraftReady(false);
+      setShowHistory(false);
+      setSelectedHistoryId(null);
+      await loadHistory();
 
       const savedDraft = await loadQuickShopDraft();
 
@@ -174,6 +261,8 @@ export function QuickShopModal({
         });
       }
 
+      setLastDeleted(null);
+
       setItems((current) =>
         current.map((item) =>
           item.id === editingItemId
@@ -195,7 +284,9 @@ export function QuickShopModal({
 
       return;
     }
+
     setLastEdit(null);
+    setLastDeleted(null);
 
     setItems((current) => [
       ...current,
@@ -241,6 +332,23 @@ export function QuickShopModal({
       return;
     }
 
+    if (lastDeleted) {
+      setItems((current) => {
+        const restoredItems = [...current];
+        const restoreIndex = Math.min(
+          Math.max(lastDeleted.index, 0),
+          restoredItems.length,
+        );
+
+        restoredItems.splice(restoreIndex, 0, lastDeleted.item);
+
+        return restoredItems;
+      });
+
+      setLastDeleted(null);
+      return;
+    }
+
     if (lastEdit) {
       setItems((current) =>
         current.map((item) =>
@@ -279,7 +387,25 @@ export function QuickShopModal({
 
   function confirmDeleteItem(itemId: string) {
     const deleteConfirmedItem = () => {
-      setItems((current) => current.filter((item) => item.id !== itemId));
+      setItems((current) => {
+        const deletedIndex = current.findIndex((item) => item.id === itemId);
+
+        if (deletedIndex === -1) {
+          return current;
+        }
+
+        const deletedItem = current[deletedIndex];
+
+        setLastDeleted({
+          item: deletedItem,
+          index: deletedIndex,
+        });
+
+        // Deleting is now the most recent undoable action.
+        setLastEdit(null);
+
+        return current.filter((item) => item.id !== itemId);
+      });
 
       if (editingItemId === itemId) {
         setEditingItemId(null);
@@ -361,6 +487,7 @@ export function QuickShopModal({
       setCurrentDigits("");
       setEditingItemId(null);
       setLastEdit(null);
+      setLastDeleted(null);
     }
 
     if (Platform.OS === "web") {
@@ -394,24 +521,52 @@ export function QuickShopModal({
   }
 
   async function handleDiscard() {
-    const finalPrices =
-      currentDigits.length > 0 && !editingItemId
-        ? [...items.map((item) => item.amount), digitsToAmount(currentDigits)]
-        : items.map((item) => item.amount);
+    const historyItems = [...items];
 
-    if (finalPrices.length === 0) {
+    if (currentDigits.length > 0 && !editingItemId) {
+      historyItems.push({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        amount: digitsToAmount(currentDigits),
+        inCart: false,
+      });
+    }
+
+    if (historyItems.length === 0) {
       return;
     }
 
     Keyboard.dismiss();
 
-    await onDiscard(finalPrices);
+    // Discard now means: archive this Quick Shop in History, then clear the active shop.
+    await addToHistory(historyItems);
+    await onDiscard(historyItems.map((item) => item.amount));
     await clearQuickShopDraft();
 
     setItems([]);
     setCurrentDigits("");
     setEditingItemId(null);
     setLastEdit(null);
+    setLastDeleted(null);
+    setReplaceOnNextDigit(false);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+  }
+
+  function openHistory() {
+    Keyboard.dismiss();
+    setSelectedHistoryId(null);
+    setShowHistory(true);
+  }
+
+  function closeHistory() {
+    setSelectedHistoryId(null);
+    setShowHistory(false);
+
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   }
 
   function handleClose() {
@@ -440,185 +595,319 @@ export function QuickShopModal({
         <Pressable style={styles.modalCard} onPress={Keyboard.dismiss}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Quick Shop</Text>
-              <Text style={styles.subtitle}>Enter prices as you shop.</Text>
+              <Text style={styles.title}>
+                {showHistory ? "History" : "Quick Shop"}
+              </Text>
+              <Text style={styles.subtitle}>
+                {showHistory
+                  ? "Your past Quick Shops."
+                  : "Enter prices as you shop."}
+              </Text>
             </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-              onPress={handleClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close Quick Shop"
-            >
-              <Text style={styles.closeButtonText}>×</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.receipt}>
-            <Text style={styles.receiptTitle}>RECEIPT</Text>
-
-            <View style={styles.receiptDivider} />
-
-            <ScrollView
-              ref={scrollRef}
-              style={styles.receiptScroll}
-              contentContainerStyle={styles.receiptContent}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {items.map((item, index) => (
-                <Swipeable
-                  key={`${item.id}-${item.inCart ?? false}`}
-                  renderLeftActions={() => renderLeftActions(item)}
-                  renderRightActions={() => renderRightActions(item.id)}
-                  onSwipeableOpen={(direction) => {
-                    if (direction === "left") {
-                      toggleItemInCart(item.id);
-                    }
-                  }}
-                  overshootLeft={false}
-                  overshootRight={false}
+            <View style={styles.headerActions}>
+              {showHistory ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.historyButton,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={closeHistory}
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to Quick Shop"
                 >
-                  <Pressable
-                    style={[
-                      styles.priceRow,
-                      editingItemId === item.id && styles.priceRowEditing,
-                    ]}
-                    onPress={(event) => {
-                      event.stopPropagation?.();
-                      startEditingItem(item);
-                    }}
-                  >
-                    <Text style={styles.priceNumber}>
-                      {String(index + 1).padStart(2, "0")}
-                    </Text>
+                  <Text style={styles.historyButtonText}>‹</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.historyButton,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={openHistory}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Quick Shop history"
+                >
+                  <Text style={styles.receiptIcon}>▤</Text>
+                </Pressable>
+              )}
 
-                    <Text
-                      style={[
-                        styles.priceText,
-                        item.inCart && styles.priceTextInCart,
-                        editingItemId === item.id && styles.priceTextEditing,
-                      ]}
-                    >
-                      {editingItemId === item.id && currentDigits
-                        ? formatMoney(digitsToAmount(currentDigits))
-                        : formatMoney(item.amount)}
-                    </Text>
-                  </Pressable>
-                </Swipeable>
-              ))}
-            </ScrollView>
-
-            <Pressable
-              style={styles.activePriceRow}
-              onPress={() => inputRef.current?.focus()}
-            >
-              <Text style={styles.activeIndicator}>
-                {editingItemId ? "✎" : "›"}
-              </Text>
-
-              <Text style={styles.activePrice}>
-                {currentDigits ? formatMoney(currentAmount) : "$0.00"}
-              </Text>
-
-              <View style={styles.cursor} />
-            </Pressable>
-
-            <View style={styles.totalDivider} />
-
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>TOTAL</Text>
-
-              <Text style={styles.totalAmount}>
-                {formatMoney(
-                  (total + (currentDigits ? Number(currentAmount) : 0)).toFixed(
-                    2,
-                  ),
-                )}
-              </Text>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && styles.pressed,
+                ]}
+                onPress={handleClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close Quick Shop"
+              >
+                <Text style={styles.closeButtonText}>×</Text>
+              </Pressable>
             </View>
           </View>
 
-          <View style={styles.helperRow}>
-            <Text style={styles.helperText}>Type 489 for $4.89</Text>
+          {showHistory ? (
+            <View style={styles.historyPanel}>
+              {history.length === 0 ? (
+                <View style={styles.emptyHistory}>
+                  <Text style={styles.emptyHistoryTitle}>
+                    No Quick Shops yet
+                  </Text>
+                  <Text style={styles.emptyHistoryText}>
+                    Discard a Quick Shop and it will appear here.
+                  </Text>
+                </View>
+              ) : selectedHistoryId ? (
+                (() => {
+                  const selected = history.find(
+                    (entry) => entry.id === selectedHistoryId,
+                  );
+                  if (!selected) return null;
 
-            {items.length > 0 || currentDigits ? (
-              <Pressable
-                onPress={removeLastPrice}
-                style={({ pressed }) => pressed && styles.pressed}
-              >
-                <Text style={styles.undoText}>Undo</Text>
-              </Pressable>
-            ) : null}
-          </View>
+                  return (
+                    <View style={styles.historyDetail}>
+                      <Pressable onPress={() => setSelectedHistoryId(null)}>
+                        <Text style={styles.historyBackText}>
+                          ‹ All History
+                        </Text>
+                      </Pressable>
 
-          <View style={styles.actionRow}>
-            <Pressable
-              disabled={items.length === 0 && !currentDigits}
-              style={({ pressed }) => [
-                styles.discardButton,
-                items.length === 0 &&
-                  !currentDigits &&
-                  styles.discardButtonDisabled,
-                pressed &&
-                  (items.length > 0 || currentDigits) &&
-                  styles.pressed,
-              ]}
-              onPress={handleDiscard}
-            >
-              <Text style={styles.discardButtonText}>Discard</Text>
-            </Pressable>
+                      <Text style={styles.historyDetailDate}>
+                        {formatHistoryDate(selected.createdAt)}
+                      </Text>
 
-            <Pressable
-              disabled={items.length === 0 && !currentDigits}
-              style={({ pressed }) => [
-                styles.saveButton,
-                items.length === 0 &&
-                  !currentDigits &&
-                  styles.saveButtonDisabled,
-                pressed &&
-                  (items.length > 0 || currentDigits) &&
-                  styles.pressed,
-              ]}
-              onPress={handleSave}
-            >
-              <Text style={styles.saveButtonText}>Save as Budget</Text>
-            </Pressable>
-          </View>
+                      <ScrollView style={styles.historyDetailScroll}>
+                        {selected.items.map((item, index) => (
+                          <View key={item.id} style={styles.historyPriceRow}>
+                            <Text style={styles.historyPriceNumber}>
+                              {String(index + 1).padStart(2, "0")}
+                            </Text>
+                            <Text style={styles.historyPriceText}>
+                              {formatMoney(item.amount)}
+                            </Text>
+                          </View>
+                        ))}
+                      </ScrollView>
 
-          <TextInput
-            ref={inputRef}
-            value={currentDigits}
-            onChangeText={handleChangeText}
-            keyboardType={Platform.OS === "web" ? "default" : "number-pad"}
-            inputMode={Platform.OS === "web" ? "numeric" : undefined}
-            returnKeyType="next"
-            enterKeyHint="next"
-            blurOnSubmit={false}
-            onSubmitEditing={addCurrentPrice}
-            onBlur={() => {
-              if (Platform.OS === "web" && currentDigits) {
-                addCurrentPrice();
+                      <View style={styles.historyTotalRow}>
+                        <Text style={styles.historyTotalLabel}>TOTAL</Text>
+                        <Text style={styles.historyTotalAmount}>
+                          {formatMoney(selected.total.toFixed(2))}
+                        </Text>
+                      </View>
 
-                setTimeout(() => {
-                  inputRef.current?.focus();
-                }, 50);
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.deleteHistoryButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() => void deleteHistoryEntry(selected.id)}
+                      >
+                        <Text style={styles.deleteHistoryButtonText}>
+                          Delete from History
+                        </Text>
+                      </Pressable>
+                    </View>
+                  );
+                })()
+              ) : (
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {history.map((entry) => (
+                    <Pressable
+                      key={entry.id}
+                      style={({ pressed }) => [
+                        styles.historyRow,
+                        pressed && styles.pressed,
+                      ]}
+                      onPress={() => setSelectedHistoryId(entry.id)}
+                    >
+                      <View>
+                        <Text style={styles.historyDate}>
+                          {formatHistoryDate(entry.createdAt)}
+                        </Text>
+                        <Text style={styles.historyItemCount}>
+                          {entry.items.length}{" "}
+                          {entry.items.length === 1 ? "price" : "prices"}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.historyAmount}>
+                        {formatMoney(entry.total.toFixed(2))}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          ) : (
+            <>
+              <View style={styles.receipt}>
+                <Text style={styles.receiptTitle}>RECEIPT</Text>
+
+                <View style={styles.receiptDivider} />
+
+                <ScrollView
+                  ref={scrollRef}
+                  style={styles.receiptScroll}
+                  contentContainerStyle={styles.receiptContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  {items.map((item, index) => (
+                    <Swipeable
+                      key={`${item.id}-${item.inCart ?? false}`}
+                      renderLeftActions={() => renderLeftActions(item)}
+                      renderRightActions={() => renderRightActions(item.id)}
+                      onSwipeableOpen={(direction) => {
+                        if (direction === "left") {
+                          toggleItemInCart(item.id);
+                        }
+                      }}
+                      overshootLeft={false}
+                      overshootRight={false}
+                    >
+                      <Pressable
+                        style={[
+                          styles.priceRow,
+                          editingItemId === item.id && styles.priceRowEditing,
+                        ]}
+                        onPress={(event) => {
+                          event.stopPropagation?.();
+                          startEditingItem(item);
+                        }}
+                      >
+                        <Text style={styles.priceNumber}>
+                          {String(index + 1).padStart(2, "0")}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.priceText,
+                            item.inCart && styles.priceTextInCart,
+                            editingItemId === item.id &&
+                              styles.priceTextEditing,
+                          ]}
+                        >
+                          {editingItemId === item.id && currentDigits
+                            ? formatMoney(digitsToAmount(currentDigits))
+                            : formatMoney(item.amount)}
+                        </Text>
+                      </Pressable>
+                    </Swipeable>
+                  ))}
+                </ScrollView>
+
+                <Pressable
+                  style={styles.activePriceRow}
+                  onPress={() => inputRef.current?.focus()}
+                >
+                  <Text style={styles.activeIndicator}>
+                    {editingItemId ? "✎" : "›"}
+                  </Text>
+
+                  <Text style={styles.activePrice}>
+                    {currentDigits ? formatMoney(currentAmount) : "$0.00"}
+                  </Text>
+
+                  <View style={styles.cursor} />
+                </Pressable>
+
+                <View style={styles.totalDivider} />
+
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>TOTAL</Text>
+
+                  <Text style={styles.totalAmount}>
+                    {formatMoney(
+                      (
+                        total + (currentDigits ? Number(currentAmount) : 0)
+                      ).toFixed(2),
+                    )}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.helperRow}>
+                <Text style={styles.helperText}>Type 489 for $4.89</Text>
+
+                {items.length > 0 || currentDigits ? (
+                  <Pressable
+                    onPress={removeLastPrice}
+                    style={({ pressed }) => pressed && styles.pressed}
+                  >
+                    <Text style={styles.undoText}>Undo</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              <View style={styles.actionRow}>
+                <Pressable
+                  disabled={items.length === 0 && !currentDigits}
+                  style={({ pressed }) => [
+                    styles.discardButton,
+                    items.length === 0 &&
+                      !currentDigits &&
+                      styles.discardButtonDisabled,
+                    pressed &&
+                      (items.length > 0 || currentDigits) &&
+                      styles.pressed,
+                  ]}
+                  onPress={handleDiscard}
+                >
+                  <Text style={styles.discardButtonText}>Discard</Text>
+                </Pressable>
+
+                <Pressable
+                  disabled={items.length === 0 && !currentDigits}
+                  style={({ pressed }) => [
+                    styles.saveButton,
+                    items.length === 0 &&
+                      !currentDigits &&
+                      styles.saveButtonDisabled,
+                    pressed &&
+                      (items.length > 0 || currentDigits) &&
+                      styles.pressed,
+                  ]}
+                  onPress={handleSave}
+                >
+                  <Text style={styles.saveButtonText}>Save as Budget</Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+
+          {!showHistory && (
+            <TextInput
+              ref={inputRef}
+              value={currentDigits}
+              onChangeText={handleChangeText}
+              keyboardType={Platform.OS === "web" ? "default" : "number-pad"}
+              inputMode={Platform.OS === "web" ? "numeric" : undefined}
+              returnKeyType="next"
+              enterKeyHint="next"
+              blurOnSubmit={false}
+              onSubmitEditing={addCurrentPrice}
+              onBlur={() => {
+                if (Platform.OS === "web" && currentDigits) {
+                  addCurrentPrice();
+
+                  setTimeout(() => {
+                    inputRef.current?.focus();
+                  }, 50);
+                }
+              }}
+              inputAccessoryViewID={
+                Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
               }
-            }}
-            inputAccessoryViewID={
-              Platform.OS === "ios" ? INPUT_ACCESSORY_ID : undefined
-            }
-            style={styles.hiddenInput}
-            caretHidden
-            contextMenuHidden
-            maxLength={9}
-          />
+              style={styles.hiddenInput}
+              caretHidden
+              contextMenuHidden
+              maxLength={9}
+            />
+          )}
         </Pressable>
 
-        {Platform.OS === "ios" && (
+        {Platform.OS === "ios" && !showHistory && (
           <InputAccessoryView nativeID={INPUT_ACCESSORY_ID}>
             <View style={styles.keyboardAccessory}>
               <Text style={styles.keyboardHint}>Next price</Text>
@@ -684,6 +973,177 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     marginTop: 3,
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  historyButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#243342",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  historyButtonText: {
+    color: "#CAD3DD",
+    fontSize: 28,
+    fontWeight: "800",
+    lineHeight: 30,
+  },
+
+  receiptIcon: {
+    color: "#CAD3DD",
+    fontSize: 20,
+    fontWeight: "900",
+  },
+
+  historyPanel: {
+    backgroundColor: "#F4F4F4",
+    borderRadius: 18,
+    padding: 16,
+    minHeight: 330,
+    maxHeight: 520,
+  },
+
+  emptyHistory: {
+    flex: 1,
+    minHeight: 280,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+
+  emptyHistoryTitle: {
+    color: "#312A38",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  emptyHistoryText: {
+    color: "#8A8190",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 6,
+  },
+
+  historyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#D8D2DD",
+  },
+
+  historyDate: {
+    color: "#312A38",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+
+  historyItemCount: {
+    color: "#8A8190",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 3,
+  },
+
+  historyAmount: {
+    color: "#6F35B5",
+    fontSize: 20,
+    fontWeight: "900",
+    fontVariant: ["tabular-nums"],
+  },
+
+  historyDetail: {
+    minHeight: 300,
+  },
+
+  historyBackText: {
+    color: "#6F35B5",
+    fontSize: 14,
+    fontWeight: "900",
+    marginBottom: 10,
+  },
+
+  historyDetailDate: {
+    color: "#554D61",
+    fontSize: 13,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  historyDetailScroll: {
+    maxHeight: 250,
+  },
+
+  historyPriceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 34,
+  },
+
+  historyPriceNumber: {
+    width: 32,
+    color: "#AAA2B2",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  historyPriceText: {
+    color: "#312A38",
+    fontSize: 18,
+    fontWeight: "800",
+    fontVariant: ["tabular-nums"],
+  },
+
+  historyTotalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#AAA2B2",
+    paddingTop: 12,
+    marginTop: 10,
+  },
+
+  historyTotalLabel: {
+    color: "#554D61",
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+
+  historyTotalAmount: {
+    color: "#6F35B5",
+    fontSize: 24,
+    fontWeight: "900",
+    fontVariant: ["tabular-nums"],
+  },
+
+  deleteHistoryButton: {
+    marginTop: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+    backgroundColor: "#3A1C1C",
+    paddingVertical: 11,
+    alignItems: "center",
+  },
+
+  deleteHistoryButtonText: {
+    color: "#FF6B6B",
+    fontSize: 13,
+    fontWeight: "900",
   },
 
   closeButton: {
