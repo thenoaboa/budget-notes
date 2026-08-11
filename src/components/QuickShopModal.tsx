@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   },
 
   receipt: {
-    backgroundColor: "#F4F0E8",
+    backgroundColor: "#F4F4F4",
     borderRadius: 18,
     paddingHorizontal: 18,
     paddingTop: 18,
