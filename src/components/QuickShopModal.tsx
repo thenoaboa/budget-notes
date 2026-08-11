@@ -560,6 +560,21 @@ export function QuickShopModal({
     async function doRestore() {
       Keyboard.dismiss();
 
+      // If Quick Shop currently has data, archive it to History before replacing it.
+      const currentHistoryItems = [...items];
+
+      if (currentDigits.length > 0 && !editingItemId) {
+        currentHistoryItems.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          amount: digitsToAmount(currentDigits),
+          inCart: false,
+        });
+      }
+
+      if (currentHistoryItems.length > 0) {
+        await addToHistory(currentHistoryItems);
+      }
+
       const restoredItems = entry.items.map((item) => ({
         ...item,
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -590,7 +605,7 @@ export function QuickShopModal({
     }
 
     const message =
-      "Quick Shop already has prices in it. Restoring this history item will replace your current Quick Shop.";
+      "Quick Shop already has prices in it. Your current Quick Shop will be saved to History before this one is restored.";
 
     if (Platform.OS === "web") {
       const confirmed = window.confirm(`Restore Quick Shop?\n\n${message}`);
@@ -758,29 +773,31 @@ export function QuickShopModal({
                         </Text>
                       </View>
 
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.restoreHistoryButton,
-                          pressed && styles.pressed,
-                        ]}
-                        onPress={() => void restoreHistoryEntry(selected)}
-                      >
-                        <Text style={styles.restoreHistoryButtonText}>
-                          Restore to Quick Shop
-                        </Text>
-                      </Pressable>
+                      <View style={styles.historyActionRow}>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.deleteHistoryButton,
+                            pressed && styles.pressed,
+                          ]}
+                          onPress={() => void deleteHistoryEntry(selected.id)}
+                        >
+                          <Text style={styles.deleteHistoryButtonText}>
+                            Delete
+                          </Text>
+                        </Pressable>
 
-                      <Pressable
-                        style={({ pressed }) => [
-                          styles.deleteHistoryButton,
-                          pressed && styles.pressed,
-                        ]}
-                        onPress={() => void deleteHistoryEntry(selected.id)}
-                      >
-                        <Text style={styles.deleteHistoryButtonText}>
-                          Delete from History
-                        </Text>
-                      </Pressable>
+                        <Pressable
+                          style={({ pressed }) => [
+                            styles.restoreHistoryButton,
+                            pressed && styles.pressed,
+                          ]}
+                          onPress={() => void restoreHistoryEntry(selected)}
+                        >
+                          <Text style={styles.restoreHistoryButtonText}>
+                            Restore
+                          </Text>
+                        </Pressable>
+                      </View>
                     </View>
                   );
                 })()
@@ -1205,32 +1222,40 @@ const styles = StyleSheet.create({
     fontVariant: ["tabular-nums"],
   },
 
-  restoreHistoryButton: {
+  historyActionRow: {
+    flexDirection: "row",
+    gap: 10,
     marginTop: 16,
-    borderRadius: 12,
-    backgroundColor: "#2ECC71",
-    paddingVertical: 11,
-    alignItems: "center",
-  },
-
-  restoreHistoryButtonText: {
-    color: "#101820",
-    fontSize: 13,
-    fontWeight: "900",
   },
 
   deleteHistoryButton: {
-    marginTop: 16,
+    flex: 1,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#FF6B6B",
     backgroundColor: "#3A1C1C",
     paddingVertical: 11,
     alignItems: "center",
+    justifyContent: "center",
   },
 
   deleteHistoryButtonText: {
     color: "#FF6B6B",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+
+  restoreHistoryButton: {
+    flex: 1,
+    borderRadius: 12,
+    backgroundColor: "#2ECC71",
+    paddingVertical: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  restoreHistoryButtonText: {
+    color: "#101820",
     fontSize: 13,
     fontWeight: "900",
   },
