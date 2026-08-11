@@ -628,7 +628,7 @@ export function QuickShopModal({
                   accessibilityRole="button"
                   accessibilityLabel="Open Quick Shop history"
                 >
-                  <Text style={styles.receiptIcon}>▱</Text>
+                  <Text style={styles.receiptIcon}>▤</Text>
                 </Pressable>
               )}
 
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     marginBottom: 16,
   },
 
@@ -978,12 +978,17 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 8,
+    marginLeft: 20,
   },
 
   historyButton: {
-    width: 32,
+    width: 36,
     height: 36,
+    borderRadius: 18,
+    backgroundColor: "#243342",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -997,9 +1002,8 @@ const styles = StyleSheet.create({
 
   receiptIcon: {
     color: "#CAD3DD",
-    fontSize: 28,
-    fontWeight: "700",
-    lineHeight: 30,
+    fontSize: 20,
+    fontWeight: "900",
   },
 
   historyPanel: {
