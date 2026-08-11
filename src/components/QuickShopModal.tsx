@@ -43,6 +43,7 @@ export function QuickShopModal({
   const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [replaceOnNextDigit, setReplaceOnNextDigit] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
@@ -132,6 +133,21 @@ export function QuickShopModal({
   function handleChangeText(value: string) {
     const digitsOnly = value.replace(/\D/g, "");
 
+    if (editingItemId && replaceOnNextDigit) {
+      // If the user entered a new digit, replace the loaded old price.
+      if (digitsOnly.length > currentDigits.length) {
+        const newDigits = digitsOnly.slice(currentDigits.length);
+
+        setCurrentDigits(newDigits);
+        setReplaceOnNextDigit(false);
+        return;
+      }
+
+      // Backspace still edits the loaded value normally.
+      setCurrentDigits(digitsOnly);
+      return;
+    }
+
     setCurrentDigits(digitsOnly);
   }
 
@@ -155,6 +171,7 @@ export function QuickShopModal({
       );
 
       setEditingItemId(null);
+      setReplaceOnNextDigit(false);
       setCurrentDigits("");
 
       requestAnimationFrame(() => {
@@ -191,17 +208,19 @@ export function QuickShopModal({
       return;
     }
 
-    // On iPhone Safari/PWA, focus must happen directly from the user's tap.
+    // Must happen directly from the tap for iPhone Safari/PWA.
     inputRef.current?.focus();
 
     setEditingItemId(item.id);
     setCurrentDigits(String(cents));
+    setReplaceOnNextDigit(true);
   }
 
   function removeLastPrice() {
     if (currentDigits) {
       setCurrentDigits("");
       setEditingItemId(null);
+      setReplaceOnNextDigit(false);
       inputRef.current?.focus();
       return;
     }
@@ -232,6 +251,7 @@ export function QuickShopModal({
 
       if (editingItemId === itemId) {
         setEditingItemId(null);
+        setReplaceOnNextDigit(false);
         setCurrentDigits("");
       }
     };
