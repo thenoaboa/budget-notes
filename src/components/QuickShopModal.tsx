@@ -538,8 +538,8 @@ export function QuickShopModal({
     Keyboard.dismiss();
 
     // Discard now means: archive this Quick Shop in History, then clear the active shop.
+    // It stays inside Quick Shop and does not send anything to Recently Deleted.
     await addToHistory(historyItems);
-    await onDiscard(historyItems.map((item) => item.amount));
     await clearQuickShopDraft();
 
     setItems([]);
@@ -552,6 +552,68 @@ export function QuickShopModal({
     requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
+  }
+
+  async function restoreHistoryEntry(entry: QuickShopHistoryEntry) {
+    const hasActiveQuickShop = items.length > 0 || currentDigits.length > 0;
+
+    async function doRestore() {
+      Keyboard.dismiss();
+
+      const restoredItems = entry.items.map((item) => ({
+        ...item,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      }));
+
+      setItems(restoredItems);
+      setCurrentDigits("");
+      setEditingItemId(null);
+      setLastEdit(null);
+      setLastDeleted(null);
+      setReplaceOnNextDigit(false);
+      setSelectedHistoryId(null);
+      setShowHistory(false);
+
+      await saveQuickShopDraft({
+        items: restoredItems,
+        currentDigits: "",
+      });
+
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+      });
+    }
+
+    if (!hasActiveQuickShop) {
+      await doRestore();
+      return;
+    }
+
+    const message =
+      "Quick Shop already has prices in it. Restoring this history item will replace your current Quick Shop.";
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(`Restore Quick Shop?\n\n${message}`);
+
+      if (confirmed) {
+        await doRestore();
+      }
+
+      return;
+    }
+
+    Alert.alert("Restore Quick Shop?", message, [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Restore",
+        onPress: () => {
+          void doRestore();
+        },
+      },
+    ]);
   }
 
   function openHistory() {
@@ -695,6 +757,18 @@ export function QuickShopModal({
                           {formatMoney(selected.total.toFixed(2))}
                         </Text>
                       </View>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.restoreHistoryButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() => void restoreHistoryEntry(selected)}
+                      >
+                        <Text style={styles.restoreHistoryButtonText}>
+                          Restore to Quick Shop
+                        </Text>
+                      </Pressable>
 
                       <Pressable
                         style={({ pressed }) => [
@@ -1129,6 +1203,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "900",
     fontVariant: ["tabular-nums"],
+  },
+
+  restoreHistoryButton: {
+    marginTop: 16,
+    borderRadius: 12,
+    backgroundColor: "#2ECC71",
+    paddingVertical: 11,
+    alignItems: "center",
+  },
+
+  restoreHistoryButtonText: {
+    color: "#101820",
+    fontSize: 13,
+    fontWeight: "900",
   },
 
   deleteHistoryButton: {
