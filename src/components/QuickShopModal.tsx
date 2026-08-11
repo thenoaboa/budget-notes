@@ -499,40 +499,6 @@ export function QuickShopModal({
             ) : null}
           </View>
 
-          <View style={styles.actionRow}>
-            <Pressable
-              disabled={items.length === 0 && !currentDigits}
-              style={({ pressed }) => [
-                styles.discardButton,
-                items.length === 0 &&
-                  !currentDigits &&
-                  styles.discardButtonDisabled,
-                pressed &&
-                  (items.length > 0 || currentDigits) &&
-                  styles.pressed,
-              ]}
-              onPress={handleDiscard}
-            >
-              <Text style={styles.discardButtonText}>Discard</Text>
-            </Pressable>
-
-            <Pressable
-              disabled={items.length === 0 && !currentDigits}
-              style={({ pressed }) => [
-                styles.saveButton,
-                items.length === 0 &&
-                  !currentDigits &&
-                  styles.saveButtonDisabled,
-                pressed &&
-                  (items.length > 0 || currentDigits) &&
-                  styles.pressed,
-              ]}
-              onPress={handleSave}
-            >
-              <Text style={styles.saveButtonText}>Save as Budget</Text>
-            </Pressable>
-          </View>
-
           {Platform.OS === "web" && showWebKeypad ? (
             <Pressable
               style={styles.webKeypad}
@@ -622,6 +588,40 @@ export function QuickShopModal({
               maxLength={9}
             />
           ) : null}
+
+          <View style={styles.actionRow}>
+            <Pressable
+              disabled={items.length === 0 && !currentDigits}
+              style={({ pressed }) => [
+                styles.discardButton,
+                items.length === 0 &&
+                  !currentDigits &&
+                  styles.discardButtonDisabled,
+                pressed &&
+                  (items.length > 0 || currentDigits) &&
+                  styles.pressed,
+              ]}
+              onPress={handleDiscard}
+            >
+              <Text style={styles.discardButtonText}>Discard</Text>
+            </Pressable>
+
+            <Pressable
+              disabled={items.length === 0 && !currentDigits}
+              style={({ pressed }) => [
+                styles.saveButton,
+                items.length === 0 &&
+                  !currentDigits &&
+                  styles.saveButtonDisabled,
+                pressed &&
+                  (items.length > 0 || currentDigits) &&
+                  styles.pressed,
+              ]}
+              onPress={handleSave}
+            >
+              <Text style={styles.saveButtonText}>Save as Budget</Text>
+            </Pressable>
+          </View>
         </Pressable>
 
         {Platform.OS === "ios" && (
@@ -905,6 +905,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     flexShrink: 0,
+    marginTop: 10,
   },
 
   discardButton: {
