@@ -43,6 +43,12 @@ export function QuickShopModal({
   const [items, setItems] = useState<QuickShopItem[]>([]);
   const [currentDigits, setCurrentDigits] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  const [lastEdit, setLastEdit] = useState<{
+    itemId: string;
+    previousAmount: string;
+  } | null>(null);
+
   const [replaceOnNextDigit, setReplaceOnNextDigit] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
 
@@ -159,6 +165,15 @@ export function QuickShopModal({
     const amount = digitsToAmount(currentDigits);
 
     if (editingItemId) {
+      const itemBeingEdited = items.find((item) => item.id === editingItemId);
+
+      if (itemBeingEdited) {
+        setLastEdit({
+          itemId: editingItemId,
+          previousAmount: itemBeingEdited.amount,
+        });
+      }
+
       setItems((current) =>
         current.map((item) =>
           item.id === editingItemId
@@ -180,6 +195,7 @@ export function QuickShopModal({
 
       return;
     }
+    setLastEdit(null);
 
     setItems((current) => [
       ...current,
@@ -222,6 +238,22 @@ export function QuickShopModal({
       setEditingItemId(null);
       setReplaceOnNextDigit(false);
       inputRef.current?.focus();
+      return;
+    }
+
+    if (lastEdit) {
+      setItems((current) =>
+        current.map((item) =>
+          item.id === lastEdit.itemId
+            ? {
+                ...item,
+                amount: lastEdit.previousAmount,
+              }
+            : item,
+        ),
+      );
+
+      setLastEdit(null);
       return;
     }
 
@@ -328,6 +360,7 @@ export function QuickShopModal({
       setItems([]);
       setCurrentDigits("");
       setEditingItemId(null);
+      setLastEdit(null);
     }
 
     if (Platform.OS === "web") {
@@ -378,6 +411,7 @@ export function QuickShopModal({
     setItems([]);
     setCurrentDigits("");
     setEditingItemId(null);
+    setLastEdit(null);
   }
 
   function handleClose() {
