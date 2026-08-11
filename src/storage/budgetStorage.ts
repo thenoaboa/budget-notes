@@ -301,6 +301,76 @@ export async function restoreDeletedQuickShopById(
   };
 }
 
+export async function returnBudgetToQuickShopById(
+  budgetId: string,
+  discardCurrentDraft: boolean,
+) {
+  const budgets = await loadBudgets();
+
+  const budgetToReturn = budgets.find(
+    (budget) => budget.id === budgetId && budget.origin === "quickShop",
+  );
+
+  if (!budgetToReturn) {
+    return {
+      returned: false,
+    };
+  }
+
+  let deletedBudgets = await loadDeletedBudgets();
+
+  if (discardCurrentDraft) {
+    const currentDraft = await loadQuickShopDraft();
+    const currentPrices = quickShopDraftToPrices(currentDraft);
+
+    if (currentPrices.length > 0) {
+      const discardedCurrentQuickShop =
+        buildQuickShopDeletedBudget(currentPrices);
+
+      deletedBudgets = [discardedCurrentQuickShop, ...deletedBudgets];
+
+      await AsyncStorage.setItem(
+        DELETED_BUDGETS_STORAGE_KEY,
+        JSON.stringify(deletedBudgets),
+      );
+    }
+  }
+
+  const returnedPrices = [...budgetToReturn.spendingItems]
+    .reverse()
+    .map((item) => {
+      const amount = Number(item.amount);
+      const quantity = item.quantity || 1;
+
+      if (!Number.isFinite(amount)) {
+        return null;
+      }
+
+      return (amount * quantity).toFixed(2);
+    })
+    .filter((amount): amount is string => amount !== null);
+
+  if (returnedPrices.length === 0) {
+    return {
+      returned: false,
+    };
+  }
+
+  await saveQuickShopDraft({
+    prices: returnedPrices,
+    currentDigits: "",
+  });
+
+  const updatedBudgets = budgets.filter((budget) => budget.id !== budgetId);
+
+  await saveBudgets(updatedBudgets);
+  await requestQuickShopOpenOnHome();
+
+  return {
+    returned: true,
+  };
+}
+
 export async function permanentlyDeleteBudgetById(budgetId: string) {
   const deletedBudgets = await loadDeletedBudgets();
 
@@ -428,6 +498,7 @@ export async function createBudgetFromQuickShop(prices: string[]) {
     taxRate: "8.25",
     createdAt: now,
     updatedAt: now,
+    origin: "quickShop",
   };
 
   await saveBudgets([newBudget, ...budgets]);

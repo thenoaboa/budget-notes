@@ -19,6 +19,7 @@ type Props = {
   onDelete: () => void;
   onRename: (newTitle: string) => void;
   onDuplicate: () => void;
+  onReturnToQuickShop?: () => void;
 };
 
 type BudgetCardStats = {
@@ -135,6 +136,7 @@ export function NoteCard({
   onDelete,
   onRename,
   onDuplicate,
+  onReturnToQuickShop,
 }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
 
@@ -171,6 +173,11 @@ export function NoteCard({
   function handleCopyFromMenu() {
     setShowMenu(false);
     setShowCopyConfirm(true);
+  }
+
+  function handleReturnToQuickShopFromMenu() {
+    setShowMenu(false);
+    onReturnToQuickShop?.();
   }
 
   function confirmDuplicate() {
@@ -219,6 +226,20 @@ export function NoteCard({
               >
                 <Text style={styles.menuModalText}>Copy</Text>
               </Pressable>
+
+              {budget.origin === "quickShop" && onReturnToQuickShop && (
+                <Pressable
+                  style={[
+                    styles.menuModalItem,
+                    styles.returnToQuickShopMenuItem,
+                  ]}
+                  onPress={handleReturnToQuickShopFromMenu}
+                >
+                  <Text style={styles.returnToQuickShopMenuText}>
+                    Return to Quick Shop
+                  </Text>
+                </Pressable>
+              )}
             </Pressable>
           </Pressable>
         </Modal>
@@ -699,6 +720,17 @@ const styles = StyleSheet.create({
 
   menuModalText: {
     color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  returnToQuickShopMenuItem: {
+    borderTopWidth: 1,
+    borderTopColor: "#3B4D5F",
+  },
+
+  returnToQuickShopMenuText: {
+    color: "#B56CFF",
     fontSize: 18,
     fontWeight: "900",
   },

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+    Alert,
     InputAccessoryView,
     Keyboard,
     KeyboardAvoidingView,
@@ -175,11 +176,42 @@ export function QuickShopModal({
 
     Keyboard.dismiss();
 
-    await onSave(finalPrices);
-    await clearQuickShopDraft();
+    async function confirmSave() {
+      await onSave(finalPrices);
+      await clearQuickShopDraft();
 
-    setPrices([]);
-    setCurrentDigits("");
+      setPrices([]);
+      setCurrentDigits("");
+    }
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(
+        "Save as Budget?\n\nThis will turn your Quick Shop into a regular Budget Note. You can rename the items afterward.",
+      );
+
+      if (confirmed) {
+        await confirmSave();
+      }
+
+      return;
+    }
+
+    Alert.alert(
+      "Save as Budget?",
+      "This will turn your Quick Shop into a regular Budget Note. You can rename the items afterward.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Save as Budget",
+          onPress: () => {
+            void confirmSave();
+          },
+        },
+      ],
+    );
   }
 
   async function handleDiscard() {
@@ -341,6 +373,20 @@ export function QuickShopModal({
               <Text style={styles.saveButtonText}>Save as Budget</Text>
             </Pressable>
           </View>
+
+          {Platform.OS === "web" && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.webNextButton,
+                !currentDigits && styles.returnButtonDisabled,
+                pressed && currentDigits.length > 0 && styles.pressed,
+              ]}
+              disabled={!currentDigits}
+              onPress={addCurrentPrice}
+            >
+              <Text style={styles.webNextButtonText}>Next price ↵</Text>
+            </Pressable>
+          )}
 
           <TextInput
             ref={inputRef}
@@ -605,7 +651,7 @@ const styles = StyleSheet.create({
 
   saveButton: {
     flex: 1.2,
-    backgroundColor: "#9B5DE5",
+    backgroundColor: "#2ECC71",
     borderRadius: 15,
     paddingVertical: 14,
     alignItems: "center",
@@ -617,7 +663,7 @@ const styles = StyleSheet.create({
   },
 
   saveButtonText: {
-    color: "#FFFFFF",
+    color: "#101820",
     fontSize: 14,
     fontWeight: "900",
   },
@@ -670,5 +716,20 @@ const styles = StyleSheet.create({
 
   pressed: {
     opacity: 0.7,
+  },
+
+  webNextButton: {
+    backgroundColor: "#9B5DE5",
+    borderRadius: 15,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+
+  webNextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900",
   },
 });

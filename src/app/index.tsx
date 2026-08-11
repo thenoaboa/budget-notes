@@ -4,8 +4,10 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
 import { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,6 +26,8 @@ import {
   createBudgetFromQuickShop,
   discardQuickShop,
   loadDeletedBudgets,
+  quickShopDraftHasData,
+  returnBudgetToQuickShopById,
 } from "../storage/budgetStorage";
 
 type HomeTutorialStep =
@@ -160,6 +164,60 @@ export default function SpendingScreen() {
     }, 900);
   }
 
+  async function finishReturnToQuickShop(
+    budgetId: string,
+    discardCurrentDraft: boolean,
+  ) {
+    const result = await returnBudgetToQuickShopById(
+      budgetId,
+      discardCurrentDraft,
+    );
+
+    if (!result.returned) {
+      return;
+    }
+
+    posthog?.capture("budget_returned_to_quick_shop");
+
+    router.replace("/" as any);
+  }
+
+  async function returnBudgetToQuickShop(budgetId: string) {
+    const hasCurrentDraft = await quickShopDraftHasData();
+
+    if (!hasCurrentDraft) {
+      await finishReturnToQuickShop(budgetId, false);
+      return;
+    }
+
+    const title = "Replace current Quick Shop?";
+    const message =
+      "You already have a Quick Shop in progress. Returning this budget will move your current Quick Shop to Recently Deleted.";
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(`${title}\n\n${message}`);
+
+      if (confirmed) {
+        await finishReturnToQuickShop(budgetId, true);
+      }
+
+      return;
+    }
+
+    Alert.alert(title, message, [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Replace & Return",
+        onPress: () => {
+          void finishReturnToQuickShop(budgetId, true);
+        },
+      },
+    ]);
+  }
+
   function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
     const yOffset = event.nativeEvent.contentOffset.y;
 
@@ -253,6 +311,11 @@ export default function SpendingScreen() {
             onDelete={() => confirmDeleteBudget(budget.id)}
             onRename={(newTitle) => renameBudget(budget.id, newTitle)}
             onDuplicate={() => copyBudget(budget.id)}
+            onReturnToQuickShop={
+              budget.origin === "quickShop"
+                ? () => returnBudgetToQuickShop(budget.id)
+                : undefined
+            }
           />
         ))}
 

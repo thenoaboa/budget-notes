@@ -25,6 +25,9 @@ export type Budget = {
   createdAt?: string;
   updatedAt?: string;
 
+  // Marks a normal Budget Note that originally came from Quick Shop.
+  origin?: "quickShop";
+
   salesTaxEnabled?: boolean;
   taxRate?: string;
 };

@@ -168,9 +168,13 @@ export default function DeletedBudgetsScreen() {
                     : budget.budgetName || "Untitled Budget"}
                 </Text>
 
-                {isQuickShop && (
+                {isQuickShop ? (
                   <View style={styles.quickShopBadge}>
                     <Text style={styles.quickShopBadgeText}>QUICK SHOP</Text>
+                  </View>
+                ) : (
+                  <View style={styles.budgetBadge}>
+                    <Text style={styles.budgetBadgeText}>BUDGET</Text>
                   </View>
                 )}
               </View>
@@ -307,6 +311,22 @@ const styles = StyleSheet.create({
 
   quickShopBadgeText: {
     color: "#B56CFF",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.6,
+  },
+
+  budgetBadge: {
+    backgroundColor: "#183A2A",
+    borderWidth: 1,
+    borderColor: "#2ECC71",
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+
+  budgetBadgeText: {
+    color: "#2ECC71",
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 0.6,
