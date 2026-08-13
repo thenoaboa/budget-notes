@@ -21,11 +21,7 @@ import {
     type QuickShopItem,
 } from "../storage/budgetStorage";
 
-type QuickShopProps = {
-  active?: boolean;
-  showCloseButton?: boolean;
-  embedded?: boolean;
-  onClose?: () => void;
+type GroceryQuickShopProps = {
   onSave: (prices: string[]) => void | Promise<void>;
 };
 
@@ -43,13 +39,7 @@ type QuickShopHistoryEntry = {
   total: number;
 };
 
-export function QuickShop({
-  active = true,
-  showCloseButton = false,
-  embedded = false,
-  onClose,
-  onSave,
-}: QuickShopProps) {
+export function GroceryQuickShop({ onSave }: GroceryQuickShopProps) {
   const inputRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -195,26 +185,15 @@ export function QuickShop({
   }
 
   useEffect(() => {
-    if (!active) {
-      setDraftReady(false);
-      setEditingItemId(null);
-      return;
-    }
-
-    let cancelled = false;
-
     async function loadDraft() {
       setDraftReady(false);
       setShowHistory(false);
       setSelectedHistoryId(null);
       setShowTaxEditor(false);
+
       await Promise.all([loadHistory(), loadTaxSettings()]);
 
       const savedDraft = await loadQuickShopDraft();
-
-      if (cancelled) {
-        return;
-      }
 
       setItems(savedDraft.items);
       setCurrentDigits(savedDraft.currentDigits);
@@ -222,14 +201,10 @@ export function QuickShop({
     }
 
     void loadDraft();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [active]);
+  }, []);
 
   useEffect(() => {
-    if (!active || !draftReady) {
+    if (!draftReady) {
       return;
     }
 
@@ -237,10 +212,10 @@ export function QuickShop({
       items,
       currentDigits,
     });
-  }, [items, currentDigits, active, draftReady]);
+  }, [items, currentDigits, draftReady]);
 
   useEffect(() => {
-    if (!active || !draftReady) {
+    if (!draftReady) {
       return;
     }
 
@@ -249,7 +224,7 @@ export function QuickShop({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [active, draftReady]);
+  }, [draftReady]);
 
   function digitsToAmount(digits: string) {
     if (!digits) {
@@ -729,17 +704,9 @@ export function QuickShop({
     });
   }
 
-  function handleClose() {
-    Keyboard.dismiss();
-    onClose?.();
-  }
-
   return (
-    <View style={styles.embeddedRoot}>
-      <Pressable
-        style={[styles.modalCard, embedded && styles.embeddedCard]}
-        onPress={Keyboard.dismiss}
-      >
+    <View style={styles.webRoot}>
+      <Pressable style={styles.webCard} onPress={Keyboard.dismiss}>
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>
@@ -778,20 +745,6 @@ export function QuickShop({
                 <Text style={styles.receiptIcon}>▤</Text>
               </Pressable>
             )}
-
-            {showCloseButton ? (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  pressed && styles.pressed,
-                ]}
-                onPress={handleClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close Quick Shop"
-              >
-                <Text style={styles.closeButtonText}>×</Text>
-              </Pressable>
-            ) : null}
           </View>
         </View>
 
@@ -900,7 +853,7 @@ export function QuickShop({
           </View>
         ) : (
           <>
-            <View style={[styles.receipt, embedded && styles.embeddedReceipt]}>
+            <View style={styles.webReceipt}>
               <Text style={styles.receiptTitle}>RECEIPT</Text>
 
               <View style={styles.receiptDivider} />
@@ -1079,9 +1032,7 @@ export function QuickShop({
               ) : null}
             </View>
 
-            <View
-              style={[styles.actionRow, embedded && styles.embeddedActionRow]}
-            >
+            <View style={styles.webActionRow}>
               <Pressable
                 disabled={items.length === 0 && !currentDigits}
                 style={({ pressed }) => [
@@ -1174,8 +1125,17 @@ export function QuickShop({
 }
 
 const styles = StyleSheet.create({
-  embeddedRoot: {
+  webRoot: {
     width: "100%",
+  },
+
+  webCard: {
+    width: "100%",
+    backgroundColor: "#182638",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#344657",
+    padding: 18,
   },
 
   backdrop: {
@@ -1197,10 +1157,6 @@ const styles = StyleSheet.create({
     padding: 18,
     maxHeight: "88%",
     minHeight: 0,
-  },
-
-  embeddedCard: {
-    maxHeight: undefined,
   },
 
   header: {
@@ -1446,7 +1402,12 @@ const styles = StyleSheet.create({
     maxHeight: 390,
   },
 
-  embeddedReceipt: {
+  webReceipt: {
+    backgroundColor: "#F4F4F4",
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 16,
     minHeight: 330,
   },
 
@@ -1715,8 +1676,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 
-  embeddedActionRow: {
-    marginTop: 18,
+  webActionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 24,
   },
 
   discardButton: {

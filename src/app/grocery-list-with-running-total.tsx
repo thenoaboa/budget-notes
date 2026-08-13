@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import { Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { QuickShop } from "../components/QuickShop";
+import { GroceryQuickShop } from "../components/GroceryQuickShop";
 
 export default function GroceryListWithRunningTotalPage() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function GroceryListWithRunningTotalPage() {
       </View>
 
       <View style={styles.toolWrap}>
-        <QuickShop active embedded onSave={handleSaveAsBudget} />
+        <GroceryQuickShop onSave={handleSaveAsBudget} />
       </View>
 
       <View style={styles.copySection}>
