@@ -28,7 +28,6 @@ export function QuickShopModal({
       animationType="fade"
       onRequestClose={() => {
         Keyboard.dismiss();
-        onClose();
       }}
     >
       <KeyboardAvoidingView
@@ -57,6 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 18,
   },
+
   backdropPressArea: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.72)",

@@ -1079,7 +1079,9 @@ export function QuickShop({
               ) : null}
             </View>
 
-            <View style={styles.actionRow}>
+            <View
+              style={[styles.actionRow, embedded && styles.embeddedActionRow]}
+            >
               <Pressable
                 disabled={items.length === 0 && !currentDigits}
                 style={({ pressed }) => [
@@ -1199,7 +1201,6 @@ const styles = StyleSheet.create({
 
   embeddedCard: {
     maxHeight: undefined,
-    paddingBottom: 100,
   },
 
   header: {
@@ -1712,6 +1713,10 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 10,
+  },
+
+  embeddedActionRow: {
+    marginTop: 18,
   },
 
   discardButton: {
