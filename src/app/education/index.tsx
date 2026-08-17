@@ -65,7 +65,7 @@ export default function EducationHomeScreen() {
               styles.optionCard,
               pressed && styles.pressedCard,
             ]}
-            onPress={() => router.push("/education/grocery-challenge" as any)}
+            onPress={() => router.push("/education/curriculum" as any)}
             accessibilityRole="button"
             accessibilityLabel="Enter Student Mode"
           >
