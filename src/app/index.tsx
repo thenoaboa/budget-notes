@@ -255,7 +255,7 @@ export default function SpendingScreen() {
               accessibilityLabel="Open main menu"
               accessibilityState={{ expanded: showMainMenu }}
             >
-              <Ionicons name="ellipsis-vertical" size={27} color="#FFFFFF" />
+              <Text style={styles.mainMenuDots}>⋮</Text>
             </Pressable>
           </View>
 
@@ -579,8 +579,19 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
+    backgroundColor: "#1B2738",
+    borderWidth: 1,
+    borderColor: "#344657",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  mainMenuDots: {
+    color: "#FFFFFF",
+    fontSize: 30,
+    fontWeight: "900",
+    lineHeight: 32,
+    marginTop: -2,
   },
 
   mainMenuBackdrop: {
