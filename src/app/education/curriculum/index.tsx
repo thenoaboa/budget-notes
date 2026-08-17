@@ -72,6 +72,28 @@ const lessons: Lesson[] = [
     status: "available",
     route: "/education/unexpected-expense",
   },
+  {
+    id: "dont-spend-it-all",
+    title: "You Don't Have to Spend It All",
+    description:
+      "Learn why leaving money available can be a smart and intentional decision.",
+    icon: "wallet-outline",
+    color: "#5DADE2",
+    duration: "10 min",
+    status: "available",
+    route: "/education/dont-spend-it-all",
+  },
+  {
+    id: "overspending",
+    title: "What Happens When You Overspend?",
+    description:
+      "See how spending more than you have affects both today's plan and your future money.",
+    icon: "trending-down-outline",
+    color: "#FF7676",
+    duration: "10–15 min",
+    status: "available",
+    route: "/education/overspending",
+  },
 ];
 
 export default function CurriculumScreen() {
