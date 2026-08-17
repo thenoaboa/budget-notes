@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { markLessonComplete } from "../../lib/educationProgress";
 
 type Choice = "Need" | "Want";
 
@@ -100,6 +101,7 @@ export default function NeedsAndWantsScreen() {
     }
 
     if (currentIndex === ITEMS.length - 1) {
+      void markLessonComplete("needs-and-wants");
       setComplete(true);
       return;
     }

@@ -9,6 +9,7 @@ import {
     Text,
     View,
 } from "react-native";
+import { markLessonComplete } from "../../lib/educationProgress";
 
 type ExpenseCategory =
   | "Food"
@@ -167,6 +168,7 @@ export default function UnexpectedExpenseScreen() {
     setShowFeedback(true);
 
     if (canComplete) {
+      void markLessonComplete("unexpected-expense");
       setChallengeComplete(true);
     }
   }

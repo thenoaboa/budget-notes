@@ -2,13 +2,14 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { markLessonComplete } from "../../lib/educationProgress";
 
 type GroceryCategory = "Protein" | "Grain" | "Fruit" | "Vegetable" | "Optional";
 
@@ -183,6 +184,7 @@ export default function GroceryChallengeScreen() {
     }
 
     if (canComplete) {
+      void markLessonComplete("grocery-challenge");
       setChallengeComplete(true);
     }
   }

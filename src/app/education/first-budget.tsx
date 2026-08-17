@@ -2,13 +2,14 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { markLessonComplete } from "../../lib/educationProgress";
 
 type BudgetCategory = "Food" | "Transportation" | "Savings" | "Entertainment";
 
@@ -168,6 +169,7 @@ export default function FirstBudgetScreen() {
     setShowFeedback(true);
 
     if (canComplete) {
+      void markLessonComplete("first-budget");
       setChallengeComplete(true);
     }
   }
