@@ -48,6 +48,7 @@ export default function SpendingScreen() {
   const [showBillsCornerModal, setShowBillsCornerModal] = useState(false);
   const [showQuickShopModal, setShowQuickShopModal] = useState(false);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
+  const [showMainMenu, setShowMainMenu] = useState(false);
   const [welcomeTutorialCompleted, setWelcomeTutorialCompleted] =
     useState(false);
 
@@ -240,7 +241,23 @@ export default function SpendingScreen() {
         alwaysBounceVertical
       >
         <View style={styles.simpleHeader}>
-          <Text style={styles.simpleTitle}>BudgetNote</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.simpleTitle}>BudgetNote</Text>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.mainMenuButton,
+                pressed && styles.pressedButton,
+              ]}
+              onPress={() => setShowMainMenu((current) => !current)}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Open main menu"
+              accessibilityState={{ expanded: showMainMenu }}
+            >
+              <Ionicons name="ellipsis-vertical" size={27} color="#FFFFFF" />
+            </Pressable>
+          </View>
 
           <View style={styles.subtitleRow}>
             <Text style={styles.simpleSubtitle}>
@@ -330,6 +347,34 @@ export default function SpendingScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      {showMainMenu && (
+        <>
+          <Pressable
+            style={styles.mainMenuBackdrop}
+            onPress={() => setShowMainMenu(false)}
+            accessibilityLabel="Close main menu"
+          />
+
+          <View style={styles.mainMenuPopover}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.mainMenuOption,
+                pressed && styles.mainMenuOptionPressed,
+              ]}
+              onPress={() => {
+                setShowMainMenu(false);
+                router.push("/education" as any);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Open Education Mode"
+            >
+              <Ionicons name="school-outline" size={22} color="#B56CFF" />
+              <Text style={styles.mainMenuOptionText}>Education Mode</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
 
       <Pressable
         style={({ pressed }) => [
@@ -505,6 +550,12 @@ const styles = StyleSheet.create({
     marginBottom: 22,
   },
 
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
   subtitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -522,6 +573,58 @@ const styles = StyleSheet.create({
     color: "#8A98A8",
     fontSize: 15,
     fontWeight: "700",
+  },
+
+  mainMenuButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  mainMenuBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 190,
+  },
+
+  mainMenuPopover: {
+    position: "absolute",
+    top: 100,
+    right: 16,
+    minWidth: 205,
+    backgroundColor: "#1B2738",
+    borderWidth: 1,
+    borderColor: "#3B4D5F",
+    borderRadius: 14,
+    paddingVertical: 6,
+    zIndex: 200,
+    elevation: 20,
+    shadowColor: "#000000",
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+  },
+
+  mainMenuOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+
+  mainMenuOptionPressed: {
+    backgroundColor: "#243342",
+  },
+
+  mainMenuOptionText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
   },
 
   billHomeButton: {
