@@ -72,6 +72,17 @@ const lessons: Lesson[] = [
     status: "available",
     route: "/education/unexpected-expense",
   },
+  {
+    id: "overspending",
+    title: "What Happens When You Overspend?",
+    description:
+      "See how spending more than you have affects today's plan and your future money.",
+    icon: "trending-down-outline",
+    color: "#FF7676",
+    duration: "10–15 min",
+    status: "available",
+    route: "/education/overspending",
+  },
 ];
 
 export default function CurriculumScreen() {
