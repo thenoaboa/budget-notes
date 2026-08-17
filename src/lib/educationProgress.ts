@@ -5,6 +5,7 @@ export type EducationLessonId =
   | "needs-and-wants"
   | "first-budget"
   | "unexpected-expense"
+  | "dont-spend-it-all"
   | "overspending";
 
 const EDUCATION_PROGRESS_KEY = "@budgetnote:education:completed-lessons";
