@@ -578,10 +578,6 @@ const styles = StyleSheet.create({
   mainMenuButton: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: "#1B2738",
-    borderWidth: 1,
-    borderColor: "#344657",
     alignItems: "center",
     justifyContent: "center",
   },
