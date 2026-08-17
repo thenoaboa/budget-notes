@@ -64,7 +64,8 @@ const lessons: Lesson[] = [
     icon: "warning-outline",
     color: "#F5A623",
     duration: "10–15 min",
-    status: "coming-soon",
+    status: "available",
+    route: "/education/unexpected-expense",
   },
 ];
 
