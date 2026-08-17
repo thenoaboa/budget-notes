@@ -42,7 +42,8 @@ const lessons: Lesson[] = [
     icon: "git-compare-outline",
     color: "#5DADE2",
     duration: "10 min",
-    status: "coming-soon",
+    status: "available",
+    route: "/education/needs-and-wants",
   },
   {
     id: "first-budget",
