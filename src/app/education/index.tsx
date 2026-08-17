@@ -1,28 +1,9 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import {
-    Alert,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
 export default function EducationHomeScreen() {
   const router = useRouter();
-
-  function showComingSoon(feature: string) {
-    const message = `${feature} will be built next.`;
-
-    if (Platform.OS === "web") {
-      window.alert(message);
-      return;
-    }
-
-    Alert.alert(feature, message);
-  }
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -93,7 +74,7 @@ export default function EducationHomeScreen() {
               styles.optionCard,
               pressed && styles.pressedCard,
             ]}
-            onPress={() => showComingSoon("Teacher Mode")}
+            onPress={() => router.push("/education/teacher" as any)}
             accessibilityRole="button"
             accessibilityLabel="Enter Teacher Mode"
           >
