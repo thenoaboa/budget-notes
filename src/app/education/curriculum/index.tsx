@@ -53,7 +53,8 @@ const lessons: Lesson[] = [
     icon: "calculator-outline",
     color: "#B56CFF",
     duration: "15–20 min",
-    status: "coming-soon",
+    status: "available",
+    route: "/education/first-budget",
   },
   {
     id: "unexpected-expense",
