@@ -4,7 +4,8 @@ export type EducationLessonId =
   | "grocery-challenge"
   | "needs-and-wants"
   | "first-budget"
-  | "unexpected-expense";
+  | "unexpected-expense"
+  | "overspending";
 
 const EDUCATION_PROGRESS_KEY = "@budgetnote:education:completed-lessons";
 
