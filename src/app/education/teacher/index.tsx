@@ -21,6 +21,11 @@ type TeacherLesson = {
   objective: string;
   openingQuestion: string;
   discussionQuestions: string[];
+  faithConnection: {
+    scripture: string;
+    principle: string;
+    discussionQuestion: string;
+  };
 };
 
 const LESSONS: TeacherLesson[] = [
@@ -41,6 +46,13 @@ const LESSONS: TeacherLesson[] = [
       "What did you remove when the total became too high?",
       "How did sales tax change your plan?",
     ],
+    faithConnection: {
+      scripture: "Luke 14:28",
+      principle:
+        "Wise stewardship includes counting the cost and planning before making a commitment.",
+      discussionQuestion:
+        "How did planning before buying help you take better care of what you were given?",
+    },
   },
   {
     id: "needs-and-wants",
@@ -59,6 +71,13 @@ const LESSONS: TeacherLesson[] = [
       "When can something normally considered a want become a need?",
       "Why should needs usually come before wants?",
     ],
+    faithConnection: {
+      scripture: "Philippians 4:11–12",
+      principle:
+        "Contentment helps us appreciate what we have without treating every desire as a necessity.",
+      discussionQuestion:
+        "How can contentment help you make a wise choice when you cannot have everything you want?",
+    },
   },
   {
     id: "first-budget",
@@ -76,6 +95,13 @@ const LESSONS: TeacherLesson[] = [
       "How did saving money affect what else you could choose?",
       "Did your final budget leave any money available?",
     ],
+    faithConnection: {
+      scripture: "Proverbs 21:5",
+      principle:
+        "Careful planning helps us use money purposefully instead of reacting without thinking.",
+      discussionQuestion:
+        "How can a thoughtful plan help you honor God with the money entrusted to you?",
+    },
   },
   {
     id: "unexpected-expense",
@@ -94,6 +120,13 @@ const LESSONS: TeacherLesson[] = [
       "Why were optional expenses easier to change than essentials?",
       "How can savings make unexpected expenses less stressful?",
     ],
+    faithConnection: {
+      scripture: "Proverbs 21:20",
+      principle:
+        "Wisdom includes preparing resources for future needs instead of consuming everything immediately.",
+      discussionQuestion:
+        "How did saving beforehand give you more freedom when something unexpected happened?",
+    },
   },
   {
     id: "dont-spend-it-all",
@@ -112,6 +145,13 @@ const LESSONS: TeacherLesson[] = [
       "What options does remaining money give you?",
       "Is unspent money the same as wasted money?",
     ],
+    faithConnection: {
+      scripture: "Hebrews 13:5",
+      principle:
+        "Contentment allows us to stop spending even when more money is available.",
+      discussionQuestion:
+        "What is the difference between enjoying what you have and always searching for something more?",
+    },
   },
   {
     id: "overspending",
@@ -130,11 +170,21 @@ const LESSONS: TeacherLesson[] = [
       "How can borrowing reduce the money available later?",
       "What could help prevent overspending before it happens?",
     ],
+    faithConnection: {
+      scripture: "Proverbs 22:7",
+      principle:
+        "Debt can limit future choices, so wisdom asks us to understand the cost before borrowing.",
+      discussionQuestion:
+        "How can owing money to someone else reduce your ability to choose what to do with future money?",
+    },
   },
 ];
 
 export default function TeacherHomeScreen() {
   const router = useRouter();
+  const [lessonApproach, setLessonApproach] = useState<"standard" | "faith">(
+    "standard",
+  );
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
     LESSONS[0].id,
   );
@@ -199,6 +249,29 @@ export default function TeacherHomeScreen() {
             <Text style={styles.summaryNumber}>Ages 8+</Text>
             <Text style={styles.summaryLabel}>Starter level</Text>
           </View>
+        </View>
+
+        <View style={styles.approachSection}>
+          <Text style={styles.approachLabel}>LESSON APPROACH</Text>
+          <View style={styles.approachSelector}>
+            <ApproachButton
+              label="Standard"
+              icon="school-outline"
+              selected={lessonApproach === "standard"}
+              onPress={() => setLessonApproach("standard")}
+            />
+            <ApproachButton
+              label="Faith-Based"
+              icon="book-outline"
+              selected={lessonApproach === "faith"}
+              onPress={() => setLessonApproach("faith")}
+            />
+          </View>
+          <Text style={styles.approachDescription}>
+            {lessonApproach === "faith"
+              ? "Every guide includes an additional scripture, biblical principle, and discussion question."
+              : "Every guide focuses on practical financial decision-making without faith-specific material."}
+          </Text>
         </View>
 
         <Text style={styles.sectionTitle}>Lesson Guides</Text>
@@ -286,6 +359,43 @@ export default function TeacherHomeScreen() {
                       ))}
                     </View>
 
+                    {lessonApproach === "faith" && (
+                      <View style={styles.faithSection}>
+                        <View style={styles.faithHeadingRow}>
+                          <View style={styles.faithIcon}>
+                            <Ionicons
+                              name="book-outline"
+                              size={18}
+                              color="#F5C451"
+                            />
+                          </View>
+                          <View style={styles.faithHeadingContent}>
+                            <Text style={styles.faithLabel}>
+                              FAITH CONNECTION
+                            </Text>
+                            <Text style={styles.scriptureText}>
+                              {lesson.faithConnection.scripture}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text style={styles.faithPrinciple}>
+                          {lesson.faithConnection.principle}
+                        </Text>
+
+                        <View style={styles.faithQuestionRow}>
+                          <Ionicons
+                            name="chatbubble-outline"
+                            size={17}
+                            color="#F5C451"
+                          />
+                          <Text style={styles.faithQuestionText}>
+                            {lesson.faithConnection.discussionQuestion}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
                     <Pressable
                       style={({ pressed }) => [
                         styles.launchButton,
@@ -317,6 +427,45 @@ export default function TeacherHomeScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function ApproachButton({
+  label,
+  icon,
+  selected,
+  onPress,
+}: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.approachButton,
+        selected && styles.approachButtonSelected,
+        pressed && styles.pressed,
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+    >
+      <Ionicons
+        name={icon}
+        size={18}
+        color={selected ? "#101820" : "#AAB5C1"}
+      />
+      <Text
+        style={[
+          styles.approachButtonText,
+          selected && styles.approachButtonTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -411,6 +560,47 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   summaryDivider: { width: 1, height: 33, backgroundColor: "#344657" },
+  approachSection: {
+    backgroundColor: "#1B2738",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#344657",
+    padding: 14,
+    marginTop: 14,
+  },
+  approachLabel: {
+    color: "#8A98A8",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    marginBottom: 10,
+  },
+  approachSelector: {
+    flexDirection: "row",
+    backgroundColor: "#101820",
+    borderRadius: 14,
+    padding: 4,
+    gap: 4,
+  },
+  approachButton: {
+    flex: 1,
+    minHeight: 43,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 11,
+    gap: 7,
+  },
+  approachButtonSelected: { backgroundColor: "#F5C451" },
+  approachButtonText: { color: "#AAB5C1", fontSize: 13, fontWeight: "900" },
+  approachButtonTextSelected: { color: "#101820" },
+  approachDescription: {
+    color: "#AAB5C1",
+    fontSize: 12,
+    fontWeight: "600",
+    lineHeight: 18,
+    marginTop: 10,
+  },
   sectionTitle: {
     color: "#FFFFFF",
     fontSize: 20,
@@ -507,6 +697,60 @@ const styles = StyleSheet.create({
   },
   questionNumberText: { color: "#FFFFFF", fontSize: 10, fontWeight: "900" },
   questionText: {
+    flex: 1,
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 19,
+  },
+  faithSection: {
+    backgroundColor: "#3C3520",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#65582B",
+    padding: 13,
+    marginBottom: 10,
+  },
+  faithHeadingRow: { flexDirection: "row", alignItems: "center" },
+  faithIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: "#514723",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  faithHeadingContent: { flex: 1 },
+  faithLabel: {
+    color: "#F5C451",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+  },
+  scriptureText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+    marginTop: 2,
+  },
+  faithPrinciple: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    lineHeight: 19,
+    marginTop: 11,
+  },
+  faithQuestionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    borderTopWidth: 1,
+    borderTopColor: "#65582B",
+    marginTop: 11,
+    paddingTop: 11,
+    gap: 8,
+  },
+  faithQuestionText: {
     flex: 1,
     color: "#FFFFFF",
     fontSize: 13,
