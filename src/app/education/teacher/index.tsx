@@ -10,17 +10,15 @@ import {
   View,
 } from "react-native";
 
-import {
-  LESSONS,
-  type LessonApproach,
-} from "../../../lib/education/teacher-lessons";
+import { LESSONS } from "@/lib/education/teacher-lessons";
 
 export default function TeacherHomeScreen() {
   const router = useRouter();
-  const [lessonApproach, setLessonApproach] =
-    useState<LessonApproach>("standard");
+  const [lessonApproach, setLessonApproach] = useState<"standard" | "faith">(
+    "standard",
+  );
   const [expandedLessonId, setExpandedLessonId] = useState<string | null>(
-    LESSONS[0].id,
+    LESSONS[0]?.id ?? null,
   );
 
   function toggleLesson(lessonId: string) {
@@ -29,14 +27,29 @@ export default function TeacherHomeScreen() {
     );
   }
 
-  function openPrintAll() {
-    router.push(`/education/teacher/print?approach=${lessonApproach}` as any);
+  function printAllTeacherGuides() {
+    router.push({
+      pathname: "/education/teacher/print",
+      params: { approach: lessonApproach },
+    } as any);
   }
 
-  function openPrintLesson(lessonId: string) {
-    router.push(
-      `/education/teacher/print/${lessonId}?approach=${lessonApproach}` as any,
-    );
+  function printTeacherGuide(lessonId: string) {
+    router.push({
+      pathname: "/education/teacher/print/[lessonId]",
+      params: { lessonId, approach: lessonApproach },
+    } as any);
+  }
+
+  function printAllStudentWorksheets() {
+    router.push("/education/teacher/student-print" as any);
+  }
+
+  function printStudentWorksheet(lessonId: string) {
+    router.push({
+      pathname: "/education/teacher/student-print/[lessonId]",
+      params: { lessonId },
+    } as any);
   }
 
   return (
@@ -113,25 +126,52 @@ export default function TeacherHomeScreen() {
           </View>
           <Text style={styles.approachDescription}>
             {lessonApproach === "faith"
-              ? "Every guide includes an additional scripture, biblical principle, and discussion question."
-              : "Every guide focuses on practical financial decision-making without faith-specific material."}
+              ? "Every teacher guide includes an additional scripture, biblical principle, and discussion question."
+              : "Teacher guides focus on practical financial decision-making without faith-specific material."}
           </Text>
         </View>
 
-        <View style={styles.sectionHeadingRow}>
-          <Text style={styles.sectionTitle}>Lesson Guides</Text>
+        <Text style={styles.sectionTitle}>Lesson Guides</Text>
+
+        <View style={styles.printAllRow}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.printAllButton,
+              pressed && styles.pressedCard,
+            ]}
+            onPress={printAllTeacherGuides}
+            accessibilityRole="button"
+            accessibilityLabel="Print all teacher guides"
+          >
+            <View style={styles.printAllIconPurple}>
+              <Ionicons name="print-outline" size={19} color="#B56CFF" />
+            </View>
+            <View style={styles.printAllTextWrap}>
+              <Text style={styles.printAllTitle}>Teacher Guides</Text>
+              <Text style={styles.printAllSubtitle}>
+                Print all {LESSONS.length}
+              </Text>
+            </View>
+          </Pressable>
 
           <Pressable
             style={({ pressed }) => [
               styles.printAllButton,
-              pressed && styles.pressed,
+              pressed && styles.pressedCard,
             ]}
-            onPress={openPrintAll}
+            onPress={printAllStudentWorksheets}
             accessibilityRole="button"
-            accessibilityLabel={`Print all ${lessonApproach === "faith" ? "faith-based" : "standard"} lesson guides`}
+            accessibilityLabel="Print all student worksheets"
           >
-            <Ionicons name="print-outline" size={17} color="#FFFFFF" />
-            <Text style={styles.printAllButtonText}>Print All</Text>
+            <View style={styles.printAllIconGreen}>
+              <Ionicons name="documents-outline" size={19} color="#2ECC71" />
+            </View>
+            <View style={styles.printAllTextWrap}>
+              <Text style={styles.printAllTitle}>Student Sheets</Text>
+              <Text style={styles.printAllSubtitle}>
+                Print all {LESSONS.length}
+              </Text>
+            </View>
           </Pressable>
         </View>
 
@@ -257,25 +297,6 @@ export default function TeacherHomeScreen() {
 
                     <Pressable
                       style={({ pressed }) => [
-                        styles.printLessonButton,
-                        pressed && styles.pressed,
-                      ]}
-                      onPress={() => openPrintLesson(lesson.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Print ${lesson.title} lesson guide`}
-                    >
-                      <Ionicons
-                        name="print-outline"
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                      <Text style={styles.printLessonButtonText}>
-                        Print Lesson Guide
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={({ pressed }) => [
                         styles.launchButton,
                         pressed && styles.pressed,
                       ]}
@@ -288,6 +309,46 @@ export default function TeacherHomeScreen() {
                         Launch Student Activity
                       </Text>
                     </Pressable>
+
+                    <View style={styles.lessonPrintRow}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.lessonPrintButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() => printStudentWorksheet(lesson.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Print student worksheet for ${lesson.title}`}
+                      >
+                        <Ionicons
+                          name="document-text-outline"
+                          size={18}
+                          color="#2ECC71"
+                        />
+                        <Text style={styles.studentPrintButtonText}>
+                          Student Worksheet
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.lessonPrintButton,
+                          pressed && styles.pressed,
+                        ]}
+                        onPress={() => printTeacherGuide(lesson.id)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Print teacher guide for ${lesson.title}`}
+                      >
+                        <Ionicons
+                          name="print-outline"
+                          size={18}
+                          color="#B56CFF"
+                        />
+                        <Text style={styles.teacherPrintButtonText}>
+                          Teacher Guide
+                        </Text>
+                      </Pressable>
+                    </View>
                   </View>
                 )}
               </View>
@@ -479,36 +540,54 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 10,
   },
-  sectionHeadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 28,
-    marginBottom: 13,
-  },
   sectionTitle: {
-    flex: 1,
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "900",
+    marginTop: 28,
+    marginBottom: 13,
+  },
+  printAllRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 14,
   },
   printAllButton: {
-    minHeight: 38,
+    flex: 1,
+    minHeight: 67,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#243342",
-    borderRadius: 12,
+    backgroundColor: "#1B2738",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#465A6E",
-    paddingHorizontal: 12,
-    gap: 7,
+    borderColor: "#344657",
+    paddingHorizontal: 11,
   },
-  printAllButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "900",
+  printAllIconPurple: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#302645",
+    marginRight: 9,
+  },
+  printAllIconGreen: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#183C32",
+    marginRight: 9,
+  },
+  printAllTextWrap: { flex: 1 },
+  printAllTitle: { color: "#FFFFFF", fontSize: 12, fontWeight: "900" },
+  printAllSubtitle: {
+    color: "#8A98A8",
+    fontSize: 10,
+    fontWeight: "700",
+    marginTop: 3,
   },
   lessonList: { gap: 12 },
   lessonCard: {
@@ -659,23 +738,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     lineHeight: 19,
   },
-  printLessonButton: {
-    minHeight: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#243342",
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#465A6E",
-    marginTop: 4,
-    gap: 8,
-  },
-  printLessonButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
-  },
   launchButton: {
     minHeight: 52,
     flexDirection: "row",
@@ -683,10 +745,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#B56CFF",
     borderRadius: 15,
-    marginTop: 9,
+    marginTop: 4,
     gap: 8,
   },
   launchButtonText: { color: "#101820", fontSize: 15, fontWeight: "900" },
+  lessonPrintRow: {
+    flexDirection: "row",
+    gap: 9,
+    marginTop: 9,
+  },
+  lessonPrintButton: {
+    flex: 1,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    backgroundColor: "#243342",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#465769",
+    paddingHorizontal: 8,
+  },
+  studentPrintButtonText: {
+    color: "#2ECC71",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  teacherPrintButtonText: {
+    color: "#CFA7FF",
+    fontSize: 12,
+    fontWeight: "900",
+  },
   teacherNote: {
     flexDirection: "row",
     alignItems: "flex-start",
