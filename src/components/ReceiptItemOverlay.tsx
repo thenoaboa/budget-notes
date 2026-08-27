@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   Modal,
@@ -48,6 +48,8 @@ export function ReceiptItemOverlay({
 
   onClose,
 }: Props) {
+  const [draftItem, setDraftItem] = useState<BudgetItem | null>(null);
+
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkDraft, setLinkDraft] = useState("");
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -56,16 +58,143 @@ export function ReceiptItemOverlay({
   const isDesktopWeb =
     Platform.OS === "web" && Dimensions.get("window").width >= 768;
 
-  if (!item) {
+  useEffect(() => {
+    if (!visible || !item) {
+      return;
+    }
+
+    setDraftItem({ ...item });
+    setLinkDraft(item.link ?? "");
+    setNoteDraft(item.note ?? "");
+    setShowLinkModal(false);
+    setShowNoteModal(false);
+  }, [visible, item?.id]);
+
+  if (!item || !draftItem || draftItem.id !== item.id) {
     return null;
   }
 
-  const hasLink = Boolean(item.link?.trim());
-  const hasNote = Boolean(item.note?.trim());
+  const hasLink = Boolean(draftItem.link?.trim());
+  const hasNote = Boolean(draftItem.note?.trim());
+
+  function handleCancel() {
+    setShowLinkModal(false);
+    setShowNoteModal(false);
+    onClose();
+  }
+
+  function updateDraftItem(
+    id: number,
+    field: "name" | "amount" | "isFood" | "note" | "link",
+    value: string | boolean,
+  ) {
+    setDraftItem((current) => {
+      if (!current || current.id !== id) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [field]: value,
+      };
+    });
+  }
+
+  function increaseDraftQuantity(id: number) {
+    setDraftItem((current) => {
+      if (!current || current.id !== id) {
+        return current;
+      }
+
+      return {
+        ...current,
+        quantity: current.quantity + 1,
+      };
+    });
+  }
+
+  function resetDraftQuantity(id: number) {
+    setDraftItem((current) => {
+      if (!current || current.id !== id) {
+        return current;
+      }
+
+      return {
+        ...current,
+        quantity: 1,
+      };
+    });
+  }
+
+  function toggleDraftIncluded(id: number) {
+    setDraftItem((current) => {
+      if (!current || current.id !== id) {
+        return current;
+      }
+
+      return {
+        ...current,
+        included: !current.included,
+      };
+    });
+  }
+
+  function handleFinish() {
+    if (!item || !draftItem) {
+      onClose();
+      return;
+    }
+
+    if (draftItem.name !== item.name) {
+      updateItem(item.id, "name", draftItem.name);
+    }
+
+    if (draftItem.amount !== item.amount) {
+      updateItem(item.id, "amount", draftItem.amount);
+    }
+
+    if (draftItem.isFood !== item.isFood) {
+      updateItem(item.id, "isFood", draftItem.isFood ?? false);
+    }
+
+    if ((draftItem.note ?? "") !== (item.note ?? "")) {
+      updateItem(item.id, "note", draftItem.note ?? "");
+    }
+
+    if ((draftItem.link ?? "") !== (item.link ?? "")) {
+      updateItem(item.id, "link", draftItem.link ?? "");
+    }
+
+    if (draftItem.quantity !== item.quantity) {
+      if (draftItem.quantity < item.quantity) {
+        resetQuantity(item.id);
+
+        for (let quantity = 1; quantity < draftItem.quantity; quantity += 1) {
+          increaseQuantity(item.id);
+        }
+      } else {
+        for (
+          let quantity = item.quantity;
+          quantity < draftItem.quantity;
+          quantity += 1
+        ) {
+          increaseQuantity(item.id);
+        }
+      }
+    }
+
+    if (draftItem.included !== item.included) {
+      toggleIncluded(item.id);
+    }
+
+    setShowLinkModal(false);
+    setShowNoteModal(false);
+    onClose();
+  }
 
   function handleDesktopFinishOrNext(...args: any[]) {
     if (isDesktopWeb) {
-      onClose();
+      handleFinish();
       return;
     }
 
@@ -78,51 +207,56 @@ export function ReceiptItemOverlay({
   }
 
   function openLinkModal() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    setLinkDraft(item.link ?? "");
+    setLinkDraft(draftItem.link ?? "");
     setShowLinkModal(true);
   }
 
   function cancelLink() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    setLinkDraft(item.link ?? "");
+    setLinkDraft(draftItem.link ?? "");
     setShowLinkModal(false);
   }
 
   function saveLink() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    updateItem(item.id, "link", linkDraft.trim());
+    updateDraftItem(draftItem.id, "link", linkDraft.trim());
     setShowLinkModal(false);
   }
 
   function openNoteModal() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    setNoteDraft(item.note ?? "");
+    setNoteDraft(draftItem.note ?? "");
     setShowNoteModal(true);
   }
 
   function cancelNote() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    setNoteDraft(item.note ?? "");
+    setNoteDraft(draftItem.note ?? "");
     setShowNoteModal(false);
   }
 
   function saveNote() {
-    if (!item) return;
+    if (!draftItem) return;
 
-    updateItem(item.id, "note", noteDraft.trim());
+    updateDraftItem(draftItem.id, "note", noteDraft.trim());
     setShowNoteModal(false);
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleCancel}
+    >
       <View style={styles.overlay}>
-        <Pressable style={styles.background} onPress={onClose} />
+        <Pressable style={styles.background} onPress={handleCancel} />
 
         <View style={styles.card}>
           <View style={styles.topRow}>
@@ -153,27 +287,27 @@ export function ReceiptItemOverlay({
                 />
               </Pressable>
 
-              <Pressable onPress={onClose}>
+              <Pressable onPress={handleCancel}>
                 <Text style={styles.close}>×</Text>
               </Pressable>
             </View>
           </View>
 
           <SpendingItemRow
-            item={item}
+            item={draftItem}
             itemNameRefs={itemNameRefs}
             itemAmountRefs={itemAmountRefs}
-            updateItem={updateItem}
-            increaseQuantity={increaseQuantity}
-            resetQuantity={resetQuantity}
-            toggleIncluded={toggleIncluded}
+            updateItem={updateDraftItem}
+            increaseQuantity={increaseDraftQuantity}
+            resetQuantity={resetDraftQuantity}
+            toggleIncluded={toggleDraftIncluded}
             deleteItem={handleDeleteFromOverlay}
             focusNextItemOrAddCurrent={handleDesktopFinishOrNext}
             hideDeleteButton
             showFoodControls
           />
 
-          <Pressable style={styles.finishButton} onPress={onClose}>
+          <Pressable style={styles.finishButton} onPress={handleFinish}>
             <Text style={styles.finishButtonText}>Finish</Text>
           </Pressable>
         </View>
@@ -248,6 +382,7 @@ export function ReceiptItemOverlay({
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
