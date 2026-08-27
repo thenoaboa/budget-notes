@@ -46,6 +46,7 @@ export function mapStoredItemsToEditorItems(
     isFood: item.isFood ?? false,
     note: item.note ?? "",
     link: item.link ?? "",
+    inCart: item.inCart ?? false,
   }));
 }
 
