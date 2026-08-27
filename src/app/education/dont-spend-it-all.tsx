@@ -2,12 +2,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { markLessonComplete } from "../../lib/educationProgress";
 
@@ -180,7 +180,7 @@ export default function DontSpendItAllScreen() {
 
           <Pressable
             style={styles.secondaryButton}
-            onPress={() => router.back()}
+            onPress={() => router.push("/education/curriculum" as any)}
           >
             <Text style={styles.secondaryButtonText}>Return to Curriculum</Text>
           </Pressable>
@@ -194,7 +194,7 @@ export default function DontSpendItAllScreen() {
       <View style={styles.header}>
         <Pressable
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={() => router.push("/education/curriculum" as any)}
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel="Return to curriculum"

@@ -254,7 +254,7 @@ export default function GroceryChallengeScreen() {
               styles.secondaryButton,
               pressed && styles.pressed,
             ]}
-            onPress={() => router.back()}
+            onPress={() => router.push("/education/curriculum" as any)}
           >
             <Text style={styles.secondaryButtonText}>
               Return to Education Mode
@@ -273,7 +273,7 @@ export default function GroceryChallengeScreen() {
             styles.backButton,
             pressed && styles.pressed,
           ]}
-          onPress={() => router.back()}
+          onPress={() => router.push("/education/curriculum" as any)}
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel="Return to Education Mode"

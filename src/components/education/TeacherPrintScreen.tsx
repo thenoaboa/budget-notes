@@ -515,7 +515,7 @@ export function TeacherPrintScreen({
             styles.actionBackButton,
             pressed && styles.pressed,
           ]}
-          onPress={() => router.back()}
+          onPress={() => router.push("/education/teacher" as any)}
           accessibilityRole="button"
           accessibilityLabel="Return to Teacher Mode"
         >

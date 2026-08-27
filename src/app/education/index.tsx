@@ -14,7 +14,7 @@ export default function EducationHomeScreen() {
               styles.backButton,
               pressed && styles.pressed,
             ]}
-            onPress={() => router.back()}
+            onPress={() => router.push("/" as any)}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel="Return to BudgetNote"

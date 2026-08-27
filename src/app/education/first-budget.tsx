@@ -252,7 +252,7 @@ export default function FirstBudgetScreen() {
               styles.secondaryButton,
               pressed && styles.pressed,
             ]}
-            onPress={() => router.back()}
+            onPress={() => router.push("/education/curriculum" as any)}
           >
             <Text style={styles.secondaryButtonText}>Return to Curriculum</Text>
           </Pressable>
@@ -269,7 +269,7 @@ export default function FirstBudgetScreen() {
             styles.backButton,
             pressed && styles.pressed,
           ]}
-          onPress={() => router.back()}
+          onPress={() => router.push("/education/curriculum" as any)}
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel="Return to curriculum"

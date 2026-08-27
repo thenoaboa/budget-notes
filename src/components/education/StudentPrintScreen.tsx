@@ -3,19 +3,19 @@ import * as Print from "expo-print";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import {
-    StudentWorksheet,
-    StudentWorksheetSection,
+  StudentWorksheet,
+  StudentWorksheetSection,
 } from "../../lib/education/student-worksheets";
 
 type Props = {
@@ -89,7 +89,7 @@ export function StudentPrintScreen({ worksheets, title }: Props) {
             styles.backButton,
             pressed && styles.pressed,
           ]}
-          onPress={() => router.back()}
+          onPress={() => router.push("/education/teacher" as any)}
           accessibilityRole="button"
           accessibilityLabel="Return to Teacher Mode"
         >

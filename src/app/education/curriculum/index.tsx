@@ -154,7 +154,7 @@ export default function CurriculumScreen() {
               styles.backButton,
               pressed && styles.pressed,
             ]}
-            onPress={() => router.back()}
+            onPress={() => router.push("/education" as any)}
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel="Return to Education Mode"
